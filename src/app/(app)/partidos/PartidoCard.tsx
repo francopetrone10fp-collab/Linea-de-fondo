@@ -1,0 +1,121 @@
+import Link from "next/link";
+import { ColorBadge } from "@/components/Badge";
+import { EVAL_LEVELS, truncateText } from "@/lib/constants";
+import type { PartidoFull } from "./queries";
+import type { Evaluation } from "@/lib/database.types";
+
+export function refereesText(p: PartidoFull) {
+  return p.referees.length ? p.referees.map((r) => r.name).join(" · ") : "Sin árbitros asignados";
+}
+
+export function Matchup({ p, size = 24, bold = true }: { p: PartidoFull; size?: number; bold?: boolean }) {
+  if (!p.teamLocal && !p.teamVisit) return null;
+  const nameCls = bold ? "font-semibold text-[13.5px]" : "text-[12.5px] text-text-dim";
+  return (
+    <div className={`flex items-center gap-1.5 flex-wrap ${bold ? "mb-2.5" : "mb-1.5"}`}>
+      {p.teamLocal && (
+        <>
+          <ColorBadge name={p.teamLocal.name} color={p.teamLocal.color} size={size} />
+          <span className={nameCls}>{p.teamLocal.name}</span>
+        </>
+      )}
+      <span className="text-text-faint text-[11px]">vs</span>
+      {p.teamVisit && (
+        <>
+          <ColorBadge name={p.teamVisit.name} color={p.teamVisit.color} size={size} />
+          <span className={nameCls}>{p.teamVisit.name}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function EvalSummary({ counts, pendingCount }: { counts: Record<Evaluation, number>; pendingCount: number }) {
+  const chips = EVAL_LEVELS.filter((l) => counts[l.key] > 0);
+  if (chips.length === 0 && pendingCount === 0) {
+    return <CallTab evaluation={null} label="Sin jugadas cargadas" />;
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {chips.map((l) => (
+        <CallTab key={l.key} evaluation={l.key} label={`${counts[l.key]} ${l.label.toLowerCase()}`} />
+      ))}
+      {pendingCount > 0 && <CallTab evaluation={null} label={`${pendingCount} sin evaluar`} />}
+    </div>
+  );
+}
+
+const EVAL_TAB_CLASSES: Record<string, string> = {
+  mala: "text-bad-text bg-bad-bg",
+  estandar: "text-amber-text bg-amber-bg",
+  buena: "text-good-text bg-good-bg",
+  relevante: "text-relevant-text bg-relevant-bg",
+};
+
+export function CallTab({ evaluation, label }: { evaluation: Evaluation | null; label: string }) {
+  const cls = evaluation ? EVAL_TAB_CLASSES[evaluation] : "text-text-faint bg-surface-3";
+  return (
+    <span className={`inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-0.5 rounded-full w-fit ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+export function FinalizedBadge({ name, at }: { name: string; at: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-relevant-text bg-relevant-bg px-2.5 py-0.5 rounded-full">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+      Finalizada por {name} · {new Date(at).toLocaleDateString("es-AR")}
+    </span>
+  );
+}
+
+export function PartidoCard({
+  p,
+  temporada,
+  evalCounts,
+  pendingCount,
+}: {
+  p: PartidoFull;
+  temporada: string;
+  evalCounts: Record<Evaluation, number>;
+  pendingCount: number;
+}) {
+  const fechaFmt = p.fecha
+    ? new Date(p.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "Sin fecha";
+  return (
+    <Link
+      href={`/partidos/${encodeURIComponent(temporada)}/${p.id}`}
+      className="bg-surface border border-line rounded-xl overflow-hidden block hover:border-text-faint"
+    >
+      <div className="p-4 pt-4">
+        <div className="flex justify-between items-center mb-2 gap-2">
+          <span className="font-mono text-[12px] text-text-dim">{fechaFmt}</span>
+          {p.finalizedAt && p.finalizedByName && <FinalizedBadge name={p.finalizedByName} at={p.finalizedAt} />}
+        </div>
+        <Matchup p={p} />
+        {p.competition && (
+          <span className="text-[10.5px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-3 text-text-dim">
+            {p.competition}
+          </span>
+        )}
+        <p className="text-[12.5px] text-text-dim mt-2">{refereesText(p)}</p>
+        {p.notes && <p className="text-[12.5px] text-text-faint mt-1">{truncateText(p.notes, 90)}</p>}
+        <div className="mt-2">
+          <EvalSummary counts={evalCounts} pendingCount={pendingCount} />
+        </div>
+        <div className="flex justify-between items-center mt-3">
+          <span className="text-accent text-[12.5px] font-semibold flex items-center gap-1">
+            Ver detalle
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}

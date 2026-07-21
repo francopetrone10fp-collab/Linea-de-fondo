@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #14171c;
+  --surface: #1b1f27;
+  --surface-2: #232833;
+  --surface-3: #2a303c;
+  --line: #333a47;
+  --text: #f2f0eb;
+  --text-dim: #9299a8;
+  --text-faint: #5c6270;
+  --accent: #e8631c;
+  --accent-dim: #b84e17;
+  --accent-text: #ffddc7;
+  --gold: #c9a227;
+  --good: #3fa34d;
+  --good-bg: #1b2e1f;
+  --good-text: #7fcb8c;
+  --bad: #d64545;
+  --bad-bg: #331b1b;
+  --bad-text: #f09595;
+  --amber: #d6a73f;
+  --amber-bg: #332b15;
+  --amber-text: #e8ce85;
+  --relevant: #16a184;
+  --relevant-bg: #0f2e28;
+  --relevant-text: #7fe0c9;
+  --radius: 10px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-text-dim: var(--text-dim);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-text: var(--accent-text);
+  --color-gold: var(--gold);
+  --color-good: var(--good);
+  --color-good-bg: var(--good-bg);
+  --color-good-text: var(--good-text);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-text: var(--bad-text);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-amber-text: var(--amber-text);
+  --color-relevant: var(--relevant);
+  --color-relevant-bg: var(--relevant-bg);
+  --color-relevant-text: var(--relevant-text);
+  --font-display: var(--font-oswald), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+select,
+input,
+textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--accent-dim);
+  outline-offset: 0;
+}
+
+::placeholder {
+  color: var(--text-faint);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .report-print,
+  .report-print * {
+    visibility: visible;
+  }
+  .report-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,0 +1,154 @@
+import { EVAL_COLORS, evalLabel } from "@/lib/constants";
+import type { PartidoFull, ClipFull, CommentFull } from "./queries";
+import type { Evaluation } from "@/lib/database.types";
+
+export interface ReportRow {
+  title: string;
+  situation: string;
+  quarter: string;
+  clock: string;
+  refereeName: string;
+  evaluation: Evaluation | null;
+  notes: string;
+}
+
+export interface ReportData {
+  matchup: string;
+  fechaFmt: string;
+  competition: string | null;
+  refereesText: string;
+  counts: Record<Evaluation, number>;
+  pending: number;
+  total: number;
+  rows: ReportRow[];
+  situationItems: { label: string; count: number }[];
+  comments: CommentFull[];
+  finalizedByName: string | null;
+  finalizedAt: string | null;
+}
+
+export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: CommentFull[]): ReportData {
+  const counts: Record<Evaluation, number> = { mala: 0, estandar: 0, buena: 0, relevante: 0 };
+  let pending = 0;
+  clips.forEach((c) => {
+    if (c.evaluation) counts[c.evaluation]++;
+    else pending++;
+  });
+
+  const fechaFmt = p.fecha
+    ? new Date(p.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "Sin fecha";
+  const matchup = [p.teamLocal?.name, p.teamVisit?.name].filter(Boolean).join(" vs ") || "Partido sin equipos cargados";
+  const refereesText = p.referees.length ? p.referees.map((r) => r.name).join(" · ") : "Sin árbitros asignados";
+
+  const situationCounts: Record<string, number> = {};
+  clips.forEach((c) => {
+    situationCounts[c.situation] = (situationCounts[c.situation] ?? 0) + 1;
+  });
+  const situationItems = Object.entries(situationCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, count]) => ({ label, count }));
+
+  return {
+    matchup,
+    fechaFmt,
+    competition: p.competition,
+    refereesText,
+    counts,
+    pending,
+    total: clips.length,
+    rows: clips.map((c) => ({
+      title: c.title,
+      situation: c.situation,
+      quarter: c.quarter,
+      clock: c.clock || "--:--",
+      refereeName: c.referee?.name ?? "—",
+      evaluation: c.evaluation,
+      notes: c.notes ?? "",
+    })),
+    situationItems,
+    comments,
+    finalizedByName: p.finalizedByName,
+    finalizedAt: p.finalizedAt,
+  };
+}
+
+export function pieSegments(data: ReportData) {
+  return [
+    { label: "Mala", value: data.counts.mala, color: EVAL_COLORS.mala },
+    { label: "Estándar", value: data.counts.estandar, color: EVAL_COLORS.estandar },
+    { label: "Buena", value: data.counts.buena, color: EVAL_COLORS.buena },
+    { label: "Relevante", value: data.counts.relevante, color: EVAL_COLORS.relevante },
+    { label: "Sin evaluar", value: data.pending, color: EVAL_COLORS.pending },
+  ];
+}
+
+const STANDALONE_CSS = `
+  body{background:#14171C;color:#F2F0EB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;padding:30px;margin:0;}
+  .report-box{background:#1B1F27;border:1px solid #333A47;border-radius:14px;max-width:720px;margin:0 auto;padding:30px;}
+  .report-title{font-size:22px;font-weight:700;margin:0 0 4px;}
+  .report-sub{font-size:13px;color:#9299A8;margin:0 0 18px;line-height:1.5;}
+  .report-stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;}
+  .report-stat{flex:1;min-width:100px;background:#232833;border:1px solid #333A47;border-radius:9px;padding:10px 12px;text-align:center;}
+  .report-stat .n{font-family:monospace;font-size:20px;font-weight:600;}
+  .report-stat .l{font-size:10.5px;color:#5C6270;text-transform:uppercase;letter-spacing:0.03em;margin-top:2px;}
+  .report-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:20px;}
+  .report-table th{text-align:left;color:#5C6270;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:0.03em;padding:0 8px 8px;border-bottom:1px solid #333A47;}
+  .report-table td{padding:8px 8px;border-bottom:1px solid #333A47;vertical-align:top;}
+  .report-eval-pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .report-eval-pill.mala{background:#331B1B;color:#F09595;}
+  .report-eval-pill.estandar{background:#332B15;color:#E8CE85;}
+  .report-eval-pill.buena{background:#1B2E1F;color:#7FCB8C;}
+  .report-eval-pill.relevante{background:#0F2E28;color:#7FE0C9;}
+  .report-eval-pill.pending{background:#2A303C;color:#5C6270;}
+  .report-foot{font-size:11.5px;color:#5C6270;border-top:1px dashed #333A47;padding-top:14px;margin-top:10px;}
+`;
+
+function esc(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function buildStandaloneReportHtml(data: ReportData): string {
+  const rows = data.rows
+    .map(
+      (r) => `
+    <tr>
+      <td>${esc(r.title)}<br><span style="color:#5C6270;font-size:11px;">${esc(r.situation)}</span></td>
+      <td>${esc(r.quarter)} · ${esc(r.clock)}</td>
+      <td>${esc(r.refereeName)}</td>
+      <td><span class="report-eval-pill ${r.evaluation ?? "pending"}">${r.evaluation ? esc(evalLabel(r.evaluation)) : "Sin evaluar"}</span></td>
+      <td>${r.notes ? esc(r.notes) : "—"}</td>
+    </tr>`
+    )
+    .join("");
+
+  const commentsHtml = data.comments
+    .map((cm) => `<p style="margin:0 0 8px;"><b>${esc(cm.authorName)}</b>: ${esc(cm.text)}</p>`)
+    .join("");
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de evaluación</title><style>${STANDALONE_CSS}</style></head><body>
+  <div class="report-box">
+    <p class="report-title">Informe de evaluación</p>
+    <p class="report-sub">${esc(data.matchup)} · ${esc(data.fechaFmt)}${data.competition ? " · " + esc(data.competition) : ""}<br>Árbitros: ${esc(data.refereesText)}</p>
+    <div class="report-stat-row">
+      <div class="report-stat"><div class="n">${data.total}</div><div class="l">Jugadas</div></div>
+      <div class="report-stat"><div class="n" style="color:#F09595">${data.counts.mala}</div><div class="l">Mala</div></div>
+      <div class="report-stat"><div class="n" style="color:#E8CE85">${data.counts.estandar}</div><div class="l">Estándar</div></div>
+      <div class="report-stat"><div class="n" style="color:#7FCB8C">${data.counts.buena}</div><div class="l">Buena</div></div>
+      <div class="report-stat"><div class="n" style="color:#7FE0C9">${data.counts.relevante}</div><div class="l">Relevante</div></div>
+      <div class="report-stat"><div class="n">${data.pending}</div><div class="l">Sin evaluar</div></div>
+    </div>
+    ${
+      data.rows.length === 0
+        ? '<p style="font-size:13px;color:#5C6270;">Este partido no tiene jugadas cargadas.</p>'
+        : `<table class="report-table"><thead><tr><th>Jugada</th><th>Momento</th><th>Árbitro</th><th>Evaluación</th><th>Notas</th></tr></thead><tbody>${rows}</tbody></table>`
+    }
+    ${commentsHtml ? `<div class="report-foot"><b style="color:#9299A8;">Comentarios generales</b><div style="margin-top:8px;">${commentsHtml}</div></div>` : ""}
+    ${data.finalizedByName ? `<div class="report-foot">Evaluación finalizada por <b style="color:#9299A8;">${esc(data.finalizedByName)}</b>${data.finalizedAt ? " el " + esc(new Date(data.finalizedAt).toLocaleDateString("es-AR")) : ""}.</div>` : ""}
+  </div>
+</body></html>`;
+}
