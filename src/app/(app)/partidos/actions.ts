@@ -195,3 +195,26 @@ export async function setClipEvaluation(id: string, evaluation: Evaluation | nul
   revalidatePath("/partidos");
   return { ok: true as const };
 }
+
+// Confirmación explícita de lectura: el propio árbitro asignado toca el botón
+// "Confirmar que vi este informe". No se marca automáticamente al abrir el
+// partido. Solo válido sobre partidos finalizados donde el árbitro está
+// asignado (lo mismo que exige la policy de RLS de partido_reads).
+export async function confirmPartidoRead(partidoId: string) {
+  const profile = await requireProfile();
+  if (profile.role !== "arbitro" || !profile.referee_id) {
+    return { ok: false as const, error: "Solo un árbitro asignado puede confirmar la lectura" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("partido_reads").insert({
+    partido_id: partidoId,
+    referee_id: profile.referee_id,
+    confirmed_by: profile.id,
+  });
+  if (error) {
+    if (error.code === "23505") return { ok: true as const }; // ya estaba confirmado
+    return { ok: false as const, error: "No se pudo confirmar la lectura" };
+  }
+  revalidatePath("/partidos");
+  return { ok: true as const };
+}

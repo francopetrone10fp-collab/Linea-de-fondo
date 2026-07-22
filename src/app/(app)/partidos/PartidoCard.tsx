@@ -77,11 +77,13 @@ export function PartidoCard({
   temporada,
   evalCounts,
   pendingCount,
+  readStatus,
 }: {
   p: PartidoFull;
   temporada: string;
   evalCounts: Record<Evaluation, number>;
   pendingCount: number;
+  readStatus?: { confirmed: number; total: number };
 }) {
   const fechaFmt = p.fecha
     ? new Date(p.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })
@@ -107,6 +109,13 @@ export function PartidoCard({
         <div className="mt-2">
           <EvalSummary counts={evalCounts} pendingCount={pendingCount} />
         </div>
+        {p.finalizedAt && readStatus && readStatus.total > 0 && (
+          <div className="mt-2">
+            <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-text-dim bg-surface-2 px-2.5 py-0.5 rounded-full">
+              {readStatus.confirmed}/{readStatus.total} lo vieron
+            </span>
+          </div>
+        )}
         <div className="flex justify-between items-center mt-3">
           <span className="text-accent text-[12.5px] font-semibold flex items-center gap-1">
             Ver detalle

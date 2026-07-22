@@ -21,20 +21,24 @@ export default function TemporadaListView({
   temporada,
   partidos,
   clipsByPartido,
+  readRefereeIdsByPartido,
   teams,
   referees,
   title,
   canCreate,
   canFilterByReferee,
+  showReadStatus,
 }: {
   temporada: string;
   partidos: PartidoFull[];
   clipsByPartido: Record<string, MinimalClip[]>;
+  readRefereeIdsByPartido: Record<string, string[]>;
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
   title: string;
   canCreate: boolean;
   canFilterByReferee: boolean;
+  showReadStatus: boolean;
 }) {
   const [refFilter, setRefFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -88,7 +92,19 @@ export default function TemporadaListView({
               if (c.evaluation) counts[c.evaluation]++;
               else pending++;
             });
-            return <PartidoCard key={p.id} p={p} temporada={temporada} evalCounts={counts} pendingCount={pending} />;
+            const readCount = showReadStatus
+              ? p.referees.filter((r) => (readRefereeIdsByPartido[p.id] ?? []).includes(r.id)).length
+              : undefined;
+            return (
+              <PartidoCard
+                key={p.id}
+                p={p}
+                temporada={temporada}
+                evalCounts={counts}
+                pendingCount={pending}
+                readStatus={showReadStatus ? { confirmed: readCount!, total: p.referees.length } : undefined}
+              />
+            );
           })}
         </div>
       )}

@@ -9,29 +9,34 @@ import AddClipModal from "../../AddClipModal";
 import PartidoFormModal from "../../PartidoFormModal";
 import ReportModal from "../../ReportModal";
 import CommentsThread from "@/components/CommentsThread";
+import ReadStatusSection from "../../ReadStatusSection";
 import { deletePartido, finalizePartido, reopenPartido } from "../../actions";
-import type { PartidoFull, ClipFull, CommentFull } from "../../queries";
+import type { PartidoFull, ClipFull, CommentFull, ReadConfirmation } from "../../queries";
 import type { Evaluation } from "@/lib/database.types";
 
 export default function PartidoDetailView({
   partido,
   clips,
   comments,
+  reads,
   teams,
   referees,
   temporada,
   canEvaluate,
   canDelete,
+  isArbitro,
   myRefereeId,
 }: {
   partido: PartidoFull;
   clips: ClipFull[];
   comments: CommentFull[];
+  reads: ReadConfirmation[];
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
   temporada: string;
   canEvaluate: boolean;
   canDelete: boolean;
+  isArbitro: boolean;
   myRefereeId: string | null;
 }) {
   const router = useRouter();
@@ -168,6 +173,8 @@ export default function PartidoDetailView({
           )
         )}
       </div>
+
+      <ReadStatusSection partido={partido} reads={reads} isArbitro={isArbitro} myRefereeId={myRefereeId} />
 
       {partido.notes && (
         <p className="text-[13px] text-text-dim my-4">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
-import { fetchPartidosFull, fetchAllClipsMinimal } from "../queries";
+import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "../queries";
 import TemporadaListView from "./TemporadaListView";
 
 export default async function TemporadaPage({ params }: { params: Promise<{ temporada: string }> }) {
@@ -9,9 +9,10 @@ export default async function TemporadaPage({ params }: { params: Promise<{ temp
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [allPartidos, clips, { data: teams }, { data: referees }] = await Promise.all([
+  const [allPartidos, clips, reads, { data: teams }, { data: referees }] = await Promise.all([
     fetchPartidosFull(supabase),
     fetchAllClipsMinimal(supabase),
+    fetchAllReadsMinimal(supabase),
     supabase.from("teams").select("id, name").order("name"),
     supabase.from("referees").select("id, name").order("name"),
   ]);
@@ -21,6 +22,11 @@ export default async function TemporadaPage({ params }: { params: Promise<{ temp
   const clipsByPartido: Record<string, typeof clips> = {};
   clips.forEach((c) => {
     (clipsByPartido[c.partido_id] ??= []).push(c);
+  });
+
+  const readRefereeIdsByPartido: Record<string, string[]> = {};
+  reads.forEach((r) => {
+    (readRefereeIdsByPartido[r.partido_id] ??= []).push(r.referee_id);
   });
 
   return (
@@ -36,11 +42,13 @@ export default async function TemporadaPage({ params }: { params: Promise<{ temp
         temporada={decodeURIComponent(temporada)}
         partidos={partidos}
         clipsByPartido={clipsByPartido}
+        readRefereeIdsByPartido={readRefereeIdsByPartido}
         teams={teams ?? []}
         referees={referees ?? []}
         title={isArbitro(profile) ? "Mis partidos" : `Temporada ${decodeURIComponent(temporada)}`}
         canCreate={canEvaluate(profile)}
         canFilterByReferee={!isArbitro(profile)}
+        showReadStatus={canEvaluate(profile)}
       />
     </div>
   );

@@ -137,3 +137,32 @@ export async function fetchAllClipsMinimal(supabase: DB) {
   const { data } = await supabase.from("clips").select("id, partido_id, situation, evaluation, referee_id");
   return data ?? [];
 }
+
+export interface ReadConfirmation {
+  refereeId: string;
+  refereeName: string;
+  confirmedByName: string;
+  confirmedAt: string;
+}
+
+export async function fetchReadsForPartido(supabase: DB, partidoId: string): Promise<ReadConfirmation[]> {
+  const [{ data: reads }, { data: referees }, { data: profiles }] = await Promise.all([
+    supabase.from("partido_reads").select("*").eq("partido_id", partidoId),
+    supabase.from("referees").select("id, name"),
+    supabase.from("profiles").select("id, name"),
+  ]);
+  const refereeNameById = new Map((referees ?? []).map((r) => [r.id, r.name]));
+  const profileNameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+  return (reads ?? []).map((r) => ({
+    refereeId: r.referee_id,
+    refereeName: refereeNameById.get(r.referee_id) ?? "—",
+    confirmedByName: profileNameById.get(r.confirmed_by) ?? "—",
+    confirmedAt: r.confirmed_at,
+  }));
+}
+
+// Para el chip "X/Y lo vieron" en la lista de partidos de una temporada.
+export async function fetchAllReadsMinimal(supabase: DB) {
+  const { data } = await supabase.from("partido_reads").select("partido_id, referee_id");
+  return data ?? [];
+}

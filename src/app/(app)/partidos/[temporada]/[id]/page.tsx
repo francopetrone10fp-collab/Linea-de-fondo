@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, canEvaluate, canDelete } from "@/lib/session";
-import { fetchPartidosFull, fetchClipsForPartido, fetchComments } from "../../queries";
+import { requireProfile, canEvaluate, canDelete, isArbitro } from "@/lib/session";
+import { fetchPartidosFull, fetchClipsForPartido, fetchComments, fetchReadsForPartido } from "../../queries";
 import PartidoDetailView from "./PartidoDetailView";
 
 export default async function PartidoDetailPage({
@@ -17,9 +17,10 @@ export default async function PartidoDetailPage({
   const partido = partidos.find((p) => p.id === id);
   if (!partido) notFound();
 
-  const [clips, comments, { data: teams }, { data: referees }] = await Promise.all([
+  const [clips, comments, reads, { data: teams }, { data: referees }] = await Promise.all([
     fetchClipsForPartido(supabase, id),
     fetchComments(supabase, "partido", id),
+    fetchReadsForPartido(supabase, id),
     supabase.from("teams").select("id, name").order("name"),
     supabase.from("referees").select("id, name").order("name"),
   ]);
@@ -29,11 +30,13 @@ export default async function PartidoDetailPage({
       partido={partido}
       clips={clips}
       comments={comments}
+      reads={reads}
       teams={teams ?? []}
       referees={referees ?? []}
       temporada={decodeURIComponent(temporada)}
       canEvaluate={canEvaluate(profile)}
       canDelete={canDelete(profile)}
+      isArbitro={isArbitro(profile)}
       myRefereeId={profile.referee_id}
     />
   );
