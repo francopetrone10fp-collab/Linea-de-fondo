@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Evaluation, Situation } from "@/lib/database.types";
+import type { Database, Evaluation, Situation, WhistleType } from "@/lib/database.types";
 
 export interface DirectoryEntry {
   id: string;
@@ -33,6 +33,7 @@ export interface ClipFull {
   clock: string | null;
   notes: string | null;
   evaluation: Evaluation | null;
+  whistleType: WhistleType | null;
   createdAt: string;
   referee: DirectoryEntry | null;
 }
@@ -109,6 +110,7 @@ export async function fetchClipsForPartido(supabase: DB, partidoId: string): Pro
     clock: c.clock,
     notes: c.notes,
     evaluation: c.evaluation,
+    whistleType: c.whistle_type,
     createdAt: c.created_at,
     referee: c.referee_id ? (refereeById.get(c.referee_id) ?? null) : null,
   }));

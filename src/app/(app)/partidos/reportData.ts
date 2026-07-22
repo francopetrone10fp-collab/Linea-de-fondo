@@ -1,4 +1,4 @@
-import { EVAL_COLORS, evalLabel } from "@/lib/constants";
+import { EVAL_COLORS, evalLabel, WHISTLE_TYPES, whistleTypeInfo } from "@/lib/constants";
 import type { PartidoFull, ClipFull, CommentFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
 
@@ -9,6 +9,7 @@ export interface ReportRow {
   clock: string;
   refereeName: string;
   evaluation: Evaluation | null;
+  whistleLabel: string | null;
   notes: string;
 }
 
@@ -22,6 +23,8 @@ export interface ReportData {
   total: number;
   rows: ReportRow[];
   situationItems: { label: string; count: number }[];
+  whistleItems: { label: string; count: number }[];
+  whistleClassified: number;
   comments: CommentFull[];
   finalizedByName: string | null;
   finalizedAt: string | null;
@@ -49,6 +52,16 @@ export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: Com
     .sort((a, b) => b[1] - a[1])
     .map(([label, count]) => ({ label, count }));
 
+  const whistleCounts: Record<string, number> = {};
+  clips.forEach((c) => {
+    if (c.whistleType) whistleCounts[c.whistleType] = (whistleCounts[c.whistleType] ?? 0) + 1;
+  });
+  const whistleItems = WHISTLE_TYPES.map((w) => ({
+    label: `${w.label} — ${w.fullName}`,
+    count: whistleCounts[w.key] ?? 0,
+  }));
+  const whistleClassified = WHISTLE_TYPES.reduce((sum, w) => sum + (whistleCounts[w.key] ?? 0), 0);
+
   return {
     matchup,
     fechaFmt,
@@ -64,9 +77,12 @@ export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: Com
       clock: c.clock || "--:--",
       refereeName: c.referee?.name ?? "—",
       evaluation: c.evaluation,
+      whistleLabel: whistleTypeInfo(c.whistleType)?.label ?? null,
       notes: c.notes ?? "",
     })),
     situationItems,
+    whistleItems,
+    whistleClassified,
     comments,
     finalizedByName: p.finalizedByName,
     finalizedAt: p.finalizedAt,
@@ -121,8 +137,21 @@ export function buildStandaloneReportHtml(data: ReportData): string {
       <td>${esc(r.quarter)} · ${esc(r.clock)}</td>
       <td>${esc(r.refereeName)}</td>
       <td><span class="report-eval-pill ${r.evaluation ?? "pending"}">${r.evaluation ? esc(evalLabel(r.evaluation)) : "Sin evaluar"}</span></td>
+      <td>${r.whistleLabel ? esc(r.whistleLabel) : "—"}</td>
       <td>${r.notes ? esc(r.notes) : "—"}</td>
     </tr>`
+    )
+    .join("");
+
+  const whistleMax = Math.max(...data.whistleItems.map((w) => w.count), 1);
+  const whistleBars = data.whistleItems
+    .map(
+      (w) => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="width:170px;flex:0 0 170px;font-size:12px;color:#9299A8;">${esc(w.label)}</div>
+      <div style="flex:1;background:#232833;border-radius:5px;height:14px;overflow:hidden;"><div style="height:100%;background:#E8631C;border-radius:5px;width:${(w.count / whistleMax) * 100}%;"></div></div>
+      <div style="width:24px;text-align:right;font-family:monospace;font-size:12px;color:#9299A8;">${w.count}</div>
+    </div>`
     )
     .join("");
 
@@ -145,7 +174,12 @@ export function buildStandaloneReportHtml(data: ReportData): string {
     ${
       data.rows.length === 0
         ? '<p style="font-size:13px;color:#5C6270;">Este partido no tiene jugadas cargadas.</p>'
-        : `<table class="report-table"><thead><tr><th>Jugada</th><th>Momento</th><th>Árbitro</th><th>Evaluación</th><th>Notas</th></tr></thead><tbody>${rows}</tbody></table>`
+        : `<table class="report-table"><thead><tr><th>Jugada</th><th>Momento</th><th>Árbitro</th><th>Evaluación</th><th>Silbato</th><th>Notas</th></tr></thead><tbody>${rows}</tbody></table>`
+    }
+    ${
+      data.whistleClassified > 0
+        ? `<div style="margin-bottom:20px;"><div style="font-size:11px;color:#5C6270;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:12px;">Tipo de silbato (${data.whistleClassified} de ${data.total} clips clasificados)</div>${whistleBars}</div>`
+        : ""
     }
     ${commentsHtml ? `<div class="report-foot"><b style="color:#9299A8;">Comentarios generales</b><div style="margin-top:8px;">${commentsHtml}</div></div>` : ""}
     ${data.finalizedByName ? `<div class="report-foot">Evaluación finalizada por <b style="color:#9299A8;">${esc(data.finalizedByName)}</b>${data.finalizedAt ? " el " + esc(new Date(data.finalizedAt).toLocaleDateString("es-AR")) : ""}.</div>` : ""}

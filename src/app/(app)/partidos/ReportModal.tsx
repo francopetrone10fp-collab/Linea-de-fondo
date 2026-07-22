@@ -83,6 +83,15 @@ export default function ReportModal({
           </div>
         )}
 
+        {data.whistleClassified > 0 && (
+          <div className="mb-6">
+            <div className="text-[11px] text-text-faint uppercase tracking-wide mb-3">
+              Tipo de silbato ({data.whistleClassified} de {data.total} clips clasificados)
+            </div>
+            <BarsChart items={data.whistleItems} />
+          </div>
+        )}
+
         {data.rows.length === 0 ? (
           <p className="text-[13px] text-text-faint">Este partido no tiene jugadas cargadas.</p>
         ) : (
@@ -90,7 +99,7 @@ export default function ReportModal({
             <table className="w-full border-collapse text-[12.5px] mb-5">
               <thead>
                 <tr>
-                  {["Jugada", "Momento", "Árbitro", "Evaluación", "Notas"].map((h) => (
+                  {["Jugada", "Momento", "Árbitro", "Evaluación", "Silbato", "Notas"].map((h) => (
                     <th key={h} className="text-left text-text-faint font-medium text-[10.5px] uppercase tracking-wide pb-2 border-b border-line px-2">
                       {h}
                     </th>
@@ -114,6 +123,7 @@ export default function ReportModal({
                         {r.evaluation ? evalLabel(r.evaluation) : "Sin evaluar"}
                       </span>
                     </td>
+                    <td className="py-2 px-2 border-b border-line align-top">{r.whistleLabel ?? "—"}</td>
                     <td className="py-2 px-2 border-b border-line align-top">{r.notes || "—"}</td>
                   </tr>
                 ))}

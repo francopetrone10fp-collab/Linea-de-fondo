@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { CallTab } from "./PartidoCard";
 import ClipFormModal from "./ClipFormModal";
 import { deleteClip, setClipEvaluation } from "./actions";
-import { EVAL_LEVELS } from "@/lib/constants";
+import { EVAL_LEVELS, whistleTypeInfo } from "@/lib/constants";
 import type { ClipFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
 
@@ -65,14 +65,26 @@ export default function ClipCard({
   }
 
   const borderCls = clip.evaluation ? CARD_BORDER[clip.evaluation] : "border-l-text-faint";
+  const whistleInfo = whistleTypeInfo(clip.whistleType);
 
   return (
     <div className={`bg-surface border border-line rounded-xl overflow-hidden border-l-4 ${borderCls}`}>
       <div className="p-3.5 pt-3.5">
         <div className="flex justify-between items-center mb-2 gap-2">
-          <span className="text-[10.5px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-3 text-text-dim whitespace-nowrap">
-            {clip.situation}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10.5px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-3 text-text-dim whitespace-nowrap">
+              {clip.situation}
+            </span>
+            {whistleInfo && (
+              <span
+                title={whistleInfo.fullName}
+                className="text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full whitespace-nowrap"
+                style={{ background: whistleInfo.bg, color: whistleInfo.color }}
+              >
+                {whistleInfo.label}
+              </span>
+            )}
+          </div>
           <span className="font-mono text-[12px] text-text-dim whitespace-nowrap">
             {clip.quarter} · {clip.clock || "--:--"}
           </span>
@@ -177,6 +189,7 @@ export default function ClipCard({
             clock: clip.clock ?? "",
             refereeId: clip.referee?.id ?? "",
             notes: clip.notes ?? "",
+            whistleType: clip.whistleType,
           }}
           onClose={() => setShowEdit(false)}
         />

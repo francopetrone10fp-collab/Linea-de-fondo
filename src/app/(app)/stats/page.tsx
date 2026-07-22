@@ -3,7 +3,7 @@ import { requireProfile, isArbitro } from "@/lib/session";
 import { Empty } from "@/app/(app)/teams/TeamsView";
 import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
-import { EVAL_LEVELS, EVAL_COLORS } from "@/lib/constants";
+import { EVAL_LEVELS, EVAL_COLORS, WHISTLE_TYPES } from "@/lib/constants";
 import type { Evaluation } from "@/lib/database.types";
 
 export default async function StatsPage() {
@@ -11,7 +11,7 @@ export default async function StatsPage() {
   const supabase = await createClient();
 
   const [{ data: clips }, { data: referees }] = await Promise.all([
-    supabase.from("clips").select("situation, evaluation, referee_id"),
+    supabase.from("clips").select("situation, evaluation, referee_id, whistle_type"),
     supabase.from("referees").select("id, name"),
   ]);
   const refNameById = new Map((referees ?? []).map((r) => [r.id, r.name]));
@@ -49,6 +49,16 @@ export default async function StatsPage() {
   const situationItems = Object.entries(bySituation)
     .sort((a, b) => b[1] - a[1])
     .map(([label, count]) => ({ label, count }));
+
+  const byWhistle: Record<string, number> = {};
+  scoped.forEach((c) => {
+    if (c.whistle_type) byWhistle[c.whistle_type] = (byWhistle[c.whistle_type] ?? 0) + 1;
+  });
+  const whistleItems = WHISTLE_TYPES.map((w) => ({
+    label: `${w.label} — ${w.fullName}`,
+    count: byWhistle[w.key] ?? 0,
+  }));
+  const whistleClassified = WHISTLE_TYPES.reduce((sum, w) => sum + (byWhistle[w.key] ?? 0), 0);
 
   const segments = [
     { label: "Mala", value: counts.mala, color: EVAL_COLORS.mala },
@@ -138,6 +148,16 @@ export default async function StatsPage() {
           </div>
           <BarsChart items={situationItems} />
         </div>
+      </div>
+
+      <div className="mb-8">
+        <div className="font-display text-[16px] font-semibold uppercase tracking-wide text-text-dim mb-1">
+          Por tipo de silbato
+        </div>
+        <p className="text-[11.5px] text-text-faint mb-3.5">
+          Impulsividad y velocidad de procesamiento en la decisión ({whistleClassified} de {total} clips clasificados).
+        </p>
+        <BarsChart items={whistleItems} />
       </div>
 
       {refTable}

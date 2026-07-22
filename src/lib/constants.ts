@@ -1,4 +1,4 @@
-import type { Role, Situation, MaterialType, Evaluation } from "@/lib/database.types";
+import type { Role, Situation, MaterialType, Evaluation, WhistleType } from "@/lib/database.types";
 
 export const SITUATIONS: Situation[] = [
   "Falta personal",
@@ -40,6 +40,20 @@ export const MATERIAL_TYPES: { key: MaterialType; label: string; color: string; 
 
 export function materialTypeInfo(key: MaterialType) {
   return MATERIAL_TYPES.find((t) => t.key === key) ?? MATERIAL_TYPES[MATERIAL_TYPES.length - 1];
+}
+
+// Tipo de silbato: da seguimiento a la impulsividad y velocidad de
+// procesamiento de cada árbitro al tomar una decisión. Campo opcional a
+// nivel clip (no todas las jugadas se prestan a clasificarlo).
+export const WHISTLE_TYPES: { key: WhistleType; label: string; fullName: string; color: string; bg: string }[] = [
+  { key: "QW", label: "QW", fullName: "Quick Whistle", color: "#E8631C", bg: "#3A2414" },
+  { key: "IW", label: "IW", fullName: "Immediate Whistle", color: "#D6A73F", bg: "#332B15" },
+  { key: "PW", label: "PW", fullName: "Patient Whistle", color: "#16A184", bg: "#0F2E28" },
+  { key: "CW", label: "CW", fullName: "Cadent Whistle", color: "#4E8FD6", bg: "#182535" },
+];
+
+export function whistleTypeInfo(key: WhistleType | null | undefined) {
+  return WHISTLE_TYPES.find((t) => t.key === key) ?? null;
 }
 
 export const TEAM_COLORS = [

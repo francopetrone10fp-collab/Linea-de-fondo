@@ -91,6 +91,7 @@ create table public.clips (
   referee_id uuid references public.referees(id) on delete set null,
   notes text,
   evaluation text check (evaluation in ('mala','estandar','buena','relevante')),
+  whistle_type text check (whistle_type in ('QW','IW','PW','CW')),
   created_by uuid not null references public.profiles(id) on delete restrict,
   created_at timestamptz not null default now()
 );

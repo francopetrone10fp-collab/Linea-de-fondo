@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClip, updateClip } from "./actions";
-import { SITUATIONS } from "@/lib/constants";
-import type { Situation } from "@/lib/database.types";
+import { SITUATIONS, WHISTLE_TYPES } from "@/lib/constants";
+import type { Situation, WhistleType } from "@/lib/database.types";
 
 export default function ClipFormModal({
   mode,
@@ -30,6 +30,7 @@ export default function ClipFormModal({
     clock: string;
     refereeId: string;
     notes: string;
+    whistleType: WhistleType | null;
   };
   onClose: () => void;
 }) {
@@ -40,6 +41,7 @@ export default function ClipFormModal({
   const [quarter, setQuarter] = useState(initial?.quarter ?? "Q1");
   const [clock, setClock] = useState(initial?.clock ?? "");
   const [refereeId, setRefereeId] = useState(initial?.refereeId ?? defaultRefereeId ?? crew[0]?.id ?? "");
+  const [whistleType, setWhistleType] = useState<WhistleType | "">(initial?.whistleType ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -56,6 +58,7 @@ export default function ClipFormModal({
       clock,
       refereeId: refereeId || null,
       notes,
+      whistleType: whistleType || null,
     };
     startTransition(async () => {
       const res = mode === "create" ? await createClip(input) : await updateClip(clipId!, input);
@@ -127,6 +130,19 @@ export default function ClipFormModal({
               ))
             )}
           </select>
+        </Field>
+        <Field label="Tipo de silbato (opcional)">
+          <select value={whistleType} onChange={(e) => setWhistleType(e.target.value as WhistleType | "")} className="w-full">
+            <option value="">Sin especificar</option>
+            {WHISTLE_TYPES.map((w) => (
+              <option key={w.key} value={w.key}>
+                {w.label} — {w.fullName}
+              </option>
+            ))}
+          </select>
+          <span className="text-[11px] text-text-faint">
+            Ayuda a dar seguimiento a la impulsividad/velocidad de procesamiento en la decisión.
+          </span>
         </Field>
         <Field label="Notas (opcional)">
           <textarea

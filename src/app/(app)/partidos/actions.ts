@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
-import type { Evaluation, Situation } from "@/lib/database.types";
+import type { Evaluation, Situation, WhistleType } from "@/lib/database.types";
 
 export interface PartidoInput {
   fecha: string; // 'YYYY-MM-DD' o ''
@@ -156,6 +156,7 @@ export interface ClipInput {
   clock: string;
   refereeId: string | null;
   notes: string;
+  whistleType: WhistleType | null;
 }
 
 export async function createClip(input: ClipInput) {
@@ -172,6 +173,7 @@ export async function createClip(input: ClipInput) {
     clock: input.clock.trim() || null,
     referee_id: input.refereeId,
     notes: input.notes.trim() || null,
+    whistle_type: input.whistleType,
     created_by: profile.id,
   });
   if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
@@ -193,6 +195,7 @@ export async function updateClip(id: string, input: ClipInput) {
       clock: input.clock.trim() || null,
       referee_id: input.refereeId,
       notes: input.notes.trim() || null,
+      whistle_type: input.whistleType,
     })
     .eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };

@@ -12,6 +12,7 @@ export type Situation =
   | "Gestión de partido"
   | "Otro";
 export type MaterialType = "pdf" | "word" | "video" | "presentacion" | "enlace" | "otro";
+export type WhistleType = "QW" | "IW" | "PW" | "CW";
 export type EntityType = "partido" | "clip";
 
 export interface Database {
@@ -139,6 +140,7 @@ export interface Database {
           referee_id: string | null;
           notes: string | null;
           evaluation: Evaluation | null;
+          whistle_type: WhistleType | null;
           created_by: string;
           created_at: string;
         };
@@ -153,6 +155,7 @@ export interface Database {
           referee_id?: string | null;
           notes?: string | null;
           evaluation?: Evaluation | null;
+          whistle_type?: WhistleType | null;
           created_by: string;
           created_at?: string;
         };
