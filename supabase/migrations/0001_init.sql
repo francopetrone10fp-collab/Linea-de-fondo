@@ -83,7 +83,7 @@ create table public.clips (
   title text not null,
   video_url text,
   situation text not null check (situation in (
-    'Falta personal','Falta técnica','Falta antideportiva','Violación',
+    'Falta personal','Falta técnica','Falta antideportiva','Violación','Regla',
     'Mecánica / Posicionamiento','Tiro libre','Gestión de partido','Otro'
   )),
   quarter text not null default 'Q1',

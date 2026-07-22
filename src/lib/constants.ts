@@ -5,6 +5,7 @@ export const SITUATIONS: Situation[] = [
   "Falta técnica",
   "Falta antideportiva",
   "Violación",
+  "Regla",
   "Mecánica / Posicionamiento",
   "Tiro libre",
   "Gestión de partido",
