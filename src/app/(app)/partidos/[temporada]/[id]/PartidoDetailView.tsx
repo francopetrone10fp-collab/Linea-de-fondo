@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { refereesText, FinalizedBadge, EvalSummary } from "../../PartidoCard";
 import ClipCard from "../../ClipCard";
-import AddClipModal from "../../AddClipModal";
+import ClipFormModal from "../../ClipFormModal";
 import PartidoFormModal from "../../PartidoFormModal";
 import ReportModal from "../../ReportModal";
 import CommentsThread from "@/components/CommentsThread";
@@ -208,7 +208,15 @@ export default function PartidoDetailView({
         ) : (
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
             {clips.map((c) => (
-              <ClipCard key={c.id} clip={c} canEvaluate={canEvaluate} canDelete={canDelete} locked={!!partido.finalizedAt} />
+              <ClipCard
+                key={c.id}
+                clip={c}
+                canEvaluate={canEvaluate}
+                canDelete={canDelete}
+                locked={!!partido.finalizedAt}
+                crew={crew}
+                contextLabel={`${matchup} · ${fechaFmt}`}
+              />
             ))}
           </div>
         )}
@@ -233,7 +241,8 @@ export default function PartidoDetailView({
       )}
 
       {showAddClip && (
-        <AddClipModal
+        <ClipFormModal
+          mode="create"
           partidoId={partido.id}
           contextLabel={`Se va a agregar a: ${matchup} · ${fechaFmt}`}
           crew={crew}

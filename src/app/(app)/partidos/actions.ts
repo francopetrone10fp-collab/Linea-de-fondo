@@ -179,6 +179,27 @@ export async function createClip(input: ClipInput) {
   return { ok: true as const };
 }
 
+export async function updateClip(id: string, input: ClipInput) {
+  const title = input.title.trim();
+  if (!title) return { ok: false as const, error: "Poné un título para el clip" };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("clips")
+    .update({
+      title,
+      video_url: input.videoUrl.trim() || null,
+      situation: input.situation,
+      quarter: input.quarter,
+      clock: input.clock.trim() || null,
+      referee_id: input.refereeId,
+      notes: input.notes.trim() || null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+  revalidatePath("/partidos");
+  return { ok: true as const };
+}
+
 export async function deleteClip(id: string) {
   const supabase = await createClient();
   await supabase.from("comments").delete().eq("entity_type", "clip").eq("entity_id", id);

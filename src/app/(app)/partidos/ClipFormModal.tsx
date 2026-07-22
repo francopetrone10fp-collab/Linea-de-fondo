@@ -2,48 +2,63 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClip } from "./actions";
+import { createClip, updateClip } from "./actions";
 import { SITUATIONS } from "@/lib/constants";
 import type { Situation } from "@/lib/database.types";
 
-export default function AddClipModal({
+export default function ClipFormModal({
+  mode,
+  clipId,
   partidoId,
   contextLabel,
   crew,
   defaultRefereeId,
+  initial,
   onClose,
 }: {
+  mode: "create" | "edit";
+  clipId?: string;
   partidoId: string;
   contextLabel: string;
   crew: { id: string; name: string }[];
   defaultRefereeId?: string | null;
+  initial?: {
+    title: string;
+    videoUrl: string;
+    situation: Situation;
+    quarter: string;
+    clock: string;
+    refereeId: string;
+    notes: string;
+  };
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [situation, setSituation] = useState<Situation>(SITUATIONS[0]);
-  const [quarter, setQuarter] = useState("Q1");
-  const [clock, setClock] = useState("");
-  const [refereeId, setRefereeId] = useState(defaultRefereeId ?? crew[0]?.id ?? "");
-  const [notes, setNotes] = useState("");
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? "");
+  const [situation, setSituation] = useState<Situation>(initial?.situation ?? SITUATIONS[0]);
+  const [quarter, setQuarter] = useState(initial?.quarter ?? "Q1");
+  const [clock, setClock] = useState(initial?.clock ?? "");
+  const [refereeId, setRefereeId] = useState(initial?.refereeId ?? defaultRefereeId ?? crew[0]?.id ?? "");
+  const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const input = {
+      partidoId,
+      title,
+      videoUrl,
+      situation,
+      quarter,
+      clock,
+      refereeId: refereeId || null,
+      notes,
+    };
     startTransition(async () => {
-      const res = await createClip({
-        partidoId,
-        title,
-        videoUrl,
-        situation,
-        quarter,
-        clock,
-        refereeId: refereeId || null,
-        notes,
-      });
+      const res = mode === "create" ? await createClip(input) : await updateClip(clipId!, input);
       if (!res.ok) {
         setError(res.error);
         return;
@@ -56,7 +71,7 @@ export default function AddClipModal({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-5 z-50">
       <form onSubmit={onSubmit} className="bg-surface border border-line rounded-2xl w-full max-w-[520px] p-6 max-h-[88vh] overflow-y-auto">
-        <h2 className="font-display text-[19px] mb-4">Nuevo clip</h2>
+        <h2 className="font-display text-[19px] mb-4">{mode === "create" ? "Nuevo clip" : "Editar clip"}</h2>
         <div className="bg-surface-2 border border-line rounded-lg px-2.5 py-2 text-[12.5px] text-text-dim mb-3.5">
           {contextLabel}
         </div>
@@ -113,7 +128,7 @@ export default function AddClipModal({
             )}
           </select>
         </Field>
-        <Field label="Notas iniciales (opcional)">
+        <Field label="Notas (opcional)">
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -137,7 +152,7 @@ export default function AddClipModal({
             disabled={isPending}
             className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
           >
-            Guardar clip
+            {mode === "create" ? "Guardar clip" : "Guardar cambios"}
           </button>
         </div>
       </form>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CallTab } from "./PartidoCard";
+import ClipFormModal from "./ClipFormModal";
 import { deleteClip, setClipEvaluation } from "./actions";
 import { EVAL_LEVELS } from "@/lib/constants";
 import type { ClipFull } from "./queries";
@@ -26,13 +27,18 @@ export default function ClipCard({
   canEvaluate,
   canDelete,
   locked,
+  crew,
+  contextLabel,
 }: {
   clip: ClipFull;
   canEvaluate: boolean;
   canDelete: boolean;
   locked: boolean;
+  crew: { id: string; name: string }[];
+  contextLabel: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function onEval(value: Evaluation) {
@@ -121,17 +127,30 @@ export default function ClipCard({
           ) : (
             <span />
           )}
-          {canDelete && (
-            <button
-              onClick={onDelete}
-              title="Eliminar clip"
-              className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
-              </svg>
-            </button>
-          )}
+          <div className="flex gap-1">
+            {canEvaluate && !locked && (
+              <button
+                onClick={() => setShowEdit(true)}
+                title="Editar clip"
+                className="text-text-faint hover:text-text hover:bg-surface-2 p-1 rounded-md"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={onDelete}
+                title="Eliminar clip"
+                className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {expanded && (
@@ -142,6 +161,26 @@ export default function ClipCard({
           </div>
         )}
       </div>
+
+      {showEdit && (
+        <ClipFormModal
+          mode="edit"
+          clipId={clip.id}
+          partidoId={clip.partidoId}
+          contextLabel={contextLabel}
+          crew={crew}
+          initial={{
+            title: clip.title,
+            videoUrl: clip.videoUrl ?? "",
+            situation: clip.situation,
+            quarter: clip.quarter,
+            clock: clip.clock ?? "",
+            refereeId: clip.referee?.id ?? "",
+            notes: clip.notes ?? "",
+          }}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
     </div>
   );
 }
