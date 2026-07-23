@@ -220,25 +220,65 @@ export async function setClipEvaluation(id: string, evaluation: Evaluation | nul
   return { ok: true as const };
 }
 
+// Registra que el árbitro vio (entró en viewport) un clip puntual. Se llama
+// muy seguido mientras se scrollea, así que no revalida la página — es solo
+// progreso persistido en segundo plano para la primera confirmación.
+export async function recordClipView(clipId: string) {
+  const profile = await requireProfile();
+  if (profile.role !== "arbitro" || !profile.referee_id) return { ok: false as const };
+  const supabase = await createClient();
+  const { error } = await supabase.from("clip_views").insert({ clip_id: clipId, referee_id: profile.referee_id });
+  if (error && error.code !== "23505") return { ok: false as const };
+  return { ok: true as const };
+}
+
 // Confirmación explícita de lectura: el propio árbitro asignado toca el botón
 // "Confirmar que vi este informe". No se marca automáticamente al abrir el
 // partido. Solo válido sobre partidos finalizados donde el árbitro está
 // asignado (lo mismo que exige la policy de RLS de partido_reads).
+//
+// Es un historial: cada llamada agrega una fila nueva, nunca reemplaza la
+// anterior. La PRIMERA vez que un árbitro confirma un partido, exige haber
+// visto (clip_views) todos los clips del partido; a partir de la segunda,
+// queda libre.
 export async function confirmPartidoRead(partidoId: string) {
   const profile = await requireProfile();
   if (profile.role !== "arbitro" || !profile.referee_id) {
     return { ok: false as const, error: "Solo un árbitro asignado puede confirmar la lectura" };
   }
   const supabase = await createClient();
+
+  const { count: priorCount } = await supabase
+    .from("partido_reads")
+    .select("id", { count: "exact", head: true })
+    .eq("partido_id", partidoId)
+    .eq("referee_id", profile.referee_id);
+
+  if (!priorCount) {
+    const { data: clipRows } = await supabase.from("clips").select("id").eq("partido_id", partidoId);
+    const clipIds = (clipRows ?? []).map((c) => c.id);
+    if (clipIds.length > 0) {
+      const { data: viewedRows } = await supabase
+        .from("clip_views")
+        .select("clip_id")
+        .eq("referee_id", profile.referee_id)
+        .in("clip_id", clipIds);
+      const viewedCount = new Set((viewedRows ?? []).map((v) => v.clip_id)).size;
+      if (viewedCount < clipIds.length) {
+        return {
+          ok: false as const,
+          error: `Todavía tenés que ver todos los clips del partido (viste ${viewedCount} de ${clipIds.length}).`,
+        };
+      }
+    }
+  }
+
   const { error } = await supabase.from("partido_reads").insert({
     partido_id: partidoId,
     referee_id: profile.referee_id,
     confirmed_by: profile.id,
   });
-  if (error) {
-    if (error.code === "23505") return { ok: true as const }; // ya estaba confirmado
-    return { ok: false as const, error: "No se pudo confirmar la lectura" };
-  }
+  if (error) return { ok: false as const, error: "No se pudo confirmar la lectura" };
   revalidatePath("/partidos");
   return { ok: true as const };
 }

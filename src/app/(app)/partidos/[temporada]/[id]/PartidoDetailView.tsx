@@ -26,6 +26,7 @@ export default function PartidoDetailView({
   canDelete,
   isArbitro,
   myRefereeId,
+  initialViewedClipIds,
 }: {
   partido: PartidoFull;
   clips: ClipFull[];
@@ -38,12 +39,18 @@ export default function PartidoDetailView({
   canDelete: boolean;
   isArbitro: boolean;
   myRefereeId: string | null;
+  initialViewedClipIds: string[];
 }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
   const [showAddClip, setShowAddClip] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [viewedClipIds, setViewedClipIds] = useState<Set<string>>(() => new Set(initialViewedClipIds));
+
+  const hasConfirmedBefore = reads.some((r) => r.refereeId === myRefereeId);
+  const shouldTrackViews =
+    isArbitro && !!myRefereeId && !!partido.finalizedAt && partido.referees.some((r) => r.id === myRefereeId) && !hasConfirmedBefore;
 
   const counts: Record<Evaluation, number> = { mala: 0, estandar: 0, buena: 0, relevante: 0 };
   let pendingCount = 0;
@@ -174,8 +181,6 @@ export default function PartidoDetailView({
         )}
       </div>
 
-      <ReadStatusSection partido={partido} reads={reads} isArbitro={isArbitro} myRefereeId={myRefereeId} />
-
       {partido.notes && (
         <p className="text-[13px] text-text-dim my-4">
           <b className="text-text-faint">Notas:</b> {partido.notes}
@@ -216,11 +221,23 @@ export default function PartidoDetailView({
                 locked={!!partido.finalizedAt}
                 crew={crew}
                 contextLabel={`${matchup} · ${fechaFmt}`}
+                trackView={shouldTrackViews}
+                alreadyViewed={viewedClipIds.has(c.id)}
+                onViewed={(clipId) => setViewedClipIds((prev) => new Set(prev).add(clipId))}
               />
             ))}
           </div>
         )}
       </div>
+
+      <ReadStatusSection
+        partido={partido}
+        reads={reads}
+        isArbitro={isArbitro}
+        myRefereeId={myRefereeId}
+        totalClips={clips.length}
+        viewedCount={viewedClipIds.size}
+      />
 
       {showEdit && (
         <PartidoFormModal

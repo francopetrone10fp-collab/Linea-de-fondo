@@ -118,14 +118,21 @@ export interface Database {
         Relationships: [];
       };
       partido_reads: {
-        Row: { partido_id: string; referee_id: string; confirmed_by: string; confirmed_at: string };
+        Row: { id: string; partido_id: string; referee_id: string; confirmed_by: string; confirmed_at: string };
         Insert: {
+          id?: string;
           partido_id: string;
           referee_id: string;
           confirmed_by: string;
           confirmed_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["partido_reads"]["Insert"]>;
+        Relationships: [];
+      };
+      clip_views: {
+        Row: { clip_id: string; referee_id: string; viewed_at: string };
+        Insert: { clip_id: string; referee_id: string; viewed_at?: string };
+        Update: Partial<Database["public"]["Tables"]["clip_views"]["Insert"]>;
         Relationships: [];
       };
       clips: {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { CallTab } from "./PartidoCard";
 import ClipFormModal from "./ClipFormModal";
 import VideoModal from "@/components/VideoModal";
-import { deleteClip, setClipEvaluation } from "./actions";
+import { deleteClip, recordClipView, setClipEvaluation } from "./actions";
 import { EVAL_LEVELS, whistleTypeInfo } from "@/lib/constants";
 import type { ClipFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
@@ -30,6 +30,9 @@ export default function ClipCard({
   locked,
   crew,
   contextLabel,
+  trackView,
+  alreadyViewed,
+  onViewed,
 }: {
   clip: ClipFull;
   canEvaluate: boolean;
@@ -37,11 +40,33 @@ export default function ClipCard({
   locked: boolean;
   crew: { id: string; name: string }[];
   contextLabel: string;
+  trackView?: boolean;
+  alreadyViewed?: boolean;
+  onViewed?: (clipId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!trackView || alreadyViewed || !rootRef.current) return;
+    const el = rootRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          observer.disconnect();
+          onViewed?.(clip.id);
+          recordClipView(clip.id);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackView, alreadyViewed, clip.id]);
 
   function onEval(value: Evaluation) {
     const next = clip.evaluation === value ? null : value;
@@ -61,7 +86,7 @@ export default function ClipCard({
   const whistleInfo = whistleTypeInfo(clip.whistleType);
 
   return (
-    <div className={`bg-surface border border-line rounded-xl overflow-hidden border-l-4 ${borderCls}`}>
+    <div ref={rootRef} className={`bg-surface border border-line rounded-xl overflow-hidden border-l-4 ${borderCls}`}>
       <div className="p-3.5 pt-3.5">
         <div className="flex justify-between items-center mb-2 gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">

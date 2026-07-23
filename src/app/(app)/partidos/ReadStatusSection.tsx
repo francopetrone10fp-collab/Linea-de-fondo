@@ -15,16 +15,28 @@ function formatConfirmedAt(iso: string) {
   });
 }
 
+function formatShortDate(iso: string) {
+  return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+}
+
+function vezLabel(n: number) {
+  return n === 1 ? "vez" : "veces";
+}
+
 export default function ReadStatusSection({
   partido,
   reads,
   isArbitro,
   myRefereeId,
+  totalClips,
+  viewedCount,
 }: {
   partido: PartidoFull;
   reads: ReadConfirmation[];
   isArbitro: boolean;
   myRefereeId: string | null;
+  totalClips: number;
+  viewedCount: number;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -34,49 +46,65 @@ export default function ReadStatusSection({
 
   if (isArbitro) {
     if (!myRefereeId || !partido.referees.some((r) => r.id === myRefereeId)) return null;
-    const myRead = reads.find((r) => r.refereeId === myRefereeId);
+    // reads viene ordenado de más viejo a más nuevo (fetchReadsForPartido).
+    const myReads = reads.filter((r) => r.refereeId === myRefereeId);
+    const hasConfirmedBefore = myReads.length > 0;
+    const lastRead = myReads[myReads.length - 1];
+    const missingClips = totalClips - viewedCount;
+    const canConfirmNow = hasConfirmedBefore || missingClips <= 0;
 
     return (
       <div className="bg-surface-2 border border-line rounded-[9px] px-3.5 py-3 my-4">
-        {myRead ? (
-          <p className="text-[12.5px] text-relevant-text m-0 flex items-center gap-1.5">
+        <div className="font-display text-[13px] font-semibold uppercase tracking-wide text-text-dim mb-2">
+          Confirmación de lectura del informe
+        </div>
+        {hasConfirmedBefore ? (
+          <p className="text-[12.5px] text-relevant-text m-0 mb-2.5 flex items-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
               <path d="M20 6 9 17l-5-5" />
             </svg>
-            Confirmaste que viste este informe el {formatConfirmedAt(myRead.confirmedAt)}.
+            Confirmaste {myReads.length} {vezLabel(myReads.length)} que viste este informe — la última el{" "}
+            {formatConfirmedAt(lastRead.confirmedAt)}.
           </p>
         ) : (
-          <div>
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-[12.5px] text-text-dim m-0">
-                Confirmá que revisaste el informe de este partido.
-              </p>
-              <button
-                disabled={isPending}
-                onClick={() =>
-                  startTransition(async () => {
-                    setError(null);
-                    const res = await confirmPartidoRead(partido.id);
-                    if (!res.ok) {
-                      setError(res.error);
-                      return;
-                    }
-                    router.refresh();
-                  })
-                }
-                className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg font-semibold text-[13px] px-3.5 py-2"
-              >
-                Confirmar que vi este informe
-              </button>
-            </div>
-            {error && <p className="text-bad-text text-[12px] mt-2 mb-0">{error}</p>}
-          </div>
+          totalClips > 0 && (
+            <p className="text-[12.5px] text-text-dim m-0 mb-2.5">
+              Viste {viewedCount} de {totalClips} clips
+              {missingClips > 0 ? " — mirá todos para poder confirmar." : "."}
+            </p>
+          )
         )}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-[12.5px] text-text-dim m-0">
+            {hasConfirmedBefore
+              ? "¿Volviste a repasar este informe? Confirmalo de nuevo."
+              : "Confirmá que revisaste el informe de este partido."}
+          </p>
+          <button
+            disabled={isPending || !canConfirmNow}
+            title={!canConfirmNow ? `Te faltan ${missingClips} clip${missingClips === 1 ? "" : "s"} por ver` : undefined}
+            onClick={() =>
+              startTransition(async () => {
+                setError(null);
+                const res = await confirmPartidoRead(partido.id);
+                if (!res.ok) {
+                  setError(res.error);
+                  return;
+                }
+                router.refresh();
+              })
+            }
+            className="bg-accent hover:bg-accent-dim disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-[13px] px-3.5 py-2"
+          >
+            {hasConfirmedBefore ? "Confirmar de nuevo que vi este informe" : "Confirmar que vi este informe"}
+          </button>
+        </div>
+        {error && <p className="text-bad-text text-[12px] mt-2 mb-0">{error}</p>}
       </div>
     );
   }
 
-  // Coordinador / Instructor: estado de lectura por árbitro asignado.
+  // Coordinador / Instructor: historial de confirmaciones por árbitro asignado.
   if (partido.referees.length === 0) return null;
   const confirmedCount = partido.referees.filter((r) => reads.some((rd) => rd.refereeId === r.id)).length;
 
@@ -92,12 +120,16 @@ export default function ReadStatusSection({
       </div>
       <div className="flex flex-col gap-1.5">
         {partido.referees.map((ref) => {
-          const read = reads.find((r) => r.refereeId === ref.id);
+          const refReads = reads.filter((r) => r.refereeId === ref.id);
+          const count = refReads.length;
+          const lastRefRead = refReads[refReads.length - 1];
           return (
             <div key={ref.id} className="flex items-center justify-between gap-2 text-[12.5px]">
               <span className="text-text-dim">{ref.name}</span>
-              {read ? (
-                <span className="text-relevant-text">Visto el {formatConfirmedAt(read.confirmedAt)}</span>
+              {count > 0 ? (
+                <span className="text-relevant-text">
+                  Confirmó {count} {vezLabel(count)}, última el {formatShortDate(lastRefRead.confirmedAt)}
+                </span>
               ) : (
                 <span className="text-text-faint">No visto todavía</span>
               )}

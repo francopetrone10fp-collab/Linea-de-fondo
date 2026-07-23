@@ -141,21 +141,25 @@ export async function fetchAllClipsMinimal(supabase: DB) {
 }
 
 export interface ReadConfirmation {
+  id: string;
   refereeId: string;
   refereeName: string;
   confirmedByName: string;
   confirmedAt: string;
 }
 
+// Historial completo de confirmaciones del partido (puede haber varias por
+// árbitro), ordenado de más vieja a más nueva.
 export async function fetchReadsForPartido(supabase: DB, partidoId: string): Promise<ReadConfirmation[]> {
   const [{ data: reads }, { data: referees }, { data: profiles }] = await Promise.all([
-    supabase.from("partido_reads").select("*").eq("partido_id", partidoId),
+    supabase.from("partido_reads").select("*").eq("partido_id", partidoId).order("confirmed_at"),
     supabase.from("referees").select("id, name"),
     supabase.from("profiles").select("id, name"),
   ]);
   const refereeNameById = new Map((referees ?? []).map((r) => [r.id, r.name]));
   const profileNameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
   return (reads ?? []).map((r) => ({
+    id: r.id,
     refereeId: r.referee_id,
     refereeName: refereeNameById.get(r.referee_id) ?? "—",
     confirmedByName: profileNameById.get(r.confirmed_by) ?? "—",
@@ -163,8 +167,27 @@ export async function fetchReadsForPartido(supabase: DB, partidoId: string): Pro
   }));
 }
 
-// Para el chip "X/Y lo vieron" en la lista de partidos de una temporada.
+// Para el chip "X/Y lo vieron" en la lista de partidos de una temporada
+// (solo interesa si cada árbitro confirmó alguna vez, no cuántas).
 export async function fetchAllReadsMinimal(supabase: DB) {
   const { data } = await supabase.from("partido_reads").select("partido_id, referee_id");
-  return data ?? [];
+  const seen = new Set<string>();
+  return (data ?? []).filter((r) => {
+    const key = `${r.partido_id}:${r.referee_id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// Ids de los clips de `clipIds` que ese árbitro ya vio (para el progreso de
+// la primera confirmación de lectura).
+export async function fetchClipViewedIds(supabase: DB, refereeId: string, clipIds: string[]): Promise<string[]> {
+  if (clipIds.length === 0) return [];
+  const { data } = await supabase
+    .from("clip_views")
+    .select("clip_id")
+    .eq("referee_id", refereeId)
+    .in("clip_id", clipIds);
+  return (data ?? []).map((r) => r.clip_id);
 }
