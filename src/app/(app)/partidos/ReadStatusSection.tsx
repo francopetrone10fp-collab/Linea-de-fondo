@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { confirmPartidoRead } from "./actions";
 import type { PartidoFull, ReadConfirmation } from "./queries";
 
@@ -28,6 +28,7 @@ export default function ReadStatusSection({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (!partido.finalizedAt) return null;
 
@@ -45,22 +46,30 @@ export default function ReadStatusSection({
             Confirmaste que viste este informe el {formatConfirmedAt(myRead.confirmedAt)}.
           </p>
         ) : (
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-[12.5px] text-text-dim m-0">
-              Confirmá que revisaste el informe de este partido.
-            </p>
-            <button
-              disabled={isPending}
-              onClick={() =>
-                startTransition(async () => {
-                  await confirmPartidoRead(partido.id);
-                  router.refresh();
-                })
-              }
-              className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg font-semibold text-[13px] px-3.5 py-2"
-            >
-              Confirmar que vi este informe
-            </button>
+          <div>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-[12.5px] text-text-dim m-0">
+                Confirmá que revisaste el informe de este partido.
+              </p>
+              <button
+                disabled={isPending}
+                onClick={() =>
+                  startTransition(async () => {
+                    setError(null);
+                    const res = await confirmPartidoRead(partido.id);
+                    if (!res.ok) {
+                      setError(res.error);
+                      return;
+                    }
+                    router.refresh();
+                  })
+                }
+                className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg font-semibold text-[13px] px-3.5 py-2"
+              >
+                Confirmar que vi este informe
+              </button>
+            </div>
+            {error && <p className="text-bad-text text-[12px] mt-2 mb-0">{error}</p>}
           </div>
         )}
       </div>
