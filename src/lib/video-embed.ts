@@ -21,7 +21,7 @@ export function parseVideoEmbed(rawUrl: string): VideoEmbed {
   if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
     let id = parsed.searchParams.get("v");
     if (!id) {
-      const match = parsed.pathname.match(/^\/(embed|shorts)\/([a-zA-Z0-9_-]+)/);
+      const match = parsed.pathname.match(/^\/(embed|shorts|live)\/([a-zA-Z0-9_-]+)/);
       if (match) id = match[2];
     }
     if (id) return { kind: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` };

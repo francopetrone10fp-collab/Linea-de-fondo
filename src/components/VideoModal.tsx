@@ -21,6 +21,7 @@ export default function VideoModal({
   }, [onClose]);
 
   const embed = parseVideoEmbed(url);
+  const headerTitle = embed.kind === "unknown" ? "Video externo" : title;
 
   return (
     <div
@@ -32,7 +33,7 @@ export default function VideoModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 mb-3">
-          <p className="text-[14px] font-semibold text-text truncate m-0">{title}</p>
+          <p className="text-[14px] font-semibold text-text truncate m-0">{headerTitle}</p>
           <button
             onClick={onClose}
             title="Cerrar"
@@ -58,7 +59,7 @@ export default function VideoModal({
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-center px-6">
               <p className="text-[13px] text-text-dim m-0">
-                No pudimos reconocer este link para reproducirlo acá adentro.
+                No se pudo mostrar &quot;{title}&quot; acá adentro. Podés abrir el link directamente.
               </p>
               <a
                 href={url}
