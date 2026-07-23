@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { ColorBadge } from "@/components/Badge";
 import { createTeam, deleteTeam } from "./actions";
 
@@ -21,7 +21,14 @@ export default function TeamsView({
 }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const filteredTeams = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return teams;
+    return teams.filter((t) => t.name.toLowerCase().includes(q));
+  }, [teams, search]);
 
   function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +50,7 @@ export default function TeamsView({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Equipos</h1>
+        <h1 className="font-display text-2xl font-semibold">Equipos ({teams.length})</h1>
         <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
           <input
             type="text"
@@ -67,11 +74,25 @@ export default function TeamsView({
         las insignias son generadas (iniciales + color), no los escudos oficiales de los clubes.
       </div>
 
+      {teams.length > 0 && (
+        <div className="mb-5">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar equipo por nombre..."
+            className="min-w-[240px] w-full max-w-[360px]"
+          />
+        </div>
+      )}
+
       {teams.length === 0 ? (
         <Empty title="Todavía no hay equipos cargados" desc="Agregá el primero para empezar el directorio." />
+      ) : filteredTeams.length === 0 ? (
+        <Empty title="Sin resultados" desc={`Ningún equipo coincide con "${search}".`} />
       ) : (
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}>
-          {teams.map((t) => {
+          {filteredTeams.map((t) => {
             const count = counts[t.id] ?? 0;
             return (
               <div key={t.id} className="bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5">
