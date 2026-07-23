@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { CallTab } from "./PartidoCard";
 import ClipFormModal from "./ClipFormModal";
+import VideoModal from "@/components/VideoModal";
 import { deleteClip, setClipEvaluation } from "./actions";
 import { EVAL_LEVELS, whistleTypeInfo } from "@/lib/constants";
 import type { ClipFull } from "./queries";
@@ -39,6 +40,7 @@ export default function ClipCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function onEval(value: Evaluation) {
@@ -53,15 +55,6 @@ export default function ClipCard({
     startTransition(async () => {
       await deleteClip(clip.id);
     });
-  }
-
-  async function copyLink() {
-    if (!clip.videoUrl) return;
-    try {
-      await navigator.clipboard.writeText(clip.videoUrl);
-    } catch {
-      // sin permisos de portapapeles, no bloqueamos la UI
-    }
   }
 
   const borderCls = clip.evaluation ? CARD_BORDER[clip.evaluation] : "border-l-text-faint";
@@ -92,18 +85,16 @@ export default function ClipCard({
         <div className="flex items-center justify-between gap-2">
           <p className="text-[15px] font-semibold m-0">{clip.title}</p>
           {clip.videoUrl && (
-            <a
-              href={clip.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={copyLink}
-              title="Abrir video"
+            <button
+              type="button"
+              onClick={() => setShowVideo(true)}
+              title="Ver video"
               className="flex-none w-[26px] h-[26px] rounded-full bg-[#E8342A] hover:bg-[#C92920] text-white flex items-center justify-center"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z" />
               </svg>
-            </a>
+            </button>
           )}
         </div>
         <p className="text-[12.5px] text-text-dim my-2.5">
@@ -193,6 +184,10 @@ export default function ClipCard({
           }}
           onClose={() => setShowEdit(false)}
         />
+      )}
+
+      {showVideo && clip.videoUrl && (
+        <VideoModal url={clip.videoUrl} title={clip.title} onClose={() => setShowVideo(false)} />
       )}
     </div>
   );
