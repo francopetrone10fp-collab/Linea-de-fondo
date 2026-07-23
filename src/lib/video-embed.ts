@@ -7,6 +7,26 @@ export type VideoEmbed =
 
 const FILE_EXTENSIONS = ["mp4", "webm", "ogg", "ogv", "mov", "m4v"];
 
+// YouTube expresa el punto de inicio en el parámetro `t` (a veces `start`),
+// ya sea en segundos puros ("198") o en formato compuesto ("1h2m3s", "1m30s").
+function parseYouTubeStartSeconds(parsed: URL): number | null {
+  const raw = parsed.searchParams.get("t") ?? parsed.searchParams.get("start");
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+  const match = raw.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i);
+  if (!match) return null;
+  const [, h, m, s] = match;
+  if (!h && !m && !s) return null;
+  return parseInt(h || "0", 10) * 3600 + parseInt(m || "0", 10) * 60 + parseInt(s || "0", 10);
+}
+
+function youtubeEmbedUrl(id: string, parsed: URL): string {
+  const start = parseYouTubeStartSeconds(parsed);
+  const embed = new URL(`https://www.youtube-nocookie.com/embed/${id}`);
+  if (start && start > 0) embed.searchParams.set("start", String(start));
+  return embed.toString();
+}
+
 export function parseVideoEmbed(rawUrl: string): VideoEmbed {
   const url = rawUrl.trim();
   let parsed: URL | null = null;
@@ -24,11 +44,11 @@ export function parseVideoEmbed(rawUrl: string): VideoEmbed {
       const match = parsed.pathname.match(/^\/(embed|shorts|live)\/([a-zA-Z0-9_-]+)/);
       if (match) id = match[2];
     }
-    if (id) return { kind: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` };
+    if (id) return { kind: "youtube", embedUrl: youtubeEmbedUrl(id, parsed) };
   }
   if (host === "youtu.be") {
     const id = parsed.pathname.replace(/^\//, "");
-    if (id) return { kind: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` };
+    if (id) return { kind: "youtube", embedUrl: youtubeEmbedUrl(id, parsed) };
   }
 
   // Vimeo: vimeo.com/<id>, player.vimeo.com/video/<id>
