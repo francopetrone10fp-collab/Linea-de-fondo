@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { ColorBadge } from "@/components/Badge";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { createReferee, deleteReferee, mergeReferees, updateRefereePhotoUrl } from "./actions";
@@ -32,8 +32,15 @@ export default function RefereesView({
   const [error, setError] = useState<string | null>(null);
   const [mergeSource, setMergeSource] = useState<Referee | null>(null);
   const [mergeTarget, setMergeTarget] = useState("");
+  const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const filteredReferees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return referees;
+    return referees.filter((r) => r.name.toLowerCase().includes(q));
+  }, [referees, search]);
 
   function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -92,7 +99,7 @@ export default function RefereesView({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Árbitros</h1>
+        <h1 className="font-display text-2xl font-semibold">Árbitros ({referees.length})</h1>
         <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
           <input
             type="text"
@@ -116,11 +123,25 @@ export default function RefereesView({
         acceso, se suma acá automáticamente.
       </div>
 
+      {referees.length > 0 && (
+        <div className="mb-5">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar árbitro por nombre..."
+            className="min-w-[240px] w-full max-w-[360px]"
+          />
+        </div>
+      )}
+
       {referees.length === 0 ? (
         <Empty title="Todavía no hay árbitros cargados" desc="Se suman solos cuando alguien crea su perfil de acceso." />
+      ) : filteredReferees.length === 0 ? (
+        <Empty title="Sin resultados" desc={`Ningún árbitro coincide con "${search}".`} />
       ) : (
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}>
-          {referees.map((r) => {
+          {filteredReferees.map((r) => {
             const count = counts[r.id] ?? 0;
             const canChangePhoto = canManage || r.id === myRefereeId;
             return (
