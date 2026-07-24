@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { MATERIAL_TYPES, materialTypeInfo, truncateText } from "@/lib/constants";
 import { createMaterial, deleteMaterial, updateMaterial } from "./actions";
+import VideoModal from "@/components/VideoModal";
 import type { MaterialType } from "@/lib/database.types";
 
 interface Material {
@@ -20,6 +21,7 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
   const [typeFilter, setTypeFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [videoMaterial, setVideoMaterial] = useState<Material | null>(null);
   const [form, setForm] = useState({ title: "", type: "pdf" as MaterialType, url: "", description: "" });
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -123,7 +125,21 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
                 >
                   {t.label}
                 </span>
-                <p className="text-[14.5px] font-semibold mt-0 mb-1.5">{m.title}</p>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <p className="text-[14.5px] font-semibold m-0">{m.title}</p>
+                  {m.type === "video" && (
+                    <button
+                      type="button"
+                      onClick={() => setVideoMaterial(m)}
+                      title="Ver video"
+                      className="flex-none w-[26px] h-[26px] rounded-full bg-[#E8342A] hover:bg-[#C92920] text-white flex items-center justify-center"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 {m.description && (
                   <p className="text-[12.5px] text-text-dim mb-2.5 leading-snug">
                     {truncateText(m.description, 110)}
@@ -237,6 +253,10 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
             </div>
           </form>
         </div>
+      )}
+
+      {videoMaterial && (
+        <VideoModal url={videoMaterial.url} title={videoMaterial.title} onClose={() => setVideoMaterial(null)} />
       )}
     </div>
   );
