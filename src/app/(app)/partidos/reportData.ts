@@ -100,7 +100,7 @@ export function pieSegments(data: ReportData) {
 }
 
 const STANDALONE_CSS = `
-  body{background:#14171C;color:#F2F0EB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;padding:30px;margin:0;}
+  body{background:#14171C;color:#F2F0EB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Barlow,sans-serif;padding:30px;margin:0;}
   .report-box{background:#1B1F27;border:1px solid #333A47;border-radius:14px;max-width:720px;margin:0 auto;padding:30px;}
   .report-title{font-size:22px;font-weight:700;margin:0 0 4px;}
   .report-sub{font-size:13px;color:#9299A8;margin:0 0 18px;line-height:1.5;}

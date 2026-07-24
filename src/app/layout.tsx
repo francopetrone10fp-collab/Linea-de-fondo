@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Oswald, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Barlow_Condensed, Barlow, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const oswald = Oswald({
+const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
-  variable: "--font-oswald",
+  variable: "--font-barlow-condensed",
 });
-const inter = Inter({
+const barlow = Barlow({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-inter",
+  variable: "--font-barlow",
 });
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body className={`${oswald.variable} ${inter.variable} ${plexMono.variable} antialiased`}>
+      <body className={`${barlowCondensed.variable} ${barlow.variable} ${plexMono.variable} antialiased`}>
         {children}
       </body>
     </html>
