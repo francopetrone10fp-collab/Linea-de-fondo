@@ -4,6 +4,7 @@ import { Empty } from "@/app/(app)/teams/TeamsView";
 import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
 import { EVAL_LEVELS, EVAL_COLORS, WHISTLE_TYPES } from "@/lib/constants";
+import { StatCard } from "@/components/StatCard";
 import type { Evaluation } from "@/lib/database.types";
 
 export default async function StatsPage() {
@@ -170,15 +171,6 @@ export default async function StatsPage() {
           <BarRow key={l.key} label={l.label} count={counts[l.key]} max={Math.max(counts.mala, counts.estandar, counts.buena, counts.relevante, 1)} />
         ))}
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, colorClass }: { label: string; value: number; colorClass?: string }) {
-  return (
-    <div className="bg-surface border border-line rounded-xl px-4 py-4">
-      <div className="text-[12px] text-text-dim mb-1.5">{label}</div>
-      <div className={`font-mono text-[26px] ${colorClass ?? ""}`}>{value}</div>
     </div>
   );
 }

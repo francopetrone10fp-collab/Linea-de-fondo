@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, canDelete } from "@/lib/session";
+import { requireProfile, canDelete, canEvaluate } from "@/lib/session";
 import TeamsView from "./TeamsView";
 
 export default async function TeamsPage() {
@@ -21,6 +21,11 @@ export default async function TeamsPage() {
   });
 
   return (
-    <TeamsView teams={teams ?? []} counts={counts} canDeleteTeams={canDelete(profile)} />
+    <TeamsView
+      teams={teams ?? []}
+      counts={counts}
+      canDeleteTeams={canDelete(profile)}
+      canManage={canEvaluate(profile)}
+    />
   );
 }

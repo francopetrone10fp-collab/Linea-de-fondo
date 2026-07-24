@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import { createTeam, deleteTeam } from "./actions";
 
@@ -14,10 +15,12 @@ export default function TeamsView({
   teams,
   counts,
   canDeleteTeams,
+  canManage,
 }: {
   teams: Team[];
   counts: Record<string, number>;
   canDeleteTeams: boolean;
+  canManage: boolean;
 }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +98,14 @@ export default function TeamsView({
           {filteredTeams.map((t) => {
             const count = counts[t.id] ?? 0;
             return (
-              <div key={t.id} className="bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5">
+              <div key={t.id} className="relative bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5">
+                {canManage && (
+                  <Link
+                    href={`/teams/${t.id}`}
+                    aria-label={`Ver perfil de ${t.name}`}
+                    className="absolute inset-0 rounded-[11px] hover:border-text-faint"
+                  />
+                )}
                 <ColorBadge name={t.name} color={t.color} size={34} />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
@@ -109,7 +119,7 @@ export default function TeamsView({
                   <button
                     onClick={() => onDelete(t.id, t.name)}
                     title="Eliminar equipo"
-                    className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
+                    className="relative z-10 text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
                   >
                     <TrashIcon />
                   </button>

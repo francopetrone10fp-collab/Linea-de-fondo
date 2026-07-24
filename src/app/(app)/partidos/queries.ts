@@ -136,7 +136,9 @@ export async function fetchComments(supabase: DB, entityType: "partido" | "clip"
 }
 
 export async function fetchAllClipsMinimal(supabase: DB) {
-  const { data } = await supabase.from("clips").select("id, partido_id, situation, evaluation, referee_id");
+  const { data } = await supabase
+    .from("clips")
+    .select("id, partido_id, situation, evaluation, referee_id, whistle_type");
   return data ?? [];
 }
 

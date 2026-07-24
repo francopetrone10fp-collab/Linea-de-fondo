@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { createReferee, deleteReferee, mergeReferees, updateRefereePhotoUrl } from "./actions";
@@ -145,13 +146,20 @@ export default function RefereesView({
             const count = counts[r.id] ?? 0;
             const canChangePhoto = canManage || r.id === myRefereeId;
             return (
-              <div key={r.id} className="bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5">
+              <div key={r.id} className="relative bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5">
+                {canManage && (
+                  <Link
+                    href={`/referees/${r.id}`}
+                    aria-label={`Ver perfil de ${r.name}`}
+                    className="absolute inset-0 rounded-[11px] hover:border-text-faint"
+                  />
+                )}
                 <button
                   type="button"
                   disabled={!canChangePhoto}
                   onClick={() => fileRefs.current[r.id]?.click()}
                   title={canChangePhoto ? "Cambiar foto" : undefined}
-                  className={canChangePhoto ? "cursor-pointer" : "cursor-default"}
+                  className={`relative z-10 ${canChangePhoto ? "cursor-pointer" : "cursor-default"}`}
                 >
                   <ColorBadge name={r.name} color={r.color} photoUrl={r.photo_url} size={34} />
                 </button>
@@ -179,14 +187,14 @@ export default function RefereesView({
                     <button
                       onClick={() => setMergeSource(r)}
                       title="Fusionar con otro árbitro"
-                      className="text-text-faint hover:text-text hover:bg-surface-3 p-1 rounded-md"
+                      className="relative z-10 text-text-faint hover:text-text hover:bg-surface-3 p-1 rounded-md"
                     >
                       <MergeIcon />
                     </button>
                     <button
                       onClick={() => onDelete(r.id, r.name)}
                       title="Eliminar árbitro"
-                      className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
+                      className="relative z-10 text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
                     >
                       <TrashIcon />
                     </button>
