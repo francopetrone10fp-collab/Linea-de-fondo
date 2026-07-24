@@ -30,6 +30,35 @@ export async function createMaterial(input: {
   return { ok: true as const };
 }
 
+export async function updateMaterial(
+  id: string,
+  input: {
+    title: string;
+    type: MaterialType;
+    url: string;
+    description: string;
+  }
+) {
+  const title = input.title.trim();
+  const url = input.url.trim();
+  if (!title) return { ok: false as const, error: "Poné un título para el material" };
+  if (!url) return { ok: false as const, error: "Pegá un link" };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("materials")
+    .update({
+      title,
+      type: input.type,
+      url,
+      description: input.description.trim() || null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false as const, error: "No se pudo actualizar el material" };
+  revalidatePath("/material");
+  return { ok: true as const };
+}
+
 export async function deleteMaterial(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("materials").delete().eq("id", id);

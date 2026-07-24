@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { MATERIAL_TYPES, materialTypeInfo, truncateText } from "@/lib/constants";
-import { createMaterial, deleteMaterial } from "./actions";
+import { createMaterial, deleteMaterial, updateMaterial } from "./actions";
 import type { MaterialType } from "@/lib/database.types";
 
 interface Material {
@@ -19,6 +19,7 @@ interface Material {
 export default function MaterialView({ materials, canManage }: { materials: Material[]; canManage: boolean }) {
   const [typeFilter, setTypeFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", type: "pdf" as MaterialType, url: "", description: "" });
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -28,14 +29,29 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
     [materials, typeFilter]
   );
 
+  function openCreate() {
+    setEditingId(null);
+    setForm({ title: "", type: "pdf", url: "", description: "" });
+    setError(null);
+    setShowModal(true);
+  }
+
+  function openEdit(m: Material) {
+    setEditingId(m.id);
+    setForm({ title: m.title, type: m.type, url: m.url, description: m.description ?? "" });
+    setError(null);
+    setShowModal(true);
+  }
+
   function onSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await createMaterial(form);
+      const res = editingId ? await updateMaterial(editingId, form) : await createMaterial(form);
       if (!res.ok) setError(res.error);
       else {
         setShowModal(false);
+        setEditingId(null);
         setForm({ title: "", type: "pdf", url: "", description: "" });
       }
     });
@@ -62,7 +78,7 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
         <h1 className="font-display text-2xl font-semibold">Material didáctico</h1>
         {canManage && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openCreate}
             className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
           >
             + Agregar material
@@ -127,13 +143,22 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
                     Abrir material
                   </a>
                   {canManage && (
-                    <button
-                      onClick={() => onDelete(m.id)}
-                      title="Eliminar material"
-                      className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
-                    >
-                      <TrashIcon />
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => openEdit(m)}
+                        title="Editar material"
+                        className="text-text-faint hover:text-text hover:bg-surface-2 p-1 rounded-md"
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        onClick={() => onDelete(m.id)}
+                        title="Eliminar material"
+                        className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -148,7 +173,7 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
             onSubmit={onSave}
             className="bg-surface border border-line rounded-2xl w-full max-w-[520px] p-6 max-h-[88vh] overflow-y-auto"
           >
-            <h2 className="font-display text-[19px] mb-4">Nuevo material</h2>
+            <h2 className="font-display text-[19px] mb-4">{editingId ? "Editar material" : "Nuevo material"}</h2>
             <FieldLabel label="Título">
               <input
                 type="text"
@@ -195,7 +220,10 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
             <div className="flex justify-end gap-2.5 mt-2">
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingId(null);
+                }}
                 className="bg-transparent text-text-dim border border-line rounded-lg text-[13px] px-3 py-2"
               >
                 Cancelar
@@ -204,13 +232,21 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
                 disabled={isPending}
                 className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
               >
-                Guardar material
+                {editingId ? "Guardar cambios" : "Guardar material"}
               </button>
             </div>
           </form>
         </div>
       )}
     </div>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
   );
 }
 
