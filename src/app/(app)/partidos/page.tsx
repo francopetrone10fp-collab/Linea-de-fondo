@@ -35,7 +35,7 @@ export default async function PartidosPage() {
             canEvaluate(profile) ? (
               <Link
                 href={`/partidos/${new Date().getFullYear()}`}
-                className="bg-accent hover:bg-accent-dim text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5 inline-block"
+                className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5 inline-block"
               >
                 Agregar partido
               </Link>

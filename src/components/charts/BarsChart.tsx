@@ -3,7 +3,7 @@ export interface BarItem {
   count: number;
 }
 
-export function BarsChart({ items, barColor = "#E8631C" }: { items: BarItem[]; barColor?: string }) {
+export function BarsChart({ items, barColor = "#C79A3D" }: { items: BarItem[]; barColor?: string }) {
   if (items.length === 0) return <p className="text-[12.5px] text-text-faint m-0">Sin datos.</p>;
   const max = Math.max(...items.map((i) => i.count), 1);
   return (

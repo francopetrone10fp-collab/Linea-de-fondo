@@ -121,7 +121,7 @@ export default function CommentsThread({
         <button
           disabled={isPending}
           onClick={onSend}
-          className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5 whitespace-nowrap"
+          className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5 whitespace-nowrap"
         >
           Enviar
         </button>

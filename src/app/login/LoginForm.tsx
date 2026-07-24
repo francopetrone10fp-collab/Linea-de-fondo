@@ -102,7 +102,7 @@ export default function LoginForm() {
           todavía lo tiene que aprobar el Coordinador General. Probá de nuevo más tarde.
         </p>
         <button
-          className="bg-accent hover:bg-accent-dim text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+          className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
           onClick={() => {
             setPending(null);
             setName("");
@@ -201,7 +201,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={!canSubmit || isPending}
-          className="bg-accent hover:bg-accent-dim disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+          className="bg-accent hover:bg-accent-dim disabled:opacity-50 disabled:cursor-not-allowed text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
         >
           {isPending ? "Ingresando..." : "Ingresar"}
         </button>
@@ -219,10 +219,10 @@ export default function LoginForm() {
 function Brand() {
   return (
     <div className="flex items-center gap-2 mb-5">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8631C" strokeWidth={2}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C79A3D" strokeWidth={2}>
         <circle cx="9" cy="15" r="6" />
         <path d="M14 11 L21 4 M21 4 L21 8 M21 4 L17 4" />
-        <circle cx="9" cy="15" r="1.6" fill="#E8631C" stroke="none" />
+        <circle cx="9" cy="15" r="1.6" fill="#C79A3D" stroke="none" />
       </svg>
       <div className="font-display font-semibold text-[18px]">Línea de Fondo</div>
     </div>
@@ -239,14 +239,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function RolePill({ role }: { role: Role }) {
-  const cls =
+  if (role === "arbitro") {
+    return (
+      <span className="inline-block text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-3 text-text-dim">
+        {ROLE_LABELS[role]}
+      </span>
+    );
+  }
+  const style =
     role === "coordinador"
-      ? "bg-gold/20 text-gold"
-      : role === "instructor"
-        ? "bg-accent/20 text-accent-text"
-        : "bg-surface-3 text-text-dim";
+      ? { background: "var(--role-coordinador-bg)", color: "var(--role-coordinador-text)" }
+      : { background: "var(--role-instructor-bg)", color: "var(--role-instructor-text)" };
   return (
-    <span className={`inline-block text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${cls}`}>
+    <span className="inline-block text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style={style}>
       {ROLE_LABELS[role]}
     </span>
   );

@@ -35,7 +35,7 @@ export const MATERIAL_TYPES: { key: MaterialType; label: string; color: string; 
   { key: "video", label: "Video", color: "#E8342A", bg: "#331B1B" },
   { key: "presentacion", label: "Presentación", color: "#D6A73F", bg: "#332B15" },
   { key: "enlace", label: "Enlace / Web", color: "#16A184", bg: "#0F2E28" },
-  { key: "otro", label: "Otro", color: "#9299A8", bg: "#2A303C" },
+  { key: "otro", label: "Otro", color: "#97A1AE", bg: "#232B37" },
 ];
 
 export function materialTypeInfo(key: MaterialType) {
@@ -57,8 +57,8 @@ export function whistleTypeInfo(key: WhistleType | null | undefined) {
 }
 
 export const TEAM_COLORS = [
-  "#E8631C", "#2E7DD1", "#1E9E6B", "#C9A227", "#B84E9C",
-  "#4E8FD6", "#D65C5C", "#5CA85C", "#8A6FD6", "#D68F3F",
+  "#4E8FD6", "#7F77DD", "#D85A30", "#5DCAA5", "#D4537E",
+  "#B4592E", "#6B8E6B", "#8A6FD6", "#4A9EA1", "#C77B3D",
 ];
 
 // Directorio de árbitros "de arranque": se usa únicamente para decidir el rol
@@ -141,6 +141,6 @@ const EVAL_COLORS: Record<string, string> = {
   estandar: "#D6A73F",
   buena: "#3FA34D",
   relevante: "#16A184",
-  pending: "#5C6270",
+  pending: "#5C6672",
 };
 export { EVAL_COLORS };

@@ -163,7 +163,7 @@ export default function PartidoFormModal({
           </button>
           <button
             disabled={isPending}
-            className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+            className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
           >
             {mode === "create" ? "Guardar partido" : "Guardar cambios"}
           </button>

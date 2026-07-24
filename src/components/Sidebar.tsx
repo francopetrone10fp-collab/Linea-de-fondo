@@ -55,10 +55,10 @@ export default function Sidebar({
     <div className="w-[220px] flex-none bg-surface border-r border-line p-6 flex flex-col gap-5 md:flex md:flex-col">
       <div className="flex flex-col gap-0.5">
         <div className="flex items-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8631C" strokeWidth={2}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C79A3D" strokeWidth={2}>
             <circle cx="9" cy="15" r="6" />
             <path d="M14 11 L21 4 M21 4 L21 8 M21 4 L17 4" />
-            <circle cx="9" cy="15" r="1.6" fill="#E8631C" stroke="none" />
+            <circle cx="9" cy="15" r="1.6" fill="#C79A3D" stroke="none" />
           </svg>
           <div className="font-display font-bold text-[19px] tracking-wide uppercase leading-tight">
             Línea de
@@ -73,7 +73,7 @@ export default function Sidebar({
         <button
           onClick={() => fileRef.current?.click()}
           title="Cambiar foto de perfil"
-          className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-semibold text-[13px] font-display flex-none overflow-hidden cursor-pointer"
+          className="w-8 h-8 rounded-full bg-accent text-accent-ink flex items-center justify-center font-semibold text-[13px] font-display flex-none overflow-hidden cursor-pointer"
           disabled={isPending}
         >
           {profile.photo_url ? (
@@ -113,7 +113,7 @@ export default function Sidebar({
             >
               {item.label}
               {item.view === "requests" && pendingCount > 0 && (
-                <span className="bg-accent text-white text-[10px] font-bold rounded-[10px] px-1.5">
+                <span className="bg-accent text-accent-ink text-[10px] font-bold rounded-[10px] px-1.5">
                   {pendingCount}
                 </span>
               )}
@@ -129,14 +129,19 @@ export default function Sidebar({
 }
 
 function RolePill({ role }: { role: SessionProfile["role"] }) {
-  const cls =
+  if (role === "arbitro") {
+    return (
+      <span className="inline-block text-[9.5px] font-bold uppercase tracking-wide px-1.5 rounded-full bg-surface-3 text-text-dim">
+        {ROLE_LABELS[role]}
+      </span>
+    );
+  }
+  const style =
     role === "coordinador"
-      ? "bg-gold/20 text-gold"
-      : role === "instructor"
-        ? "bg-accent/20 text-accent-text"
-        : "bg-surface-3 text-text-dim";
+      ? { background: "var(--role-coordinador-bg)", color: "var(--role-coordinador-text)" }
+      : { background: "var(--role-instructor-bg)", color: "var(--role-instructor-text)" };
   return (
-    <span className={`inline-block text-[9.5px] font-bold uppercase tracking-wide px-1.5 rounded-full ${cls}`}>
+    <span className="inline-block text-[9.5px] font-bold uppercase tracking-wide px-1.5 rounded-full" style={style}>
       {ROLE_LABELS[role]}
     </span>
   );

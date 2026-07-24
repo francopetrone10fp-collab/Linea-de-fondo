@@ -94,7 +94,7 @@ export default function ReadStatusSection({
                 router.refresh();
               })
             }
-            className="bg-accent hover:bg-accent-dim disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-[13px] px-3.5 py-2"
+            className="bg-accent hover:bg-accent-dim disabled:opacity-50 disabled:cursor-not-allowed text-accent-ink rounded-lg font-semibold text-[13px] px-3.5 py-2"
           >
             {hasConfirmedBefore ? "Confirmar de nuevo que vi este informe" : "Confirmar que vi este informe"}
           </button>

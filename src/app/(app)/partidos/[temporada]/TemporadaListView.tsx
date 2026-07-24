@@ -56,7 +56,7 @@ export default function TemporadaListView({
         {canCreate && (
           <button
             onClick={() => setShowModal(true)}
-            className="bg-accent hover:bg-accent-dim text-white rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+            className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
           >
             + Agregar partido
           </button>

@@ -1,18 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #14171c;
-  --surface: #1b1f27;
-  --surface-2: #232833;
-  --surface-3: #2a303c;
-  --line: #333a47;
-  --text: #f2f0eb;
-  --text-dim: #9299a8;
-  --text-faint: #5c6270;
-  --accent: #e8631c;
-  --accent-dim: #b84e17;
-  --accent-text: #ffddc7;
-  --gold: #c9a227;
+  --bg: #0b0f14;
+  --surface: #131820;
+  --surface-2: #1b222c;
+  --surface-3: #232b37;
+  --line: #2c3644;
+  --text: #edeff2;
+  --text-dim: #97a1ae;
+  --text-faint: #5c6672;
+  --accent: #c79a3d;
+  --accent-dim: #9c7622;
+  --accent-text: #f3dfaf;
+  --accent-ink: #2c2005;
+  --role-coordinador-bg: rgba(199, 154, 61, 0.2);
+  --role-coordinador-text: #e8c97d;
+  --role-instructor: #4e8fd6;
+  --role-instructor-bg: rgba(78, 143, 214, 0.18);
+  --role-instructor-text: #bfdbff;
   --good: #3fa34d;
   --good-bg: #1b2e1f;
   --good-text: #7fcb8c;
@@ -40,7 +45,7 @@
   --color-accent: var(--accent);
   --color-accent-dim: var(--accent-dim);
   --color-accent-text: var(--accent-text);
-  --color-gold: var(--gold);
+  --color-accent-ink: var(--accent-ink);
   --color-good: var(--good);
   --color-good-bg: var(--good-bg);
   --color-good-text: var(--good-text);

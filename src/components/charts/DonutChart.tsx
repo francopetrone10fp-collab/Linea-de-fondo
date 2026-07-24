@@ -12,8 +12,8 @@ export function DonutChart({ segments, size = 170, thickness = 26 }: { segments:
   if (total === 0) {
     return (
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#2A303C" strokeWidth={thickness} />
-        <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="middle" fontSize={12} fill="#5C6270">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#232B37" strokeWidth={thickness} />
+        <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="middle" fontSize={12} fill="#5C6672">
           Sin datos
         </text>
       </svg>
@@ -45,10 +45,10 @@ export function DonutChart({ segments, size = 170, thickness = 26 }: { segments:
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       {circles}
-      <text x={size / 2} y={size / 2 - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#F2F0EB">
+      <text x={size / 2} y={size / 2 - 4} textAnchor="middle" fontSize={24} fontWeight={700} fill="#EDEFF2">
         {total}
       </text>
-      <text x={size / 2} y={size / 2 + 16} textAnchor="middle" fontSize={10} fill="#9299A8">
+      <text x={size / 2} y={size / 2 + 16} textAnchor="middle" fontSize={10} fill="#97A1AE">
         jugada{total === 1 ? "" : "s"}
       </text>
     </svg>
