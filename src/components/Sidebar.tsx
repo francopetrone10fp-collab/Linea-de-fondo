@@ -52,7 +52,7 @@ export default function Sidebar({
   }
 
   return (
-    <div className="w-[220px] flex-none bg-surface border-r border-line p-6 flex flex-col gap-5 md:flex md:flex-col">
+    <div className="relative z-10 w-[220px] flex-none bg-surface border-r border-line p-6 flex flex-col gap-5 md:flex md:flex-col">
       <div className="flex flex-col gap-0.5">
         <div className="flex items-center gap-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C79A3D" strokeWidth={2}>

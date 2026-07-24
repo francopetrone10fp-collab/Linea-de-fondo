@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
 import Sidebar from "@/components/Sidebar";
+import CourtBackdrop from "@/components/CourtBackdrop";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireProfile();
@@ -17,8 +18,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
+      <CourtBackdrop variant="dashboard" />
       <Sidebar profile={profile} pendingCount={pendingCount} />
-      <main className="flex-1 min-w-0 px-8 py-6 pb-16">
+      <main className="relative z-10 flex-1 min-w-0 px-8 py-6 pb-16">
         <div className="bg-surface-2 border border-line rounded-[9px] px-3.5 py-2.5 text-[12.5px] text-text-dim mb-5 flex gap-2 items-start">
           <span>
             Los datos se guardan en Supabase y son visibles según el rol de cada perfil (control de
