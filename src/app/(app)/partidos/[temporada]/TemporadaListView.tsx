@@ -24,8 +24,9 @@ export default function TemporadaListView({
   readRefereeIdsByPartido,
   teams,
   referees,
+  categories,
   competitions,
-  defaultCompetitionId,
+  defaultCategoryId,
   title,
   canCreate,
   canFilterByReferee,
@@ -37,8 +38,9 @@ export default function TemporadaListView({
   readRefereeIdsByPartido: Record<string, string[]>;
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
+  categories: { id: string; name: string }[];
   competitions: { id: string; name: string }[];
-  defaultCompetitionId?: string;
+  defaultCategoryId?: string;
   title: string;
   canCreate: boolean;
   canFilterByReferee: boolean;
@@ -118,8 +120,9 @@ export default function TemporadaListView({
           mode="create"
           teams={teams}
           referees={referees}
+          categories={categories}
           competitions={competitions}
-          defaultCompetitionId={defaultCompetitionId}
+          defaultCategoryId={defaultCategoryId}
           onClose={() => setShowModal(false)}
         />
       )}

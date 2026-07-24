@@ -49,6 +49,7 @@ export default function ReportModal({
         <p className="font-display text-[22px] font-semibold mt-0 mb-1">Informe de evaluación</p>
         <p className="text-[13px] text-text-dim mb-4">
           {data.matchup} · {data.fechaFmt}
+          {data.category ? ` · ${data.category}` : ""}
           {data.competition ? ` · ${data.competition}` : ""}
           <br />
           Árbitros: {data.refereesText}

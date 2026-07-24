@@ -8,6 +8,7 @@ import type { Evaluation, Situation, WhistleType } from "@/lib/database.types";
 
 export interface PartidoInput {
   fecha: string; // 'YYYY-MM-DD' o ''
+  categoryId: string | null;
   competitionId: string | null;
   notes: string;
   teamLocalId: string | null;
@@ -34,6 +35,7 @@ export async function createPartido(input: PartidoInput) {
     .from("partidos")
     .insert({
       fecha: input.fecha || null,
+      category_id: input.categoryId,
       competition_id: input.competitionId,
       notes: input.notes.trim() || null,
       team_local_id: input.teamLocalId,
@@ -59,6 +61,7 @@ export async function updatePartido(id: string, input: PartidoInput) {
     .from("partidos")
     .update({
       fecha: input.fecha || null,
+      category_id: input.categoryId,
       competition_id: input.competitionId,
       notes: input.notes.trim() || null,
       team_local_id: input.teamLocalId,
@@ -72,7 +75,7 @@ export async function updatePartido(id: string, input: PartidoInput) {
   return { ok: true as const };
 }
 
-export async function deletePartido(id: string, temporada: string, competitionSlug: string) {
+export async function deletePartido(id: string, temporada: string, categorySlug: string) {
   const supabase = await createClient();
   const { data: clipRows } = await supabase.from("clips").select("id").eq("partido_id", id);
   const clipIds = (clipRows ?? []).map((c) => c.id);
@@ -85,7 +88,7 @@ export async function deletePartido(id: string, temporada: string, competitionSl
   if (error) return { ok: false as const, error: "No se pudo eliminar el partido" };
 
   revalidatePath("/partidos");
-  redirect(`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(competitionSlug)}`);
+  redirect(`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlug)}`);
 }
 
 export async function finalizePartido(id: string) {

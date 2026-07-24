@@ -12,6 +12,7 @@ export interface PartidoFull {
   id: string;
   fecha: string | null;
   temporada: string;
+  category: DirectoryEntry | null;
   competition: DirectoryEntry | null;
   notes: string | null;
   finalizedAt: string | null;
@@ -56,6 +57,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
     { data: partidos },
     { data: teams },
     { data: referees },
+    { data: categories },
     { data: competitions },
     { data: partidoReferees },
     { data: profiles },
@@ -67,6 +69,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
       .order("created_at", { ascending: false }),
     supabase.from("teams").select("id, name, color"),
     supabase.from("referees").select("id, name, color, photo_url"),
+    supabase.from("categories").select("id, name, color"),
     supabase.from("competitions").select("id, name, color"),
     supabase.from("partido_referees").select("partido_id, referee_id, position").order("position"),
     supabase.from("profiles").select("id, name"),
@@ -74,6 +77,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
 
   const teamById = new Map((teams ?? []).map((t) => [t.id, t]));
   const refereeById = new Map((referees ?? []).map((r) => [r.id, r]));
+  const categoryById = new Map((categories ?? []).map((c) => [c.id, c]));
   const competitionById = new Map((competitions ?? []).map((c) => [c.id, c]));
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
 
@@ -90,6 +94,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
     id: p.id,
     fecha: p.fecha,
     temporada: p.temporada,
+    category: p.category_id ? (categoryById.get(p.category_id) ?? null) : null,
     competition: p.competition_id ? (competitionById.get(p.competition_id) ?? null) : null,
     notes: p.notes,
     finalizedAt: p.finalized_at,

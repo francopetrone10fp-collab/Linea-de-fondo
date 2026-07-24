@@ -7,7 +7,7 @@ import PartidoDetailView from "./PartidoDetailView";
 export default async function PartidoDetailPage({
   params,
 }: {
-  params: Promise<{ temporada: string; competitionId: string; id: string }>;
+  params: Promise<{ temporada: string; categoryId: string; id: string }>;
 }) {
   const { temporada, id } = await params;
   const profile = await requireProfile();
@@ -19,20 +19,22 @@ export default async function PartidoDetailPage({
 
   const clips = await fetchClipsForPartido(supabase, id);
 
-  const [comments, reads, { data: teams }, { data: referees }, { data: competitions }, viewedClipIds] = await Promise.all([
-    fetchComments(supabase, "partido", id),
-    fetchReadsForPartido(supabase, id),
-    supabase.from("teams").select("id, name").order("name"),
-    supabase.from("referees").select("id, name").order("name"),
-    supabase.from("competitions").select("id, name").order("name"),
-    isArbitro(profile) && profile.referee_id
-      ? fetchClipViewedIds(
-          supabase,
-          profile.referee_id,
-          clips.map((c) => c.id)
-        )
-      : Promise.resolve([] as string[]),
-  ]);
+  const [comments, reads, { data: teams }, { data: referees }, { data: categories }, { data: competitions }, viewedClipIds] =
+    await Promise.all([
+      fetchComments(supabase, "partido", id),
+      fetchReadsForPartido(supabase, id),
+      supabase.from("teams").select("id, name").order("name"),
+      supabase.from("referees").select("id, name").order("name"),
+      supabase.from("categories").select("id, name").order("name"),
+      supabase.from("competitions").select("id, name").order("name"),
+      isArbitro(profile) && profile.referee_id
+        ? fetchClipViewedIds(
+            supabase,
+            profile.referee_id,
+            clips.map((c) => c.id)
+          )
+        : Promise.resolve([] as string[]),
+    ]);
 
   return (
     <PartidoDetailView
@@ -42,6 +44,7 @@ export default async function PartidoDetailPage({
       reads={reads}
       teams={teams ?? []}
       referees={referees ?? []}
+      categories={categories ?? []}
       competitions={competitions ?? []}
       temporada={decodeURIComponent(temporada)}
       canEvaluate={canEvaluate(profile)}

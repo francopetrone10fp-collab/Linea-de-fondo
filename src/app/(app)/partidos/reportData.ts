@@ -16,6 +16,7 @@ export interface ReportRow {
 export interface ReportData {
   matchup: string;
   fechaFmt: string;
+  category: string | null;
   competition: string | null;
   refereesText: string;
   counts: Record<Evaluation, number>;
@@ -65,6 +66,7 @@ export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: Com
   return {
     matchup,
     fechaFmt,
+    category: p.category?.name ?? null,
     competition: p.competition?.name ?? null,
     refereesText,
     counts,
@@ -162,7 +164,7 @@ export function buildStandaloneReportHtml(data: ReportData): string {
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de evaluación</title><style>${STANDALONE_CSS}</style></head><body>
   <div class="report-box">
     <p class="report-title">Informe de evaluación</p>
-    <p class="report-sub">${esc(data.matchup)} · ${esc(data.fechaFmt)}${data.competition ? " · " + esc(data.competition) : ""}<br>Árbitros: ${esc(data.refereesText)}</p>
+    <p class="report-sub">${esc(data.matchup)} · ${esc(data.fechaFmt)}${data.category ? " · " + esc(data.category) : ""}${data.competition ? " · " + esc(data.competition) : ""}<br>Árbitros: ${esc(data.refereesText)}</p>
     <div class="report-stat-row">
       <div class="report-stat"><div class="n">${data.total}</div><div class="l">Jugadas</div></div>
       <div class="report-stat"><div class="n" style="color:#F09595">${data.counts.mala}</div><div class="l">Mala</div></div>

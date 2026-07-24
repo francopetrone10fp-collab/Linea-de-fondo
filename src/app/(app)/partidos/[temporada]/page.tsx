@@ -2,10 +2,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isArbitro } from "@/lib/session";
 import { fetchPartidosFull } from "../queries";
-import { competitionSlugFor } from "../PartidoCard";
+import { categorySlugFor } from "../PartidoCard";
 import { Empty } from "@/app/(app)/teams/TeamsView";
 
-export default async function TemporadaCompetitionsPage({ params }: { params: Promise<{ temporada: string }> }) {
+export default async function TemporadaCategoriesPage({ params }: { params: Promise<{ temporada: string }> }) {
   const { temporada } = await params;
   const profile = await requireProfile();
   const supabase = await createClient();
@@ -17,13 +17,13 @@ export default async function TemporadaCompetitionsPage({ params }: { params: Pr
   const counts: Record<string, number> = {};
   const names: Record<string, string> = {};
   partidos.forEach((p) => {
-    const slug = competitionSlugFor(p);
+    const slug = categorySlugFor(p);
     counts[slug] = (counts[slug] ?? 0) + 1;
-    names[slug] = p.competition?.name ?? "Sin competencia";
+    names[slug] = p.category?.name ?? "Sin categoría";
   });
   const slugs = Object.keys(counts).sort((a, b) => {
-    if (a === "sin-competencia") return 1;
-    if (b === "sin-competencia") return -1;
+    if (a === "sin-categoria") return 1;
+    if (b === "sin-categoria") return -1;
     return names[a].localeCompare(names[b]);
   });
 

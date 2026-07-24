@@ -3,97 +3,97 @@
 import { useMemo, useState, useTransition } from "react";
 import { ColorBadge } from "@/components/Badge";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
-import { createCompetition, deleteCompetition } from "./actions";
+import { createCategory, deleteCategory } from "./actions";
 
-interface Competition {
+interface Category {
   id: string;
   name: string;
   color: string;
 }
 
-export default function CompetitionsView({
-  competitions,
+export default function CategoriesView({
+  categories,
   counts,
-  canDeleteCompetitions,
+  canDeleteCategories,
 }: {
-  competitions: Competition[];
+  categories: Category[];
   counts: Record<string, number>;
-  canDeleteCompetitions: boolean;
+  canDeleteCategories: boolean;
 }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const filteredCompetitions = useMemo(() => {
+  const filteredCategories = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return competitions;
-    return competitions.filter((c) => c.name.toLowerCase().includes(q));
-  }, [competitions, search]);
+    if (!q) return categories;
+    return categories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, search]);
 
   function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await createCompetition(name);
+      const res = await createCategory(name);
       if (!res.ok) setError(res.error);
       else setName("");
     });
   }
 
-  function onDelete(id: string, competitionName: string) {
-    if (!confirm(`¿Eliminar la competencia "${competitionName}"? Los partidos que ya la tienen cargada van a quedar sin competencia.`))
+  function onDelete(id: string, categoryName: string) {
+    if (!confirm(`¿Eliminar la categoría "${categoryName}"? Los partidos que ya la tienen cargada van a quedar sin categoría.`))
       return;
     startTransition(async () => {
-      await deleteCompetition(id);
+      await deleteCategory(id);
     });
   }
 
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Competencias ({competitions.length})</h1>
+        <h1 className="font-display text-2xl font-semibold">Categorías ({categories.length})</h1>
         <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ej: Asociación Rosarina de Básquet (AROB)"
+            placeholder="Ej: Superliga"
             className="min-w-[220px]"
           />
           <button
             disabled={isPending}
             className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
           >
-            + Agregar competencia
+            + Agregar categoría
           </button>
         </form>
       </div>
       {error && <p className="text-bad-text text-[12.5px] mb-3">{error}</p>}
 
       <div className="bg-surface-2 border border-line rounded-[9px] px-3.5 py-2.5 text-[12.5px] text-text-dim mb-5">
-        Directorio de competencias/asociaciones organizadoras (ej. AROB, CAB, FBPSF) para asignar a cada partido.
+        Directorio de categorías/divisiones (ej. Superliga, U19) para asignar a cada partido.
       </div>
 
-      {competitions.length > 0 && (
+      {categories.length > 0 && (
         <div className="mb-5">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar competencia por nombre..."
+            placeholder="Buscar categoría por nombre..."
             className="min-w-[240px] w-full max-w-[360px]"
           />
         </div>
       )}
 
-      {competitions.length === 0 ? (
-        <Empty title="Todavía no hay competencias cargadas" desc="Agregá la primera para empezar el directorio." />
-      ) : filteredCompetitions.length === 0 ? (
-        <Empty title="Sin resultados" desc={`Ninguna competencia coincide con "${search}".`} />
+      {categories.length === 0 ? (
+        <Empty title="Todavía no hay categorías cargadas" desc="Agregá la primera para empezar el directorio." />
+      ) : filteredCategories.length === 0 ? (
+        <Empty title="Sin resultados" desc={`Ninguna categoría coincide con "${search}".`} />
       ) : (
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}>
-          {filteredCompetitions.map((c) => {
+          {filteredCategories.map((c) => {
             const count = counts[c.id] ?? 0;
             return (
               <div key={c.id} className="bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5">
@@ -106,10 +106,10 @@ export default function CompetitionsView({
                     {count} partido{count === 1 ? "" : "s"}
                   </div>
                 </div>
-                {canDeleteCompetitions && (
+                {canDeleteCategories && (
                   <button
                     onClick={() => onDelete(c.id, c.name)}
-                    title="Eliminar competencia"
+                    title="Eliminar categoría"
                     className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md"
                   >
                     <TrashIcon />

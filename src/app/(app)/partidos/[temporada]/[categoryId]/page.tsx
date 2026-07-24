@@ -2,37 +2,37 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
 import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "../../queries";
-import { competitionSlugFor } from "../../PartidoCard";
+import { categorySlugFor } from "../../PartidoCard";
 import TemporadaListView from "../TemporadaListView";
 
-const SIN_COMPETENCIA = "sin-competencia";
+const SIN_CATEGORIA = "sin-categoria";
 
-export default async function CompetitionPartidosPage({
+export default async function CategoryPartidosPage({
   params,
 }: {
-  params: Promise<{ temporada: string; competitionId: string }>;
+  params: Promise<{ temporada: string; categoryId: string }>;
 }) {
-  const { temporada, competitionId } = await params;
+  const { temporada, categoryId } = await params;
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [allPartidos, clips, reads, { data: teams }, { data: referees }, { data: competitions }] = await Promise.all([
-    fetchPartidosFull(supabase),
-    fetchAllClipsMinimal(supabase),
-    fetchAllReadsMinimal(supabase),
-    supabase.from("teams").select("id, name").order("name"),
-    supabase.from("referees").select("id, name").order("name"),
-    supabase.from("competitions").select("id, name").order("name"),
-  ]);
+  const [allPartidos, clips, reads, { data: teams }, { data: referees }, { data: categories }, { data: competitions }] =
+    await Promise.all([
+      fetchPartidosFull(supabase),
+      fetchAllClipsMinimal(supabase),
+      fetchAllReadsMinimal(supabase),
+      supabase.from("teams").select("id, name").order("name"),
+      supabase.from("referees").select("id, name").order("name"),
+      supabase.from("categories").select("id, name").order("name"),
+      supabase.from("competitions").select("id, name").order("name"),
+    ]);
 
   const temporadaDecoded = decodeURIComponent(temporada);
   const partidos = allPartidos.filter(
-    (p) => p.temporada === temporadaDecoded && competitionSlugFor(p) === competitionId
+    (p) => p.temporada === temporadaDecoded && categorySlugFor(p) === categoryId
   );
-  const competitionName =
-    competitionId === SIN_COMPETENCIA
-      ? "Sin competencia"
-      : (competitions ?? []).find((c) => c.id === competitionId)?.name;
+  const categoryName =
+    categoryId === SIN_CATEGORIA ? "Sin categoría" : (categories ?? []).find((c) => c.id === categoryId)?.name;
 
   const clipsByPartido: Record<string, typeof clips> = {};
   clips.forEach((c) => {
@@ -53,7 +53,7 @@ export default async function CompetitionPartidosPage({
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
-        Volver a competencias
+        Volver a categorías
       </Link>
 
       <TemporadaListView
@@ -63,12 +63,13 @@ export default async function CompetitionPartidosPage({
         readRefereeIdsByPartido={readRefereeIdsByPartido}
         teams={teams ?? []}
         referees={referees ?? []}
+        categories={categories ?? []}
         competitions={competitions ?? []}
-        defaultCompetitionId={competitionId === SIN_COMPETENCIA ? undefined : competitionId}
+        defaultCategoryId={categoryId === SIN_CATEGORIA ? undefined : categoryId}
         title={
           isArbitro(profile)
             ? "Mis partidos"
-            : `${competitionName ?? "Sin competencia"} — Temporada ${temporadaDecoded}`
+            : `${categoryName ?? "Sin categoría"} — Temporada ${temporadaDecoded}`
         }
         canCreate={canEvaluate(profile)}
         canFilterByReferee={!isArbitro(profile)}

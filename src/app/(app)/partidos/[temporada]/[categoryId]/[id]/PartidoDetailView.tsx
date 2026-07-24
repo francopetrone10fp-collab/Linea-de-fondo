@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { refereesText, FinalizedBadge, EvalSummary, competitionSlugFor } from "../../../PartidoCard";
+import { refereesText, FinalizedBadge, EvalSummary, categorySlugFor } from "../../../PartidoCard";
 import ClipCard from "../../../ClipCard";
 import ClipFormModal from "../../../ClipFormModal";
 import PartidoFormModal from "../../../PartidoFormModal";
@@ -21,6 +21,7 @@ export default function PartidoDetailView({
   reads,
   teams,
   referees,
+  categories,
   competitions,
   temporada,
   canEvaluate,
@@ -35,6 +36,7 @@ export default function PartidoDetailView({
   reads: ReadConfirmation[];
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
+  categories: { id: string; name: string }[];
   competitions: { id: string; name: string }[];
   temporada: string;
   canEvaluate: boolean;
@@ -94,7 +96,7 @@ export default function PartidoDetailView({
         : "¿Eliminar este partido? Esta acción no se puede deshacer.";
     if (!confirm(msg)) return;
     startTransition(async () => {
-      await deletePartido(partido.id, temporada, competitionSlugFor(partido));
+      await deletePartido(partido.id, temporada, categorySlugFor(partido));
     });
   }
 
@@ -104,7 +106,7 @@ export default function PartidoDetailView({
   return (
     <div>
       <Link
-        href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(competitionSlugFor(partido))}`}
+        href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlugFor(partido))}`}
         className="text-text-dim hover:text-text text-[13px] flex items-center gap-1.5 mb-4 w-fit"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
@@ -118,6 +120,7 @@ export default function PartidoDetailView({
           <h1 className="font-display text-2xl font-semibold mb-1.5">{matchup}</h1>
           <p className="text-text-dim text-[13px] m-0 mb-0.5">
             {fechaFmt}
+            {partido.category ? ` · ${partido.category.name}` : ""}
             {partido.competition ? ` · ${partido.competition.name}` : ""}
           </p>
           <p className="text-text-dim text-[13px] m-0">Árbitros: {refereesText(partido)}</p>
@@ -247,9 +250,11 @@ export default function PartidoDetailView({
           partidoId={partido.id}
           teams={teams}
           referees={referees}
+          categories={categories}
           competitions={competitions}
           initial={{
             fecha: partido.fecha ?? "",
+            categoryId: partido.category?.id ?? "",
             competitionId: partido.competition?.id ?? "",
             notes: partido.notes ?? "",
             teamLocalId: partido.teamLocal?.id ?? "",
