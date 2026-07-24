@@ -11,7 +11,11 @@ export function ColorBadge({
   photoUrl?: string | null;
   size?: number;
 }) {
-  const fontSize = Math.round(size * 0.4);
+  const label = photoUrl ? null : initials(name);
+  // Las iniciales suelen ser 2 letras (equipos/árbitros); si el nombre trae
+  // un acrónimo más largo entre paréntesis (ej. "FBPSF"), achicamos la letra
+  // para que entre en el círculo en vez de recortarse.
+  const fontSize = Math.round(size * 0.4 * (label ? Math.min(1, 2 / label.length) : 1));
   return (
     <span
       className="rounded-full text-white inline-flex items-center justify-center font-display font-bold flex-none overflow-hidden leading-none"
@@ -21,7 +25,7 @@ export function ColorBadge({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={photoUrl} alt={name} className="w-full h-full object-cover rounded-full" />
       ) : (
-        initials(name)
+        label
       )}
     </span>
   );

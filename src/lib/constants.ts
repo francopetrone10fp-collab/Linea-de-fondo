@@ -120,10 +120,16 @@ export function normName(s: string | null | undefined): string {
   return (s || "").trim().toLowerCase();
 }
 
+// Si el nombre termina en un acrónimo entre paréntesis (ej. "Asociación
+// Rosarina de Básquet (AROB)"), usamos ese acrónimo como iniciales en vez de
+// las primeras letras de las primeras palabras — es el identificador por el
+// que se reconoce a la competencia.
 export function initials(name: string): string {
+  const trimmed = name.trim();
+  const acronym = trimmed.match(/\(([A-Za-z0-9]{2,8})\)\s*$/);
+  if (acronym) return acronym[1].toUpperCase();
   return (
-    name
-      .trim()
+    trimmed
       .split(/\s+/)
       .slice(0, 2)
       .map((p) => p[0]?.toUpperCase() || "")
