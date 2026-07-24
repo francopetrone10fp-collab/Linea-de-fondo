@@ -149,15 +149,7 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
                   Subido por {m.createdByName} · {new Date(m.created_at).toLocaleDateString("es-AR")}
                 </p>
                 <div className="flex justify-between items-center">
-                  <a
-                    href={m.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => copyLink(m.url)}
-                    className="text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-1.5"
-                  >
-                    Abrir material
-                  </a>
+                  <OpenMaterialLink material={m} onOpen={copyLink} />
                   {canManage && (
                     <div className="flex gap-1">
                       <button
@@ -267,6 +259,95 @@ function PencilIcon() {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
     </svg>
+  );
+}
+
+const MATERIAL_BUTTON_LABEL: Record<MaterialType, string> = {
+  pdf: "Ver PDF",
+  word: "Ver documento",
+  video: "Ver video",
+  presentacion: "Ver presentación",
+  enlace: "Abrir enlace",
+  otro: "Abrir material",
+};
+
+function MaterialTypeIcon({ type }: { type: MaterialType }) {
+  const common = { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 } as const;
+  switch (type) {
+    case "pdf":
+    case "word":
+      return (
+        <svg {...common}>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+          <path d="M9 13h6M9 17h6" />
+        </svg>
+      );
+    case "video":
+      return (
+        <svg {...common}>
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      );
+    case "presentacion":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="12" rx="1" />
+          <path d="M8 21h8M12 16v5" />
+          <path d="M7 12l2.8-3.2 2.2 2L17 6.5" />
+        </svg>
+      );
+    case "enlace":
+      return (
+        <svg {...common}>
+          <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+          <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+          <line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <path d="M15 3h6v6" />
+          <path d="M10 14 21 3" />
+        </svg>
+      );
+  }
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function OpenMaterialLink({
+  material,
+  onOpen,
+}: {
+  material: { type: MaterialType; url: string };
+  onOpen: (url: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const t = materialTypeInfo(material.type);
+  return (
+    <a
+      href={material.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => onOpen(material.url)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="inline-flex items-center gap-1.5 rounded-lg text-[12px] font-semibold px-2.5 py-1.5 transition-colors"
+      style={{ background: hexToRgba(t.bg, hovered ? 1 : 0.55), color: t.color }}
+    >
+      <MaterialTypeIcon type={material.type} />
+      {MATERIAL_BUTTON_LABEL[material.type]}
+    </a>
   );
 }
 
