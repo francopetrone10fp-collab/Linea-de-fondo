@@ -65,7 +65,7 @@ export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: Com
   return {
     matchup,
     fechaFmt,
-    competition: p.competition,
+    competition: p.competition?.name ?? null,
     refereesText,
     counts,
     pending,

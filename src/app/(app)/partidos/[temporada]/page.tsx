@@ -1,33 +1,33 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
-import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "../queries";
-import TemporadaListView from "./TemporadaListView";
+import { requireProfile, isArbitro } from "@/lib/session";
+import { fetchPartidosFull } from "../queries";
+import { competitionSlugFor } from "../PartidoCard";
+import { Empty } from "@/app/(app)/teams/TeamsView";
 
-export default async function TemporadaPage({ params }: { params: Promise<{ temporada: string }> }) {
+export default async function TemporadaCompetitionsPage({ params }: { params: Promise<{ temporada: string }> }) {
   const { temporada } = await params;
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [allPartidos, clips, reads, { data: teams }, { data: referees }] = await Promise.all([
-    fetchPartidosFull(supabase),
-    fetchAllClipsMinimal(supabase),
-    fetchAllReadsMinimal(supabase),
-    supabase.from("teams").select("id, name").order("name"),
-    supabase.from("referees").select("id, name").order("name"),
-  ]);
+  const allPartidos = await fetchPartidosFull(supabase);
+  const temporadaDecoded = decodeURIComponent(temporada);
+  const partidos = allPartidos.filter((p) => p.temporada === temporadaDecoded);
 
-  const partidos = allPartidos.filter((p) => p.temporada === decodeURIComponent(temporada));
-
-  const clipsByPartido: Record<string, typeof clips> = {};
-  clips.forEach((c) => {
-    (clipsByPartido[c.partido_id] ??= []).push(c);
+  const counts: Record<string, number> = {};
+  const names: Record<string, string> = {};
+  partidos.forEach((p) => {
+    const slug = competitionSlugFor(p);
+    counts[slug] = (counts[slug] ?? 0) + 1;
+    names[slug] = p.competition?.name ?? "Sin competencia";
+  });
+  const slugs = Object.keys(counts).sort((a, b) => {
+    if (a === "sin-competencia") return 1;
+    if (b === "sin-competencia") return -1;
+    return names[a].localeCompare(names[b]);
   });
 
-  const readRefereeIdsByPartido: Record<string, string[]> = {};
-  reads.forEach((r) => {
-    (readRefereeIdsByPartido[r.partido_id] ??= []).push(r.referee_id);
-  });
+  const title = isArbitro(profile) ? "Mis partidos" : `Temporada ${temporadaDecoded}`;
 
   return (
     <div>
@@ -38,18 +38,33 @@ export default async function TemporadaPage({ params }: { params: Promise<{ temp
         Volver a temporadas
       </Link>
 
-      <TemporadaListView
-        temporada={decodeURIComponent(temporada)}
-        partidos={partidos}
-        clipsByPartido={clipsByPartido}
-        readRefereeIdsByPartido={readRefereeIdsByPartido}
-        teams={teams ?? []}
-        referees={referees ?? []}
-        title={isArbitro(profile) ? "Mis partidos" : `Temporada ${decodeURIComponent(temporada)}`}
-        canCreate={canEvaluate(profile)}
-        canFilterByReferee={!isArbitro(profile)}
-        showReadStatus={canEvaluate(profile)}
-      />
+      <h1 className="font-display text-2xl font-semibold mb-5">{title}</h1>
+
+      {slugs.length === 0 ? (
+        <Empty title="No hay partidos en esta temporada" desc="Registrá el primero desde Partidos." />
+      ) : (
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}>
+          {slugs.map((slug) => (
+            <Link
+              key={slug}
+              href={`/partidos/${encodeURIComponent(temporadaDecoded)}/${encodeURIComponent(slug)}`}
+              className="bg-surface border border-line rounded-xl p-5 flex items-center gap-3.5 hover:border-text-faint"
+            >
+              <span className="w-11 h-11 rounded-[10px] bg-surface-3 text-accent flex items-center justify-center flex-none">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+                </svg>
+              </span>
+              <div>
+                <div className="font-display text-[17px] font-semibold">{names[slug]}</div>
+                <div className="text-[12px] text-text-faint mt-0.5">
+                  {counts[slug]} partido{counts[slug] === 1 ? "" : "s"}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

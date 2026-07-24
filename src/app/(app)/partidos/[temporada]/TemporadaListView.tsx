@@ -24,6 +24,8 @@ export default function TemporadaListView({
   readRefereeIdsByPartido,
   teams,
   referees,
+  competitions,
+  defaultCompetitionId,
   title,
   canCreate,
   canFilterByReferee,
@@ -35,6 +37,8 @@ export default function TemporadaListView({
   readRefereeIdsByPartido: Record<string, string[]>;
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
+  competitions: { id: string; name: string }[];
+  defaultCompetitionId?: string;
   title: string;
   canCreate: boolean;
   canFilterByReferee: boolean;
@@ -77,8 +81,8 @@ export default function TemporadaListView({
 
       {partidos.length === 0 ? (
         <Empty
-          title="No hay partidos en esta temporada"
-          desc={canCreate ? "Registrá el primero para empezar el historial de esta temporada." : ""}
+          title="No hay partidos acá"
+          desc={canCreate ? "Registrá el primero para empezar el historial." : ""}
         />
       ) : filtered.length === 0 ? (
         <Empty title="Sin resultados" desc="Ningún partido coincide con esos filtros." />
@@ -110,7 +114,14 @@ export default function TemporadaListView({
       )}
 
       {showModal && (
-        <PartidoFormModal mode="create" teams={teams} referees={referees} onClose={() => setShowModal(false)} />
+        <PartidoFormModal
+          mode="create"
+          teams={teams}
+          referees={referees}
+          competitions={competitions}
+          defaultCompetitionId={defaultCompetitionId}
+          onClose={() => setShowModal(false)}
+        />
       )}
     </div>
   );

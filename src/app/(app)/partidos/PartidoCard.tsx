@@ -8,6 +8,12 @@ export function refereesText(p: PartidoFull) {
   return p.referees.length ? p.referees.map((r) => r.name).join(" · ") : "Sin árbitros asignados";
 }
 
+// Segmento de URL para la carpeta de competencia de un partido (id real, o el
+// bucket fijo para los que todavía no tienen una competencia asignada).
+export function competitionSlugFor(p: PartidoFull) {
+  return p.competition?.id ?? "sin-competencia";
+}
+
 export function Matchup({ p, size = 24, bold = true }: { p: PartidoFull; size?: number; bold?: boolean }) {
   if (!p.teamLocal && !p.teamVisit) return null;
   const nameCls = bold ? "font-semibold text-[13.5px]" : "text-[12.5px] text-text-dim";
@@ -90,7 +96,7 @@ export function PartidoCard({
     : "Sin fecha";
   return (
     <Link
-      href={`/partidos/${encodeURIComponent(temporada)}/${p.id}`}
+      href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(competitionSlugFor(p))}/${p.id}`}
       className="bg-surface border border-line rounded-xl overflow-hidden block hover:border-text-faint"
     >
       <div className="p-4 pt-4">
@@ -101,7 +107,7 @@ export function PartidoCard({
         <Matchup p={p} />
         {p.competition && (
           <span className="text-[10.5px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-3 text-text-dim">
-            {p.competition}
+            {p.competition.name}
           </span>
         )}
         <p className="text-[12.5px] text-text-dim mt-2">{refereesText(p)}</p>

@@ -82,6 +82,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["teams"]["Insert"]>;
         Relationships: [];
       };
+      competitions: {
+        Row: {
+          id: string;
+          name: string;
+          color: string;
+          starter: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          color: string;
+          starter?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["competitions"]["Insert"]>;
+        Relationships: [];
+      };
       partidos: {
         Row: {
           id: string;
@@ -89,7 +109,7 @@ export interface Database {
           temporada: string;
           team_local_id: string | null;
           team_visit_id: string | null;
-          competition: string | null;
+          competition_id: string | null;
           notes: string | null;
           finalized_by: string | null;
           finalized_at: string | null;
@@ -101,7 +121,7 @@ export interface Database {
           fecha?: string | null;
           team_local_id?: string | null;
           team_visit_id?: string | null;
-          competition?: string | null;
+          competition_id?: string | null;
           notes?: string | null;
           finalized_by?: string | null;
           finalized_at?: string | null;

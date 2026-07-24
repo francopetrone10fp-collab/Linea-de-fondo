@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, canEvaluate, canDelete, isArbitro } from "@/lib/session";
-import { fetchPartidosFull, fetchClipsForPartido, fetchComments, fetchReadsForPartido, fetchClipViewedIds } from "../../queries";
+import { fetchPartidosFull, fetchClipsForPartido, fetchComments, fetchReadsForPartido, fetchClipViewedIds } from "../../../queries";
 import PartidoDetailView from "./PartidoDetailView";
 
 export default async function PartidoDetailPage({
   params,
 }: {
-  params: Promise<{ temporada: string; id: string }>;
+  params: Promise<{ temporada: string; competitionId: string; id: string }>;
 }) {
   const { temporada, id } = await params;
   const profile = await requireProfile();
@@ -19,11 +19,12 @@ export default async function PartidoDetailPage({
 
   const clips = await fetchClipsForPartido(supabase, id);
 
-  const [comments, reads, { data: teams }, { data: referees }, viewedClipIds] = await Promise.all([
+  const [comments, reads, { data: teams }, { data: referees }, { data: competitions }, viewedClipIds] = await Promise.all([
     fetchComments(supabase, "partido", id),
     fetchReadsForPartido(supabase, id),
     supabase.from("teams").select("id, name").order("name"),
     supabase.from("referees").select("id, name").order("name"),
+    supabase.from("competitions").select("id, name").order("name"),
     isArbitro(profile) && profile.referee_id
       ? fetchClipViewedIds(
           supabase,
@@ -41,6 +42,7 @@ export default async function PartidoDetailPage({
       reads={reads}
       teams={teams ?? []}
       referees={referees ?? []}
+      competitions={competitions ?? []}
       temporada={decodeURIComponent(temporada)}
       canEvaluate={canEvaluate(profile)}
       canDelete={canDelete(profile)}

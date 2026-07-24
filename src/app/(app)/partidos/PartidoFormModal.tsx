@@ -3,17 +3,22 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createPartido, updatePartido, type PartidoInput } from "./actions";
+import { createCompetition } from "@/app/(app)/competitions/actions";
 
 interface DirectoryOption {
   id: string;
   name: string;
 }
 
+const NEW_COMPETITION_VALUE = "__new__";
+
 export default function PartidoFormModal({
   mode,
   partidoId,
   teams,
   referees,
+  competitions,
+  defaultCompetitionId,
   initial,
   onClose,
 }: {
@@ -21,9 +26,11 @@ export default function PartidoFormModal({
   partidoId?: string;
   teams: DirectoryOption[];
   referees: DirectoryOption[];
+  competitions: DirectoryOption[];
+  defaultCompetitionId?: string;
   initial?: {
     fecha: string;
-    competition: string;
+    competitionId: string;
     notes: string;
     teamLocalId: string;
     teamVisitId: string;
@@ -33,7 +40,10 @@ export default function PartidoFormModal({
 }) {
   const router = useRouter();
   const [fecha, setFecha] = useState(initial?.fecha ?? "");
-  const [competition, setCompetition] = useState(initial?.competition ?? "");
+  const [competitionOptions, setCompetitionOptions] = useState(competitions);
+  const [competitionId, setCompetitionId] = useState(initial?.competitionId ?? defaultCompetitionId ?? "");
+  const [newCompetitionName, setNewCompetitionName] = useState("");
+  const [creatingCompetition, setCreatingCompetition] = useState(false);
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [teamLocalId, setTeamLocalId] = useState(initial?.teamLocalId ?? "");
   const [teamVisitId, setTeamVisitId] = useState(initial?.teamVisitId ?? "");
@@ -43,12 +53,37 @@ export default function PartidoFormModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  function onCompetitionSelectChange(value: string) {
+    if (value === NEW_COMPETITION_VALUE) {
+      setCreatingCompetition(true);
+      return;
+    }
+    setCompetitionId(value);
+  }
+
+  function onCreateCompetition() {
+    const trimmed = newCompetitionName.trim();
+    if (!trimmed) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await createCompetition(trimmed);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setCompetitionOptions((opts) => [...opts, res.competition].sort((a, b) => a.name.localeCompare(b.name)));
+      setCompetitionId(res.competition.id);
+      setNewCompetitionName("");
+      setCreatingCompetition(false);
+    });
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const input: PartidoInput = {
       fecha,
-      competition,
+      competitionId: competitionId || null,
       notes,
       teamLocalId: teamLocalId || null,
       teamVisitId: teamVisitId || null,
@@ -75,15 +110,50 @@ export default function PartidoFormModal({
             <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full" />
           </Field>
           <Field label="Competencia" className="flex-1">
-            <input
-              type="text"
-              value={competition}
-              onChange={(e) => setCompetition(e.target.value)}
-              placeholder="Ej: Liga U19 — Fecha 8"
-              className="w-full"
-            />
+            <select value={competitionId} onChange={(e) => onCompetitionSelectChange(e.target.value)} className="w-full">
+              <option value="">Sin especificar</option>
+              {competitionOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+              <option value={NEW_COMPETITION_VALUE}>+ Nueva competencia...</option>
+            </select>
           </Field>
         </div>
+
+        {creatingCompetition && (
+          <div className="flex gap-2 items-end mb-3.5 -mt-1.5">
+            <Field label="Nombre de la competencia" className="flex-1">
+              <input
+                type="text"
+                value={newCompetitionName}
+                onChange={(e) => setNewCompetitionName(e.target.value)}
+                placeholder="Ej: ARBB"
+                className="w-full"
+                autoFocus
+              />
+            </Field>
+            <button
+              type="button"
+              onClick={onCreateCompetition}
+              disabled={isPending || !newCompetitionName.trim()}
+              className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13px] px-3 py-2"
+            >
+              Crear
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCreatingCompetition(false);
+                setNewCompetitionName("");
+              }}
+              className="bg-transparent text-text-dim border border-line rounded-lg text-[13px] px-3 py-2"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
 
         <Field label="Árbitro 1">
           <select value={ref1} onChange={(e) => setRef1(e.target.value)} className="w-full">

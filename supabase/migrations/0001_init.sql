@@ -46,6 +46,16 @@ create table public.teams (
 );
 create unique index teams_name_key on public.teams (lower(name));
 
+create table public.competitions (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  color text not null,
+  starter boolean not null default false,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index competitions_name_key on public.competitions (lower(name));
+
 -- ============================================================
 -- 3. PARTIDOS
 -- ============================================================
@@ -57,7 +67,7 @@ create table public.partidos (
   ) stored,
   team_local_id uuid references public.teams(id) on delete set null,
   team_visit_id uuid references public.teams(id) on delete set null,
-  competition text,
+  competition_id uuid references public.competitions(id) on delete set null,
   notes text,
   finalized_by uuid references public.profiles(id) on delete set null,
   finalized_at timestamptz,
@@ -186,6 +196,7 @@ $$;
 alter table public.profiles enable row level security;
 alter table public.referees enable row level security;
 alter table public.teams enable row level security;
+alter table public.competitions enable row level security;
 alter table public.partidos enable row level security;
 alter table public.partido_referees enable row level security;
 alter table public.clips enable row level security;
@@ -261,6 +272,16 @@ create policy teams_insert on public.teams
   for insert with check (public.is_approved());
 
 create policy teams_delete on public.teams
+  for delete using (public.is_coordinador());
+
+-- ---------- competitions ----------
+create policy competitions_select on public.competitions
+  for select using (public.is_approved());
+
+create policy competitions_insert on public.competitions
+  for insert with check (public.is_approved());
+
+create policy competitions_delete on public.competitions
   for delete using (public.is_coordinador());
 
 -- ---------- partidos ----------

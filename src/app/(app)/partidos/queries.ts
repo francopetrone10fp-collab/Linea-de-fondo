@@ -12,7 +12,7 @@ export interface PartidoFull {
   id: string;
   fecha: string | null;
   temporada: string;
-  competition: string | null;
+  competition: DirectoryEntry | null;
   notes: string | null;
   finalizedAt: string | null;
   finalizedByName: string | null;
@@ -52,21 +52,29 @@ export interface CommentFull {
 type DB = SupabaseClient<Database>;
 
 export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
-  const [{ data: partidos }, { data: teams }, { data: referees }, { data: partidoReferees }, { data: profiles }] =
-    await Promise.all([
-      supabase
-        .from("partidos")
-        .select("*")
-        .order("fecha", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false }),
-      supabase.from("teams").select("id, name, color"),
-      supabase.from("referees").select("id, name, color, photo_url"),
-      supabase.from("partido_referees").select("partido_id, referee_id, position").order("position"),
-      supabase.from("profiles").select("id, name"),
-    ]);
+  const [
+    { data: partidos },
+    { data: teams },
+    { data: referees },
+    { data: competitions },
+    { data: partidoReferees },
+    { data: profiles },
+  ] = await Promise.all([
+    supabase
+      .from("partidos")
+      .select("*")
+      .order("fecha", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false }),
+    supabase.from("teams").select("id, name, color"),
+    supabase.from("referees").select("id, name, color, photo_url"),
+    supabase.from("competitions").select("id, name, color"),
+    supabase.from("partido_referees").select("partido_id, referee_id, position").order("position"),
+    supabase.from("profiles").select("id, name"),
+  ]);
 
   const teamById = new Map((teams ?? []).map((t) => [t.id, t]));
   const refereeById = new Map((referees ?? []).map((r) => [r.id, r]));
+  const competitionById = new Map((competitions ?? []).map((c) => [c.id, c]));
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
 
   const refsByPartido = new Map<string, DirectoryEntry[]>();
@@ -82,7 +90,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
     id: p.id,
     fecha: p.fecha,
     temporada: p.temporada,
-    competition: p.competition,
+    competition: p.competition_id ? (competitionById.get(p.competition_id) ?? null) : null,
     notes: p.notes,
     finalizedAt: p.finalized_at,
     finalizedByName: p.finalized_by ? (nameById.get(p.finalized_by) ?? null) : null,

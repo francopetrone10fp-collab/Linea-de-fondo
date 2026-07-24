@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { refereesText, FinalizedBadge, EvalSummary } from "../../PartidoCard";
-import ClipCard from "../../ClipCard";
-import ClipFormModal from "../../ClipFormModal";
-import PartidoFormModal from "../../PartidoFormModal";
-import ReportModal from "../../ReportModal";
+import { refereesText, FinalizedBadge, EvalSummary, competitionSlugFor } from "../../../PartidoCard";
+import ClipCard from "../../../ClipCard";
+import ClipFormModal from "../../../ClipFormModal";
+import PartidoFormModal from "../../../PartidoFormModal";
+import ReportModal from "../../../ReportModal";
 import CommentsThread from "@/components/CommentsThread";
-import ReadStatusSection from "../../ReadStatusSection";
-import { deletePartido, finalizePartido, reopenPartido } from "../../actions";
-import type { PartidoFull, ClipFull, CommentFull, ReadConfirmation } from "../../queries";
+import ReadStatusSection from "../../../ReadStatusSection";
+import { deletePartido, finalizePartido, reopenPartido } from "../../../actions";
+import type { PartidoFull, ClipFull, CommentFull, ReadConfirmation } from "../../../queries";
 import type { Evaluation } from "@/lib/database.types";
 
 export default function PartidoDetailView({
@@ -21,6 +21,7 @@ export default function PartidoDetailView({
   reads,
   teams,
   referees,
+  competitions,
   temporada,
   canEvaluate,
   canDelete,
@@ -34,6 +35,7 @@ export default function PartidoDetailView({
   reads: ReadConfirmation[];
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
+  competitions: { id: string; name: string }[];
   temporada: string;
   canEvaluate: boolean;
   canDelete: boolean;
@@ -92,7 +94,7 @@ export default function PartidoDetailView({
         : "¿Eliminar este partido? Esta acción no se puede deshacer.";
     if (!confirm(msg)) return;
     startTransition(async () => {
-      await deletePartido(partido.id, temporada);
+      await deletePartido(partido.id, temporada, competitionSlugFor(partido));
     });
   }
 
@@ -102,7 +104,7 @@ export default function PartidoDetailView({
   return (
     <div>
       <Link
-        href={`/partidos/${encodeURIComponent(temporada)}`}
+        href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(competitionSlugFor(partido))}`}
         className="text-text-dim hover:text-text text-[13px] flex items-center gap-1.5 mb-4 w-fit"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
@@ -116,7 +118,7 @@ export default function PartidoDetailView({
           <h1 className="font-display text-2xl font-semibold mb-1.5">{matchup}</h1>
           <p className="text-text-dim text-[13px] m-0 mb-0.5">
             {fechaFmt}
-            {partido.competition ? ` · ${partido.competition}` : ""}
+            {partido.competition ? ` · ${partido.competition.name}` : ""}
           </p>
           <p className="text-text-dim text-[13px] m-0">Árbitros: {refereesText(partido)}</p>
         </div>
@@ -245,9 +247,10 @@ export default function PartidoDetailView({
           partidoId={partido.id}
           teams={teams}
           referees={referees}
+          competitions={competitions}
           initial={{
             fecha: partido.fecha ?? "",
-            competition: partido.competition ?? "",
+            competitionId: partido.competition?.id ?? "",
             notes: partido.notes ?? "",
             teamLocalId: partido.teamLocal?.id ?? "",
             teamVisitId: partido.teamVisit?.id ?? "",
