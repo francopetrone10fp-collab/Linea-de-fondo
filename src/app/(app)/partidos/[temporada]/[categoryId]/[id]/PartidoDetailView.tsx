@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { refereesText, FinalizedBadge, EvalSummary, categorySlugFor } from "../../../PartidoCard";
+import { FinalizedBadge, EvalSummary } from "../../../PartidoCard";
+import { refereesText, categorySlugFor } from "../../../partidoHelpers";
 import ClipCard from "../../../ClipCard";
 import ClipFormModal from "../../../ClipFormModal";
 import PartidoFormModal from "../../../PartidoFormModal";

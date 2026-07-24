@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Empty } from "@/app/(app)/teams/TeamsView";
-import { PartidoCard, refereesText } from "../PartidoCard";
+import { PartidoCard } from "../PartidoCard";
+import { refereesText } from "../partidoHelpers";
 import PartidoFormModal from "../PartidoFormModal";
 import type { PartidoFull } from "../queries";
 import type { Evaluation } from "@/lib/database.types";

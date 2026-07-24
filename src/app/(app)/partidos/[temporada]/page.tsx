@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isArbitro } from "@/lib/session";
 import { fetchPartidosFull } from "../queries";
-import { categorySlugFor } from "../PartidoCard";
+import { categorySlugFor } from "../partidoHelpers";
 import { Empty } from "@/app/(app)/teams/TeamsView";
 
 export default async function TemporadaCategoriesPage({ params }: { params: Promise<{ temporada: string }> }) {

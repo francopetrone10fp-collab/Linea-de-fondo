@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
 import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "../../queries";
-import { categorySlugFor } from "../../PartidoCard";
+import { categorySlugFor } from "../../partidoHelpers";
 import TemporadaListView from "../TemporadaListView";
 
 const SIN_CATEGORIA = "sin-categoria";
