@@ -1,8 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useTransition } from "react";
 import { ColorBadge } from "@/components/Badge";
 import { EVAL_LEVELS, truncateText } from "@/lib/constants";
+import { deletePartido } from "./actions";
+import PartidoFormModal from "./PartidoFormModal";
 import type { PartidoFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
+
+interface DirectoryOption {
+  id: string;
+  name: string;
+}
 
 export function refereesText(p: PartidoFull) {
   return p.referees.length ? p.referees.map((r) => r.name).join(" · ") : "Sin árbitros asignados";
@@ -84,21 +94,50 @@ export function PartidoCard({
   evalCounts,
   pendingCount,
   readStatus,
+  canManage = false,
+  teams = [],
+  referees = [],
+  categories = [],
+  competitions = [],
 }: {
   p: PartidoFull;
   temporada: string;
   evalCounts: Record<Evaluation, number>;
   pendingCount: number;
   readStatus?: { confirmed: number; total: number };
+  canManage?: boolean;
+  teams?: DirectoryOption[];
+  referees?: DirectoryOption[];
+  categories?: DirectoryOption[];
+  competitions?: DirectoryOption[];
 }) {
+  const [showEdit, setShowEdit] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const categorySlug = categorySlugFor(p);
+
   const fechaFmt = p.fecha
     ? new Date(p.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })
     : "Sin fecha";
+
+  function onDelete() {
+    const totalClips = pendingCount + Object.values(evalCounts).reduce((a, b) => a + b, 0);
+    const msg =
+      totalClips > 0
+        ? `¿Eliminar este partido? También se van a eliminar sus ${totalClips} clip${totalClips === 1 ? "" : "s"} cargado${totalClips === 1 ? "" : "s"}. Esta acción no se puede deshacer.`
+        : "¿Eliminar este partido? Esta acción no se puede deshacer.";
+    if (!confirm(msg)) return;
+    startTransition(async () => {
+      await deletePartido(p.id, temporada, categorySlug);
+    });
+  }
+
   return (
-    <Link
-      href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlugFor(p))}/${p.id}`}
-      className="bg-surface border border-line rounded-xl overflow-hidden block hover:border-text-faint"
-    >
+    <div className="relative bg-surface border border-line rounded-xl overflow-hidden hover:border-text-faint">
+      <Link
+        href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlug)}/${p.id}`}
+        aria-label="Ver detalle del partido"
+        className="absolute inset-0"
+      />
       <div className="p-4 pt-4">
         <div className="flex justify-between items-center mb-2 gap-2">
           <span className="font-mono text-[12px] text-text-dim">{fechaFmt}</span>
@@ -136,8 +175,54 @@ export function PartidoCard({
               <path d="M9 6l6 6-6 6" />
             </svg>
           </span>
+          {canManage && (
+            <div className="relative z-10 flex gap-1">
+              <button
+                type="button"
+                onClick={() => setShowEdit(true)}
+                title="Editar partido"
+                className="text-text-faint hover:text-text hover:bg-surface-2 p-1 rounded-md"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={isPending}
+                title="Eliminar partido"
+                className="text-text-faint hover:text-bad-text hover:bg-bad-bg p-1 rounded-md disabled:opacity-50"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </Link>
+
+      {showEdit && (
+        <PartidoFormModal
+          mode="edit"
+          partidoId={p.id}
+          teams={teams}
+          referees={referees}
+          categories={categories}
+          competitions={competitions}
+          initial={{
+            fecha: p.fecha ?? "",
+            categoryId: p.category?.id ?? "",
+            competitionId: p.competition?.id ?? "",
+            notes: p.notes ?? "",
+            teamLocalId: p.teamLocal?.id ?? "",
+            teamVisitId: p.teamVisit?.id ?? "",
+            refereeIds: p.referees.map((r) => r.id),
+          }}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
+    </div>
   );
 }

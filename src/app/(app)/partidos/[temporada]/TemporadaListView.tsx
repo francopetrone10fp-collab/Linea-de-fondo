@@ -109,6 +109,11 @@ export default function TemporadaListView({
                 evalCounts={counts}
                 pendingCount={pending}
                 readStatus={showReadStatus ? { confirmed: readCount!, total: p.referees.length } : undefined}
+                canManage={canCreate}
+                teams={teams}
+                referees={referees}
+                categories={categories}
+                competitions={competitions}
               />
             );
           })}
