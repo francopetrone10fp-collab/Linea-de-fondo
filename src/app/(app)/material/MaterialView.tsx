@@ -19,6 +19,7 @@ interface Material {
 
 export default function MaterialView({ materials, canManage }: { materials: Material[]; canManage: boolean }) {
   const [typeFilter, setTypeFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [videoMaterial, setVideoMaterial] = useState<Material | null>(null);
@@ -26,10 +27,10 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const filtered = useMemo(
-    () => (typeFilter ? materials.filter((m) => m.type === typeFilter) : materials),
-    [materials, typeFilter]
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return materials.filter((m) => (!typeFilter || m.type === typeFilter) && (!q || m.title.toLowerCase().includes(q)));
+  }, [materials, typeFilter, search]);
 
   function openCreate() {
     setEditingId(null);
@@ -93,7 +94,7 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
         se suben archivos directo — pegá un link de Drive, YouTube, etc.
       </div>
 
-      <div className="mb-5">
+      <div className="mb-5 flex gap-2.5 flex-wrap">
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
           <option value="">Todos los tipos</option>
           {MATERIAL_TYPES.map((t) => (
@@ -102,6 +103,13 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
             </option>
           ))}
         </select>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar material por título..."
+          className="min-w-[240px] flex-1 max-w-[360px]"
+        />
       </div>
 
       {filtered.length === 0 ? (
@@ -110,7 +118,9 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
           desc={
             materials.length === 0
               ? "Sumá el primer PDF, video o link de estudio para el equipo."
-              : "No hay material de ese tipo todavía."
+              : search
+                ? `Ningún material coincide con "${search}".`
+                : "No hay material de ese tipo todavía."
           }
         />
       ) : (

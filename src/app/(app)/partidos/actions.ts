@@ -4,7 +4,35 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
+import { colorForTeam } from "@/lib/constants";
 import type { Evaluation, Situation, WhistleType } from "@/lib/database.types";
+
+// La categoría (Superliga, U19, etc.) es solo una etiqueta del partido, sin
+// sección propia de administración — se crea al vuelo desde el formulario de
+// partido (ver PartidoFormModal).
+export async function createCategory(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false as const, error: "Poné un nombre para la categoría" };
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({
+      name: trimmed,
+      color: colorForTeam(trimmed),
+      created_by: profile.id,
+    })
+    .select("id, name, color")
+    .single();
+  if (error || !data) {
+    return {
+      ok: false as const,
+      error: error?.code === "23505" ? "Esa categoría ya existe" : "No se pudo guardar la categoría",
+    };
+  }
+  revalidatePath("/competitions", "layout");
+  return { ok: true as const, category: data };
+}
 
 export interface PartidoInput {
   fecha: string; // 'YYYY-MM-DD' o ''

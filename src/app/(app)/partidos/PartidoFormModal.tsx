@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { createPartido, updatePartido, type PartidoInput } from "./actions";
-import { createCategory } from "@/app/(app)/categories/actions";
+import { createPartido, updatePartido, createCategory, type PartidoInput } from "./actions";
 import { createCompetition } from "@/app/(app)/competitions/actions";
 
 interface DirectoryOption {
