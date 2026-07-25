@@ -41,7 +41,7 @@ export function buildAggregateStats(rows: ReportClipRow[]): AggregateStats {
   const whistleClassified = WHISTLE_TYPES.reduce((sum, w) => sum + (whistleCounts[w.key] ?? 0), 0);
 
   const segments = [
-    { label: "Mala", value: counts.mala, color: EVAL_COLORS.mala },
+    { label: "No recomendable", value: counts.mala, color: EVAL_COLORS.mala },
     { label: "Estándar", value: counts.estandar, color: EVAL_COLORS.estandar },
     { label: "Buena", value: counts.buena, color: EVAL_COLORS.buena },
     { label: "Relevante", value: counts.relevante, color: EVAL_COLORS.relevante },

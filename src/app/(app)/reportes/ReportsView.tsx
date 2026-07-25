@@ -203,7 +203,7 @@ export default function ReportsView({
         <>
           <div className="grid gap-3.5 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
             <StatCard label="Jugadas" value={stats.total} />
-            <StatCard label="Mala" value={stats.counts.mala} colorClass="text-bad-text" />
+            <StatCard label="No recomendable" value={stats.counts.mala} colorClass="text-bad-text" />
             <StatCard label="Estándar" value={stats.counts.estandar} colorClass="text-amber-text" />
             <StatCard label="Buena" value={stats.counts.buena} colorClass="text-good-text" />
             <StatCard label="Relevante" value={stats.counts.relevante} colorClass="text-relevant-text" />

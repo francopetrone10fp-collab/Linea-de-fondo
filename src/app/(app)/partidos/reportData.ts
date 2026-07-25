@@ -93,7 +93,7 @@ export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: Com
 
 export function pieSegments(data: ReportData) {
   return [
-    { label: "Mala", value: data.counts.mala, color: EVAL_COLORS.mala },
+    { label: "No recomendable", value: data.counts.mala, color: EVAL_COLORS.mala },
     { label: "Estándar", value: data.counts.estandar, color: EVAL_COLORS.estandar },
     { label: "Buena", value: data.counts.buena, color: EVAL_COLORS.buena },
     { label: "Relevante", value: data.counts.relevante, color: EVAL_COLORS.relevante },
@@ -167,7 +167,7 @@ export function buildStandaloneReportHtml(data: ReportData): string {
     <p class="report-sub">${esc(data.matchup)} · ${esc(data.fechaFmt)}${data.category ? " · " + esc(data.category) : ""}${data.competition ? " · " + esc(data.competition) : ""}<br>Árbitros: ${esc(data.refereesText)}</p>
     <div class="report-stat-row">
       <div class="report-stat"><div class="n">${data.total}</div><div class="l">Jugadas</div></div>
-      <div class="report-stat"><div class="n" style="color:#F09595">${data.counts.mala}</div><div class="l">Mala</div></div>
+      <div class="report-stat"><div class="n" style="color:#F09595">${data.counts.mala}</div><div class="l">No recomendable</div></div>
       <div class="report-stat"><div class="n" style="color:#E8CE85">${data.counts.estandar}</div><div class="l">Estándar</div></div>
       <div class="report-stat"><div class="n" style="color:#7FCB8C">${data.counts.buena}</div><div class="l">Buena</div></div>
       <div class="report-stat"><div class="n" style="color:#7FE0C9">${data.counts.relevante}</div><div class="l">Relevante</div></div>

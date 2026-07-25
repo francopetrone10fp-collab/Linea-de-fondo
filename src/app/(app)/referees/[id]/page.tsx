@@ -60,7 +60,7 @@ export default async function RefereeProfilePage({ params }: { params: Promise<{
   const pending = total - (counts.mala + counts.estandar + counts.buena + counts.relevante);
 
   const segments = [
-    { label: "Mala", value: counts.mala, color: EVAL_COLORS.mala },
+    { label: "No recomendable", value: counts.mala, color: EVAL_COLORS.mala },
     { label: "Estándar", value: counts.estandar, color: EVAL_COLORS.estandar },
     { label: "Buena", value: counts.buena, color: EVAL_COLORS.buena },
     { label: "Relevante", value: counts.relevante, color: EVAL_COLORS.relevante },
@@ -97,7 +97,7 @@ export default async function RefereeProfilePage({ params }: { params: Promise<{
         <>
           <div className="grid gap-3.5 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
             <StatCard label="Jugadas totales" value={total} />
-            <StatCard label="Mala" value={counts.mala} colorClass="text-bad-text" />
+            <StatCard label="No recomendable" value={counts.mala} colorClass="text-bad-text" />
             <StatCard label="Estándar" value={counts.estandar} colorClass="text-amber-text" />
             <StatCard label="Buena" value={counts.buena} colorClass="text-good-text" />
             <StatCard label="Relevante" value={counts.relevante} colorClass="text-relevant-text" />

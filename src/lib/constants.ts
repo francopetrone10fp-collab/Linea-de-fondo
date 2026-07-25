@@ -19,7 +19,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 export const EVAL_LEVELS: { key: Evaluation; label: string }[] = [
-  { key: "mala", label: "Mala" },
+  { key: "mala", label: "No recomendable" },
   { key: "estandar", label: "Estándar" },
   { key: "buena", label: "Buena" },
   { key: "relevante", label: "Relevante" },

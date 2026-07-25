@@ -57,7 +57,7 @@ export default function ReportModal({
 
         <div className="flex gap-2.5 flex-wrap mb-5">
           <Stat n={data.total} l="Jugadas" />
-          <Stat n={data.counts.mala} l="Mala" color="text-bad-text" />
+          <Stat n={data.counts.mala} l="No recomendable" color="text-bad-text" />
           <Stat n={data.counts.estandar} l="Estándar" color="text-amber-text" />
           <Stat n={data.counts.buena} l="Buena" color="text-good-text" />
           <Stat n={data.counts.relevante} l="Relevante" color="text-relevant-text" />
