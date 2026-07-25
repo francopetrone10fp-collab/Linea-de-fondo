@@ -12,14 +12,17 @@ export default async function CompetitionsPage() {
   ]);
 
   const counts: Record<string, number> = {};
+  let sinCompetenciaCount = 0;
   (partidos ?? []).forEach((p) => {
     if (p.competition_id) counts[p.competition_id] = (counts[p.competition_id] ?? 0) + 1;
+    else sinCompetenciaCount++;
   });
 
   return (
     <CompetitionsView
       competitions={competitions ?? []}
       counts={counts}
+      sinCompetenciaCount={sinCompetenciaCount}
       canDeleteCompetitions={canDelete(profile)}
     />
   );

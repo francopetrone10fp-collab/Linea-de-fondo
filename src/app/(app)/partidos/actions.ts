@@ -48,7 +48,7 @@ export async function createPartido(input: PartidoInput) {
   if (error || !partido) return { ok: false as const, error: "No se pudo guardar el partido" };
   await setPartidoReferees(partido.id, input.refereeIds);
 
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const, id: partido.id };
 }
 
@@ -71,11 +71,11 @@ export async function updatePartido(id: string, input: PartidoInput) {
   if (error) return { ok: false as const, error: "No se pudo guardar el partido" };
   await setPartidoReferees(id, input.refereeIds);
 
-  revalidatePath("/partidos", "layout");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
-export async function deletePartido(id: string, temporada: string, categorySlug: string) {
+export async function deletePartido(id: string, temporada: string, competitionSlug: string) {
   const supabase = await createClient();
   const { data: clipRows } = await supabase.from("clips").select("id").eq("partido_id", id);
   const clipIds = (clipRows ?? []).map((c) => c.id);
@@ -87,8 +87,8 @@ export async function deletePartido(id: string, temporada: string, categorySlug:
   const { error } = await supabase.from("partidos").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar el partido" };
 
-  revalidatePath("/partidos");
-  redirect(`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlug)}`);
+  revalidatePath("/competitions", "layout");
+  redirect(`/competitions/${encodeURIComponent(competitionSlug)}/${encodeURIComponent(temporada)}`);
 }
 
 export async function finalizePartido(id: string) {
@@ -99,7 +99,7 @@ export async function finalizePartido(id: string) {
     .update({ finalized_by: profile.id, finalized_at: new Date().toISOString() })
     .eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo finalizar" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -107,7 +107,7 @@ export async function reopenPartido(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("partidos").update({ finalized_by: null, finalized_at: null }).eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo reabrir" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -125,7 +125,7 @@ export async function addComment(entityType: "partido" | "clip", entityId: strin
     text: trimmed,
   });
   if (error) return { ok: false as const, error: "No se pudo guardar el comentario" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -138,7 +138,7 @@ export async function editComment(id: string, text: string) {
     .update({ text: trimmed, edited_at: new Date().toISOString() })
     .eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo guardar la edición" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -146,7 +146,7 @@ export async function deleteComment(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("comments").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar el comentario" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -180,7 +180,7 @@ export async function createClip(input: ClipInput) {
     created_by: profile.id,
   });
   if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -202,7 +202,7 @@ export async function updateClip(id: string, input: ClipInput) {
     })
     .eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -211,7 +211,7 @@ export async function deleteClip(id: string) {
   await supabase.from("comments").delete().eq("entity_type", "clip").eq("entity_id", id);
   const { error } = await supabase.from("clips").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar el clip" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -219,7 +219,7 @@ export async function setClipEvaluation(id: string, evaluation: Evaluation | nul
   const supabase = await createClient();
   const { error } = await supabase.from("clips").update({ evaluation }).eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo actualizar la evaluación" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -282,6 +282,6 @@ export async function confirmPartidoRead(partidoId: string) {
     confirmed_by: profile.id,
   });
   if (error) return { ok: false as const, error: "No se pudo confirmar la lectura" };
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }

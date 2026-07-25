@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { FinalizedBadge, EvalSummary } from "../../../PartidoCard";
-import { refereesText, categorySlugFor } from "../../../partidoHelpers";
-import ClipCard from "../../../ClipCard";
-import ClipFormModal from "../../../ClipFormModal";
-import PartidoFormModal from "../../../PartidoFormModal";
-import ReportModal from "../../../ReportModal";
+import { FinalizedBadge, EvalSummary } from "@/app/(app)/partidos/PartidoCard";
+import { refereesText, competitionSlugFor } from "@/app/(app)/partidos/partidoHelpers";
+import ClipCard from "@/app/(app)/partidos/ClipCard";
+import ClipFormModal from "@/app/(app)/partidos/ClipFormModal";
+import PartidoFormModal from "@/app/(app)/partidos/PartidoFormModal";
+import ReportModal from "@/app/(app)/partidos/ReportModal";
 import CommentsThread from "@/components/CommentsThread";
-import ReadStatusSection from "../../../ReadStatusSection";
-import { deletePartido, finalizePartido, reopenPartido } from "../../../actions";
-import type { PartidoFull, ClipFull, CommentFull, ReadConfirmation } from "../../../queries";
+import ReadStatusSection from "@/app/(app)/partidos/ReadStatusSection";
+import { deletePartido, finalizePartido, reopenPartido } from "@/app/(app)/partidos/actions";
+import type { PartidoFull, ClipFull, CommentFull, ReadConfirmation } from "@/app/(app)/partidos/queries";
 import type { Evaluation } from "@/lib/database.types";
 
 export default function PartidoDetailView({
@@ -97,7 +97,7 @@ export default function PartidoDetailView({
         : "¿Eliminar este partido? Esta acción no se puede deshacer.";
     if (!confirm(msg)) return;
     startTransition(async () => {
-      await deletePartido(partido.id, temporada, categorySlugFor(partido));
+      await deletePartido(partido.id, temporada, competitionSlugFor(partido));
     });
   }
 
@@ -107,7 +107,7 @@ export default function PartidoDetailView({
   return (
     <div>
       <Link
-        href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlugFor(partido))}`}
+        href={`/competitions/${encodeURIComponent(competitionSlugFor(partido))}/${encodeURIComponent(temporada)}`}
         className="text-text-dim hover:text-text text-[13px] flex items-center gap-1.5 mb-4 w-fit"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>

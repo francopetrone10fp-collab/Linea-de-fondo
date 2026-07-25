@@ -1,13 +1,19 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, canEvaluate, canDelete, isArbitro } from "@/lib/session";
-import { fetchPartidosFull, fetchClipsForPartido, fetchComments, fetchReadsForPartido, fetchClipViewedIds } from "../../../queries";
+import {
+  fetchPartidosFull,
+  fetchClipsForPartido,
+  fetchComments,
+  fetchReadsForPartido,
+  fetchClipViewedIds,
+} from "@/app/(app)/partidos/queries";
 import PartidoDetailView from "./PartidoDetailView";
 
 export default async function PartidoDetailPage({
   params,
 }: {
-  params: Promise<{ temporada: string; categoryId: string; id: string }>;
+  params: Promise<{ temporada: string; competitionId: string; id: string }>;
 }) {
   const { temporada, id } = await params;
   const profile = await requireProfile();

@@ -22,7 +22,7 @@ export async function createTeam(name: string) {
     };
   }
   revalidatePath("/teams");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -31,6 +31,6 @@ export async function deleteTeam(id: string) {
   const { error } = await supabase.from("teams").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar el equipo" };
   revalidatePath("/teams");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }

@@ -25,8 +25,7 @@ export async function createCompetition(name: string) {
       error: error?.code === "23505" ? "Esa competencia ya existe" : "No se pudo guardar la competencia",
     };
   }
-  revalidatePath("/competitions");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const, competition: data };
 }
 
@@ -34,7 +33,6 @@ export async function deleteCompetition(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("competitions").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar la competencia" };
-  revalidatePath("/competitions");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }

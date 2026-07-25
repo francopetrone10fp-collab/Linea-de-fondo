@@ -6,7 +6,7 @@ import ReportsView from "./ReportsView";
 
 export default async function ReportesPage() {
   const profile = await requireProfile();
-  if (!canEvaluate(profile)) redirect("/partidos");
+  if (!canEvaluate(profile)) redirect("/competitions");
 
   const supabase = await createClient();
   const [clips, { data: teams }, { data: referees }] = await Promise.all([

@@ -18,7 +18,7 @@ const EMPTY_COUNTS: Record<Evaluation, number> = { mala: 0, estandar: 0, buena: 
 export default async function RefereeProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const profile = await requireProfile();
-  if (!canEvaluate(profile)) redirect("/partidos");
+  if (!canEvaluate(profile)) redirect("/competitions");
 
   const supabase = await createClient();
   const [{ data: referee }, allPartidos, clipsMinimal, { data: myClipsData }] = await Promise.all([

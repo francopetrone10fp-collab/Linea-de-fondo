@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Empty } from "@/app/(app)/teams/TeamsView";
-import { PartidoCard } from "../PartidoCard";
-import { refereesText } from "../partidoHelpers";
-import PartidoFormModal from "../PartidoFormModal";
-import type { PartidoFull } from "../queries";
+import { PartidoCard } from "./PartidoCard";
+import { refereesText } from "./partidoHelpers";
+import PartidoFormModal from "./PartidoFormModal";
+import type { PartidoFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
 
 interface MinimalClip {
@@ -27,7 +27,7 @@ export default function TemporadaListView({
   referees,
   categories,
   competitions,
-  defaultCategoryId,
+  defaultCompetitionId,
   title,
   canCreate,
   canFilterByReferee,
@@ -41,7 +41,7 @@ export default function TemporadaListView({
   referees: { id: string; name: string }[];
   categories: { id: string; name: string }[];
   competitions: { id: string; name: string }[];
-  defaultCategoryId?: string;
+  defaultCompetitionId?: string;
   title: string;
   canCreate: boolean;
   canFilterByReferee: boolean;
@@ -128,7 +128,7 @@ export default function TemporadaListView({
           referees={referees}
           categories={categories}
           competitions={competitions}
-          defaultCategoryId={defaultCategoryId}
+          defaultCompetitionId={defaultCompetitionId}
           onClose={() => setShowModal(false)}
         />
       )}

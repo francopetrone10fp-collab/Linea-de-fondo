@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
-import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "../../queries";
-import { categorySlugFor } from "../../partidoHelpers";
-import TemporadaListView from "../TemporadaListView";
+import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "@/app/(app)/partidos/queries";
+import { competitionSlugFor } from "@/app/(app)/partidos/partidoHelpers";
+import TemporadaListView from "@/app/(app)/partidos/TemporadaListView";
 
-const SIN_CATEGORIA = "sin-categoria";
+const SIN_COMPETENCIA = "sin-competencia";
 
-export default async function CategoryPartidosPage({
+export default async function CompetitionSeasonPartidosPage({
   params,
 }: {
-  params: Promise<{ temporada: string; categoryId: string }>;
+  params: Promise<{ competitionId: string; temporada: string }>;
 }) {
-  const { temporada, categoryId } = await params;
+  const { competitionId, temporada } = await params;
   const profile = await requireProfile();
   const supabase = await createClient();
 
@@ -29,10 +29,12 @@ export default async function CategoryPartidosPage({
 
   const temporadaDecoded = decodeURIComponent(temporada);
   const partidos = allPartidos.filter(
-    (p) => p.temporada === temporadaDecoded && categorySlugFor(p) === categoryId
+    (p) => p.temporada === temporadaDecoded && competitionSlugFor(p) === competitionId
   );
-  const categoryName =
-    categoryId === SIN_CATEGORIA ? "Sin categoría" : (categories ?? []).find((c) => c.id === categoryId)?.name;
+  const competitionName =
+    competitionId === SIN_COMPETENCIA
+      ? "Sin competencia"
+      : (competitions ?? []).find((c) => c.id === competitionId)?.name;
 
   const clipsByPartido: Record<string, typeof clips> = {};
   clips.forEach((c) => {
@@ -47,13 +49,13 @@ export default async function CategoryPartidosPage({
   return (
     <div>
       <Link
-        href={`/partidos/${encodeURIComponent(temporadaDecoded)}`}
+        href={`/competitions/${encodeURIComponent(competitionId)}`}
         className="text-text-dim hover:text-text text-[13px] flex items-center gap-1.5 mb-4 w-fit"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
-        Volver a categorías
+        Volver a temporadas
       </Link>
 
       <TemporadaListView
@@ -65,11 +67,11 @@ export default async function CategoryPartidosPage({
         referees={referees ?? []}
         categories={categories ?? []}
         competitions={competitions ?? []}
-        defaultCategoryId={categoryId === SIN_CATEGORIA ? undefined : categoryId}
+        defaultCompetitionId={competitionId === SIN_COMPETENCIA ? undefined : competitionId}
         title={
           isArbitro(profile)
             ? "Mis partidos"
-            : `${categoryName ?? "Sin categoría"} — Temporada ${temporadaDecoded}`
+            : `${competitionName ?? "Sin competencia"} — Temporada ${temporadaDecoded}`
         }
         canCreate={canEvaluate(profile)}
         canFilterByReferee={!isArbitro(profile)}

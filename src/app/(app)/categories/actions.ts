@@ -26,7 +26,7 @@ export async function createCategory(name: string) {
     };
   }
   revalidatePath("/categories");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const, category: data };
 }
 
@@ -35,6 +35,6 @@ export async function deleteCategory(id: string) {
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar la categoría" };
   revalidatePath("/categories");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }

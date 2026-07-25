@@ -32,7 +32,7 @@ export default async function ReportPrintPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const profile = await requireProfile();
-  if (!canEvaluate(profile)) redirect("/partidos");
+  if (!canEvaluate(profile)) redirect("/competitions");
 
   const filters = searchParamsToFilters(await searchParams);
 

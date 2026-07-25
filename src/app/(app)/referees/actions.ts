@@ -22,7 +22,7 @@ export async function createReferee(name: string) {
     };
   }
   revalidatePath("/referees");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -31,7 +31,7 @@ export async function deleteReferee(id: string) {
   const { error } = await supabase.from("referees").delete().eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo eliminar" };
   revalidatePath("/referees");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
 
@@ -84,6 +84,6 @@ export async function mergeReferees(sourceId: string, targetId: string) {
   if (deleteError) return { ok: false as const, error: "No se pudo eliminar el duplicado" };
 
   revalidatePath("/referees");
-  revalidatePath("/partidos");
+  revalidatePath("/competitions", "layout");
   return { ok: true as const, clipsMoved: (sourceRows ?? []).length };
 }

@@ -20,7 +20,7 @@ export default function PartidoFormModal({
   referees,
   categories,
   competitions,
-  defaultCategoryId,
+  defaultCompetitionId,
   initial,
   onClose,
 }: {
@@ -30,7 +30,7 @@ export default function PartidoFormModal({
   referees: DirectoryOption[];
   categories: DirectoryOption[];
   competitions: DirectoryOption[];
-  defaultCategoryId?: string;
+  defaultCompetitionId?: string;
   initial?: {
     fecha: string;
     categoryId: string;
@@ -45,9 +45,9 @@ export default function PartidoFormModal({
   const router = useRouter();
   const [fecha, setFecha] = useState(initial?.fecha ?? "");
   const [categoryOptions, setCategoryOptions] = useState(categories);
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? defaultCategoryId ?? "");
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
   const [competitionOptions, setCompetitionOptions] = useState(competitions);
-  const [competitionId, setCompetitionId] = useState(initial?.competitionId ?? "");
+  const [competitionId, setCompetitionId] = useState(initial?.competitionId ?? defaultCompetitionId ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [teamLocalId, setTeamLocalId] = useState(initial?.teamLocalId ?? "");
   const [teamVisitId, setTeamVisitId] = useState(initial?.teamVisitId ?? "");

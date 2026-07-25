@@ -6,7 +6,7 @@ import { ColorBadge } from "@/components/Badge";
 import { EVAL_LEVELS, truncateText } from "@/lib/constants";
 import { deletePartido } from "./actions";
 import PartidoFormModal from "./PartidoFormModal";
-import { refereesText, categorySlugFor } from "./partidoHelpers";
+import { refereesText, competitionSlugFor } from "./partidoHelpers";
 import type { PartidoFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
 
@@ -104,7 +104,7 @@ export function PartidoCard({
 }) {
   const [showEdit, setShowEdit] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const categorySlug = categorySlugFor(p);
+  const competitionSlug = competitionSlugFor(p);
 
   const fechaFmt = p.fecha
     ? new Date(p.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })
@@ -118,14 +118,14 @@ export function PartidoCard({
         : "¿Eliminar este partido? Esta acción no se puede deshacer.";
     if (!confirm(msg)) return;
     startTransition(async () => {
-      await deletePartido(p.id, temporada, categorySlug);
+      await deletePartido(p.id, temporada, competitionSlug);
     });
   }
 
   return (
     <div className="relative bg-surface border border-line rounded-xl overflow-hidden hover:border-text-faint">
       <Link
-        href={`/partidos/${encodeURIComponent(temporada)}/${encodeURIComponent(categorySlug)}/${p.id}`}
+        href={`/competitions/${encodeURIComponent(competitionSlug)}/${encodeURIComponent(temporada)}/${p.id}`}
         aria-label="Ver detalle del partido"
         className="absolute inset-0"
       />
