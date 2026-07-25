@@ -22,9 +22,11 @@ const NAV_ITEMS = [
 export default function Sidebar({
   profile,
   pendingCount,
+  onNavigate,
 }: {
   profile: SessionProfile;
   pendingCount: number;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -53,7 +55,7 @@ export default function Sidebar({
   }
 
   return (
-    <div className="relative z-10 w-[220px] flex-none bg-surface border-r border-line p-6 flex flex-col gap-5 md:flex md:flex-col">
+    <div className="relative z-10 w-full md:w-[220px] flex-none bg-surface md:border-r border-line p-6 flex flex-col gap-5 min-h-screen md:min-h-0">
       <div className="flex flex-col gap-0.5">
         <div className="flex items-center gap-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C79A3D" strokeWidth={2}>
@@ -106,6 +108,7 @@ export default function Sidebar({
             <Link
               key={item.view}
               href={item.href}
+              onClick={onNavigate}
               className={`flex items-center gap-2.5 border-l-[3px] text-[14px] font-medium px-2.5 py-2.5 rounded-r-md ${
                 active
                   ? "border-accent text-text bg-surface-2"
@@ -122,7 +125,7 @@ export default function Sidebar({
           );
         })}
       </nav>
-      <div className="mt-auto text-[11px] text-text-faint leading-relaxed hidden md:block">
+      <div className="mt-auto text-[11px] text-text-faint leading-relaxed">
         Los datos se guardan y son visibles según el rol de cada perfil.
       </div>
     </div>
