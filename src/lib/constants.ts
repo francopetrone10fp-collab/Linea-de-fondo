@@ -50,6 +50,8 @@ export const WHISTLE_TYPES: { key: WhistleType; label: string; fullName: string;
   { key: "IW", label: "IW", fullName: "Immediate Whistle", color: "#D6A73F", bg: "#332B15" },
   { key: "PW", label: "PW", fullName: "Patient Whistle", color: "#16A184", bg: "#0F2E28" },
   { key: "CW", label: "CW", fullName: "Cadent Whistle", color: "#4E8FD6", bg: "#182535" },
+  { key: "NCC", label: "No Call ✓", fullName: "No Call correcto", color: "#3FA34D", bg: "#1B2E1F" },
+  { key: "NCI", label: "No Call ✗", fullName: "No Call incorrecto", color: "#D64545", bg: "#331B1B" },
 ];
 
 export function whistleTypeInfo(key: WhistleType | null | undefined) {

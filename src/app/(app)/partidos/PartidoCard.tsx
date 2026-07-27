@@ -91,6 +91,7 @@ export function PartidoCard({
   referees = [],
   categories = [],
   competitions = [],
+  canCreateCompetitions = true,
 }: {
   p: PartidoFull;
   temporada: string;
@@ -102,6 +103,7 @@ export function PartidoCard({
   referees?: DirectoryOption[];
   categories?: DirectoryOption[];
   competitions?: DirectoryOption[];
+  canCreateCompetitions?: boolean;
 }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
@@ -209,6 +211,7 @@ export function PartidoCard({
           referees={referees}
           categories={categories}
           competitions={competitions}
+          canCreateCompetitions={canCreateCompetitions}
           initial={{
             fecha: p.fecha ?? "",
             categoryId: p.category?.id ?? "",

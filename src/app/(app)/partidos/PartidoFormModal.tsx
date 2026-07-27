@@ -21,6 +21,7 @@ export default function PartidoFormModal({
   competitions,
   defaultCompetitionId,
   defaultSeasonId,
+  canCreateCompetitions = true,
   initial,
   onClose,
 }: {
@@ -32,6 +33,7 @@ export default function PartidoFormModal({
   competitions: DirectoryOption[];
   defaultCompetitionId?: string;
   defaultSeasonId?: string | null;
+  canCreateCompetitions?: boolean;
   initial?: {
     fecha: string;
     categoryId: string;
@@ -128,6 +130,7 @@ export default function PartidoFormModal({
           }}
           newPlaceholder="Ej: Asociación Rosarina de Básquet (AROB)"
           newFieldLabel="Nombre de la competencia"
+          allowCreate={canCreateCompetitions}
         />
 
         <Field label="Árbitro 1">
@@ -229,6 +232,7 @@ function DirectorySelect({
   createAction,
   newPlaceholder,
   newFieldLabel,
+  allowCreate = true,
 }: {
   label: string;
   value: string;
@@ -238,6 +242,7 @@ function DirectorySelect({
   createAction: (name: string) => Promise<{ ok: true; item: DirectoryOption } | { ok: false; error: string }>;
   newPlaceholder: string;
   newFieldLabel: string;
+  allowCreate?: boolean;
 }) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -279,7 +284,7 @@ function DirectorySelect({
               {o.name}
             </option>
           ))}
-          <option value={NEW_VALUE}>+ Nueva {label.toLowerCase()}...</option>
+          {allowCreate && <option value={NEW_VALUE}>+ Nueva {label.toLowerCase()}...</option>}
         </select>
       </Field>
 

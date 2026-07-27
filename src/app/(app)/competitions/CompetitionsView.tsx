@@ -17,11 +17,13 @@ export default function CompetitionsView({
   counts,
   sinCompetenciaCount,
   canDeleteCompetitions,
+  canCreateCompetitions,
 }: {
   competitions: Competition[];
   counts: Record<string, number>;
   sinCompetenciaCount: number;
   canDeleteCompetitions: boolean;
+  canCreateCompetitions: boolean;
 }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -56,21 +58,23 @@ export default function CompetitionsView({
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
         <h1 className="font-display text-2xl font-semibold">Competencias ({competitions.length})</h1>
-        <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej: Asociación Rosarina de Básquet (AROB)"
-            className="min-w-[220px]"
-          />
-          <button
-            disabled={isPending}
-            className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
-          >
-            + Agregar competencia
-          </button>
-        </form>
+        {canCreateCompetitions && (
+          <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej: Asociación Rosarina de Básquet (AROB)"
+              className="min-w-[220px]"
+            />
+            <button
+              disabled={isPending}
+              className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+            >
+              + Agregar competencia
+            </button>
+          </form>
+        )}
       </div>
       {error && <p className="text-bad-text text-[12.5px] mb-3">{error}</p>}
 
@@ -92,7 +96,10 @@ export default function CompetitionsView({
       )}
 
       {competitions.length === 0 ? (
-        <Empty title="Todavía no hay competencias cargadas" desc="Agregá la primera para empezar el directorio." />
+        <Empty
+          title="Todavía no hay competencias cargadas"
+          desc={canCreateCompetitions ? "Agregá la primera para empezar el directorio." : ""}
+        />
       ) : filteredCompetitions.length === 0 ? (
         <Empty title="Sin resultados" desc={`Ninguna competencia coincide con "${search}".`} />
       ) : (

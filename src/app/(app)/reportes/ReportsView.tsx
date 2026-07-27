@@ -5,6 +5,7 @@ import { Empty } from "@/app/(app)/teams/TeamsView";
 import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
 import { StatCard } from "@/components/StatCard";
+import RotateHint from "@/components/RotateHint";
 import { SITUATIONS, WHISTLE_TYPES, EVAL_LEVELS, evalLabel, whistleTypeInfo } from "@/lib/constants";
 import { EMPTY_FILTERS, applyReportFilters, filtersToSearchParams, type ReportFilters } from "./filters";
 import { buildAggregateStats } from "./aggregate";
@@ -114,6 +115,8 @@ export default function ReportsView({
           </button>
         </div>
       </div>
+
+      <RotateHint message="Para ver mejor la tabla, girá el celular a horizontal." />
 
       <div className="bg-surface border border-line rounded-xl p-4 mb-6">
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>

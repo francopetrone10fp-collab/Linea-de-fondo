@@ -30,6 +30,7 @@ export default function TemporadaListView({
   categoryFilterOptions = [],
   defaultCompetitionId,
   defaultSeasonId,
+  canCreateCompetitions = true,
   title,
   canCreate,
   canFilterByReferee,
@@ -46,6 +47,7 @@ export default function TemporadaListView({
   categoryFilterOptions?: { id: string; name: string }[];
   defaultCompetitionId?: string;
   defaultSeasonId?: string | null;
+  canCreateCompetitions?: boolean;
   title: string;
   canCreate: boolean;
   canFilterByReferee: boolean;
@@ -135,6 +137,7 @@ export default function TemporadaListView({
                 referees={referees}
                 categories={categories}
                 competitions={competitions}
+                canCreateCompetitions={canCreateCompetitions}
               />
             );
           })}
@@ -150,6 +153,7 @@ export default function TemporadaListView({
           competitions={competitions}
           defaultCompetitionId={defaultCompetitionId}
           defaultSeasonId={defaultSeasonId}
+          canCreateCompetitions={canCreateCompetitions}
           onClose={() => setShowModal(false)}
         />
       )}

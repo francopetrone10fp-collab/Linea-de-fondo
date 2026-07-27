@@ -2,13 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile } from "@/lib/session";
+import { requireProfile, isCoordinador } from "@/lib/session";
 import { colorForTeam } from "@/lib/constants";
 
 export async function createCompetition(name: string) {
   const trimmed = name.trim();
   if (!trimmed) return { ok: false as const, error: "Poné un nombre para la competencia" };
   const profile = await requireProfile();
+  if (!isCoordinador(profile)) {
+    return { ok: false as const, error: "Solo Coordinador General puede crear competencias" };
+  }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("competitions")

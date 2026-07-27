@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
+import { requireProfile, isArbitro, canEvaluate, isCoordinador } from "@/lib/session";
 import { fetchPartidosFull, fetchAllClipsMinimal, fetchAllReadsMinimal } from "@/app/(app)/partidos/queries";
 import { competitionSlugFor } from "@/app/(app)/partidos/partidoHelpers";
 import TemporadaListView from "@/app/(app)/partidos/TemporadaListView";
@@ -82,6 +82,7 @@ export default async function CompetitionSeasonPartidosPage({
         categoryFilterOptions={categoryFilterOptions}
         defaultCompetitionId={competitionId === SIN_COMPETENCIA ? undefined : competitionId}
         defaultSeasonId={seasonRow?.id ?? null}
+        canCreateCompetitions={isCoordinador(profile)}
         title={
           isArbitro(profile)
             ? "Mis partidos"

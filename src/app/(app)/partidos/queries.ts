@@ -117,7 +117,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
 
 export async function fetchClipsForPartido(supabase: DB, partidoId: string): Promise<ClipFull[]> {
   const [{ data: clips }, { data: referees }] = await Promise.all([
-    supabase.from("clips").select("*").eq("partido_id", partidoId).order("created_at", { ascending: false }),
+    supabase.from("clips").select("*").eq("partido_id", partidoId).order("created_at", { ascending: true }),
     supabase.from("referees").select("id, name, color, photo_url"),
   ]);
   const refereeById = new Map((referees ?? []).map((r) => [r.id, r]));

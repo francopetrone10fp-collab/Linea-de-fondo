@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, canEvaluate, canDelete, isArbitro } from "@/lib/session";
+import { requireProfile, canEvaluate, canDelete, isArbitro, isCoordinador } from "@/lib/session";
 import {
   fetchPartidosFull,
   fetchClipsForPartido,
@@ -58,6 +58,7 @@ export default async function PartidoDetailPage({
       isArbitro={isArbitro(profile)}
       myRefereeId={profile.referee_id}
       initialViewedClipIds={viewedClipIds}
+      canCreateCompetitions={isCoordinador(profile)}
     />
   );
 }

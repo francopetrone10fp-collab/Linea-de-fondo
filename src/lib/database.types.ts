@@ -12,7 +12,7 @@ export type Situation =
   | "Gestión de partido"
   | "Otro";
 export type MaterialType = "pdf" | "word" | "video" | "presentacion" | "enlace" | "otro";
-export type WhistleType = "QW" | "IW" | "PW" | "CW";
+export type WhistleType = "QW" | "IW" | "PW" | "CW" | "NCC" | "NCI";
 export type EntityType = "partido" | "clip";
 
 export interface Database {

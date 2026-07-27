@@ -5,6 +5,7 @@ import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
 import { EVAL_LEVELS, EVAL_COLORS, WHISTLE_TYPES } from "@/lib/constants";
 import { StatCard } from "@/components/StatCard";
+import RotateHint from "@/components/RotateHint";
 import type { Evaluation } from "@/lib/database.types";
 
 export default async function StatsPage() {
@@ -121,6 +122,7 @@ export default async function StatsPage() {
   return (
     <div>
       <h1 className="font-display text-2xl font-semibold mb-5">{title}</h1>
+      <RotateHint />
 
       <div className="grid gap-3.5 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
         <StatCard label="Clips totales" value={total} />

@@ -30,6 +30,7 @@ export default function PartidoDetailView({
   isArbitro,
   myRefereeId,
   initialViewedClipIds,
+  canCreateCompetitions = true,
 }: {
   partido: PartidoFull;
   clips: ClipFull[];
@@ -45,6 +46,7 @@ export default function PartidoDetailView({
   isArbitro: boolean;
   myRefereeId: string | null;
   initialViewedClipIds: string[];
+  canCreateCompetitions?: boolean;
 }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
@@ -258,6 +260,7 @@ export default function PartidoDetailView({
           referees={referees}
           categories={categories}
           competitions={competitions}
+          canCreateCompetitions={canCreateCompetitions}
           initial={{
             fecha: partido.fecha ?? "",
             categoryId: partido.category?.id ?? "",

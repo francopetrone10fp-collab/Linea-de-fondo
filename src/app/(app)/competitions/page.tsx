@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, canDelete } from "@/lib/session";
+import { requireProfile, canDelete, isCoordinador } from "@/lib/session";
 import CompetitionsView from "./CompetitionsView";
 
 export default async function CompetitionsPage() {
@@ -24,6 +24,7 @@ export default async function CompetitionsPage() {
       counts={counts}
       sinCompetenciaCount={sinCompetenciaCount}
       canDeleteCompetitions={canDelete(profile)}
+      canCreateCompetitions={isCoordinador(profile)}
     />
   );
 }

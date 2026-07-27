@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { parseVideoEmbed } from "@/lib/video-embed";
+import RotateHint from "@/components/RotateHint";
 
 export default function VideoModal({
   url,
@@ -32,6 +33,8 @@ export default function VideoModal({
         className="bg-surface border border-line rounded-2xl w-full max-w-[900px] p-4"
         onClick={(e) => e.stopPropagation()}
       >
+        <RotateHint message="Para ver el video más grande, girá el celular a horizontal." />
+
         <div className="flex items-center justify-between gap-3 mb-3">
           <p className="text-[14px] font-semibold text-text truncate m-0">{headerTitle}</p>
           <button
