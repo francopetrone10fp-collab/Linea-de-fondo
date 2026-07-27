@@ -57,7 +57,6 @@ create table public.categories (
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
-create unique index categories_name_key on public.categories (lower(name));
 
 -- Competencias: asociaciones/federaciones organizadoras (ej. AROB, CAB,
 -- FBPSF). Independiente de la categoría del partido.
@@ -70,6 +69,14 @@ create table public.competitions (
   created_at timestamptz not null default now()
 );
 create unique index competitions_name_key on public.competitions (lower(name));
+
+-- Las categorías disponibles dependen de la competencia (cada asociación
+-- define sus propias divisiones, incluso con nombres repetidos entre sí:
+-- "Juveniles" de AROB no es la misma categoría que "Juveniles" de FBPSF),
+-- por eso el índice único es por (competencia, nombre) y no solo por nombre.
+alter table public.categories
+  add column competition_id uuid references public.competitions(id) on delete set null;
+create unique index categories_name_key on public.categories (competition_id, lower(name));
 
 -- ============================================================
 -- 3. PARTIDOS

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Empty } from "@/app/(app)/teams/TeamsView";
 import { PartidoCard } from "./PartidoCard";
 import { refereesText } from "./partidoHelpers";
@@ -27,6 +27,7 @@ export default function TemporadaListView({
   referees,
   categories,
   competitions,
+  categoryFilterOptions = [],
   defaultCompetitionId,
   title,
   canCreate,
@@ -41,6 +42,7 @@ export default function TemporadaListView({
   referees: { id: string; name: string }[];
   categories: { id: string; name: string }[];
   competitions: { id: string; name: string }[];
+  categoryFilterOptions?: { id: string; name: string }[];
   defaultCompetitionId?: string;
   title: string;
   canCreate: boolean;
@@ -48,13 +50,20 @@ export default function TemporadaListView({
   showReadStatus: boolean;
 }) {
   const [refFilter, setRefFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!canFilterByReferee || !refFilter.trim()) return partidos;
-    const q = refFilter.trim().toLowerCase();
-    return partidos.filter((p) => refereesText(p).toLowerCase().includes(q));
-  }, [partidos, refFilter, canFilterByReferee]);
+    let list = partidos;
+    if (canFilterByReferee && refFilter.trim()) {
+      const q = refFilter.trim().toLowerCase();
+      list = list.filter((p) => refereesText(p).toLowerCase().includes(q));
+    }
+    if (categoryFilter.length > 0) {
+      list = list.filter((p) => !!p.category && categoryFilter.includes(p.category.id));
+    }
+    return list;
+  }, [partidos, refFilter, canFilterByReferee, categoryFilter]);
 
   return (
     <div>
@@ -70,15 +79,24 @@ export default function TemporadaListView({
         )}
       </div>
 
-      {canFilterByReferee && (
-        <div className="mb-5">
-          <input
-            type="text"
-            value={refFilter}
-            onChange={(e) => setRefFilter(e.target.value)}
-            placeholder="Buscar por árbitro..."
-            className="min-w-[240px]"
-          />
+      {(canFilterByReferee || categoryFilterOptions.length > 0) && (
+        <div className="flex gap-2.5 flex-wrap mb-5">
+          {canFilterByReferee && (
+            <input
+              type="text"
+              value={refFilter}
+              onChange={(e) => setRefFilter(e.target.value)}
+              placeholder="Buscar por árbitro..."
+              className="min-w-[240px]"
+            />
+          )}
+          {categoryFilterOptions.length > 0 && (
+            <CategoryMultiSelect
+              options={categoryFilterOptions}
+              selected={categoryFilter}
+              onChange={setCategoryFilter}
+            />
+          )}
         </div>
       )}
 
@@ -131,6 +149,75 @@ export default function TemporadaListView({
           defaultCompetitionId={defaultCompetitionId}
           onClose={() => setShowModal(false)}
         />
+      )}
+    </div>
+  );
+}
+
+// Filtro desplegable con multi-selección para las categorías de la
+// competencia que se está viendo (cierra al tocar afuera).
+function CategoryMultiSelect({
+  options,
+  selected,
+  onChange,
+}: {
+  options: { id: string; name: string }[];
+  selected: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOutside(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [open]);
+
+  function toggle(id: string) {
+    onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  }
+
+  const label =
+    selected.length === 0
+      ? "Todas las categorías"
+      : selected.length === 1
+        ? (options.find((o) => o.id === selected[0])?.name ?? "1 categoría")
+        : `${selected.length} categorías`;
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="min-w-[200px] bg-surface border border-line rounded-lg text-[13px] px-3 py-2 flex items-center justify-between gap-2"
+      >
+        <span className={selected.length ? "text-text" : "text-text-dim"}>{label}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} className="flex-none text-text-faint">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-1 min-w-[220px] max-h-[280px] overflow-y-auto bg-surface border border-line rounded-lg shadow-lg py-1.5">
+          {selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="w-full text-left text-[12.5px] text-accent px-3 py-1.5 hover:bg-surface-2"
+            >
+              Limpiar selección
+            </button>
+          )}
+          {options.map((o) => (
+            <label key={o.id} className="flex items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-surface-2 cursor-pointer">
+              <input type="checkbox" checked={selected.includes(o.id)} onChange={() => toggle(o.id)} />
+              {o.name}
+            </label>
+          ))}
+        </div>
       )}
     </div>
   );

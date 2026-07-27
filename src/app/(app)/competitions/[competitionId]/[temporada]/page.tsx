@@ -23,7 +23,7 @@ export default async function CompetitionSeasonPartidosPage({
       fetchAllReadsMinimal(supabase),
       supabase.from("teams").select("id, name").order("name"),
       supabase.from("referees").select("id, name").order("name"),
-      supabase.from("categories").select("id, name").order("name"),
+      supabase.from("categories").select("id, name, competition_id").order("name"),
       supabase.from("competitions").select("id, name").order("name"),
     ]);
 
@@ -35,6 +35,10 @@ export default async function CompetitionSeasonPartidosPage({
     competitionId === SIN_COMPETENCIA
       ? "Sin competencia"
       : (competitions ?? []).find((c) => c.id === competitionId)?.name;
+
+  // Las categorías disponibles para filtrar dependen de la competencia que
+  // se está viendo (no mezclar las divisiones de una asociación con las de otra).
+  const categoryFilterOptions = (categories ?? []).filter((c) => c.competition_id === competitionId);
 
   const clipsByPartido: Record<string, typeof clips> = {};
   clips.forEach((c) => {
@@ -67,6 +71,7 @@ export default async function CompetitionSeasonPartidosPage({
         referees={referees ?? []}
         categories={categories ?? []}
         competitions={competitions ?? []}
+        categoryFilterOptions={categoryFilterOptions}
         defaultCompetitionId={competitionId === SIN_COMPETENCIA ? undefined : competitionId}
         title={
           isArbitro(profile)
