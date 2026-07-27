@@ -20,6 +20,7 @@ export default function PartidoFormModal({
   categories,
   competitions,
   defaultCompetitionId,
+  defaultSeasonId,
   initial,
   onClose,
 }: {
@@ -30,10 +31,12 @@ export default function PartidoFormModal({
   categories: DirectoryOption[];
   competitions: DirectoryOption[];
   defaultCompetitionId?: string;
+  defaultSeasonId?: string | null;
   initial?: {
     fecha: string;
     categoryId: string;
     competitionId: string;
+    seasonId: string | null;
     notes: string;
     teamLocalId: string;
     teamVisitId: string;
@@ -46,7 +49,9 @@ export default function PartidoFormModal({
   const [categoryOptions, setCategoryOptions] = useState(categories);
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
   const [competitionOptions, setCompetitionOptions] = useState(competitions);
-  const [competitionId, setCompetitionId] = useState(initial?.competitionId ?? defaultCompetitionId ?? "");
+  const originalCompetitionId = initial?.competitionId ?? defaultCompetitionId ?? "";
+  const originalSeasonId = initial?.seasonId ?? defaultSeasonId ?? null;
+  const [competitionId, setCompetitionId] = useState(originalCompetitionId);
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [teamLocalId, setTeamLocalId] = useState(initial?.teamLocalId ?? "");
   const [teamVisitId, setTeamVisitId] = useState(initial?.teamVisitId ?? "");
@@ -59,10 +64,17 @@ export default function PartidoFormModal({
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    // La temporada (season_id) queda atada a la competencia con la que se
+    // creó/cargó; si acá se cambia la competencia del partido, no tiene
+    // sentido mantenerla apuntando a una temporada de la competencia
+    // anterior, así que se suelta (el partido vuelve a agruparse por fecha
+    // hasta que se lo cargue de nuevo desde una temporada de la competencia nueva).
+    const seasonId = competitionId === originalCompetitionId ? originalSeasonId : null;
     const input: PartidoInput = {
       fecha,
       categoryId: categoryId || null,
       competitionId: competitionId || null,
+      seasonId,
       notes,
       teamLocalId: teamLocalId || null,
       teamVisitId: teamVisitId || null,

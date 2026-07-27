@@ -12,6 +12,7 @@ export interface PartidoFull {
   id: string;
   fecha: string | null;
   temporada: string;
+  seasonId: string | null;
   category: DirectoryEntry | null;
   competition: DirectoryEntry | null;
   notes: string | null;
@@ -59,6 +60,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
     { data: referees },
     { data: categories },
     { data: competitions },
+    { data: seasons },
     { data: partidoReferees },
     { data: profiles },
   ] = await Promise.all([
@@ -71,6 +73,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
     supabase.from("referees").select("id, name, color, photo_url"),
     supabase.from("categories").select("id, name, color"),
     supabase.from("competitions").select("id, name, color"),
+    supabase.from("seasons").select("id, name"),
     supabase.from("partido_referees").select("partido_id, referee_id, position").order("position"),
     supabase.from("profiles").select("id, name"),
   ]);
@@ -79,6 +82,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
   const refereeById = new Map((referees ?? []).map((r) => [r.id, r]));
   const categoryById = new Map((categories ?? []).map((c) => [c.id, c]));
   const competitionById = new Map((competitions ?? []).map((c) => [c.id, c]));
+  const seasonById = new Map((seasons ?? []).map((s) => [s.id, s]));
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
 
   const refsByPartido = new Map<string, DirectoryEntry[]>();
@@ -93,7 +97,11 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
   return (partidos ?? []).map((p) => ({
     id: p.id,
     fecha: p.fecha,
-    temporada: p.temporada,
+    // Preferimos el nombre de la temporada vinculada (season_id) por sobre
+    // el valor derivado de la fecha: así un partido queda agrupado con su
+    // temporada real, no con lo que su fecha calcule en el momento.
+    temporada: (p.season_id ? seasonById.get(p.season_id)?.name : undefined) ?? p.temporada,
+    seasonId: p.season_id,
     category: p.category_id ? (categoryById.get(p.category_id) ?? null) : null,
     competition: p.competition_id ? (competitionById.get(p.competition_id) ?? null) : null,
     notes: p.notes,

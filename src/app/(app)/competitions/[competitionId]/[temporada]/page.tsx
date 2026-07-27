@@ -16,7 +16,7 @@ export default async function CompetitionSeasonPartidosPage({
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [allPartidos, clips, reads, { data: teams }, { data: referees }, { data: categories }, { data: competitions }] =
+  const [allPartidos, clips, reads, { data: teams }, { data: referees }, { data: categories }, { data: competitions }, { data: seasonRow }] =
     await Promise.all([
       fetchPartidosFull(supabase),
       fetchAllClipsMinimal(supabase),
@@ -25,6 +25,14 @@ export default async function CompetitionSeasonPartidosPage({
       supabase.from("referees").select("id, name").order("name"),
       supabase.from("categories").select("id, name, competition_id").order("name"),
       supabase.from("competitions").select("id, name").order("name"),
+      competitionId === SIN_COMPETENCIA
+        ? Promise.resolve({ data: null })
+        : supabase
+            .from("seasons")
+            .select("id")
+            .eq("competition_id", competitionId)
+            .ilike("name", decodeURIComponent(temporada))
+            .maybeSingle(),
     ]);
 
   const temporadaDecoded = decodeURIComponent(temporada);
@@ -73,6 +81,7 @@ export default async function CompetitionSeasonPartidosPage({
         competitions={competitions ?? []}
         categoryFilterOptions={categoryFilterOptions}
         defaultCompetitionId={competitionId === SIN_COMPETENCIA ? undefined : competitionId}
+        defaultSeasonId={seasonRow?.id ?? null}
         title={
           isArbitro(profile)
             ? "Mis partidos"

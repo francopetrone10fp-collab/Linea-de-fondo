@@ -213,6 +213,7 @@ export function PartidoCard({
             fecha: p.fecha ?? "",
             categoryId: p.category?.id ?? "",
             competitionId: p.competition?.id ?? "",
+            seasonId: p.seasonId,
             notes: p.notes ?? "",
             teamLocalId: p.teamLocal?.id ?? "",
             teamVisitId: p.teamVisit?.id ?? "",

@@ -151,6 +151,7 @@ export interface Database {
           team_visit_id: string | null;
           category_id: string | null;
           competition_id: string | null;
+          season_id: string | null;
           notes: string | null;
           finalized_by: string | null;
           finalized_at: string | null;
@@ -164,6 +165,7 @@ export interface Database {
           team_visit_id?: string | null;
           category_id?: string | null;
           competition_id?: string | null;
+          season_id?: string | null;
           notes?: string | null;
           finalized_by?: string | null;
           finalized_at?: string | null;

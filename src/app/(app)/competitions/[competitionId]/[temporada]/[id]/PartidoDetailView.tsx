@@ -262,6 +262,7 @@ export default function PartidoDetailView({
             fecha: partido.fecha ?? "",
             categoryId: partido.category?.id ?? "",
             competitionId: partido.competition?.id ?? "",
+            seasonId: partido.seasonId,
             notes: partido.notes ?? "",
             teamLocalId: partido.teamLocal?.id ?? "",
             teamVisitId: partido.teamVisit?.id ?? "",

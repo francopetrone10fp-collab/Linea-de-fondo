@@ -37,6 +37,7 @@ export interface PartidoInput {
   fecha: string; // 'YYYY-MM-DD' o ''
   categoryId: string | null;
   competitionId: string | null;
+  seasonId: string | null;
   notes: string;
   teamLocalId: string | null;
   teamVisitId: string | null;
@@ -64,6 +65,7 @@ export async function createPartido(input: PartidoInput) {
       fecha: input.fecha || null,
       category_id: input.categoryId,
       competition_id: input.competitionId,
+      season_id: input.seasonId,
       notes: input.notes.trim() || null,
       team_local_id: input.teamLocalId,
       team_visit_id: input.teamVisitId,
@@ -90,6 +92,7 @@ export async function updatePartido(id: string, input: PartidoInput) {
       fecha: input.fecha || null,
       category_id: input.categoryId,
       competition_id: input.competitionId,
+      season_id: input.seasonId,
       notes: input.notes.trim() || null,
       team_local_id: input.teamLocalId,
       team_visit_id: input.teamVisitId,

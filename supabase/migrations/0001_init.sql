@@ -103,6 +103,7 @@ create table public.partidos (
   team_visit_id uuid references public.teams(id) on delete set null,
   category_id uuid references public.categories(id) on delete set null,
   competition_id uuid references public.competitions(id) on delete set null,
+  season_id uuid references public.seasons(id) on delete set null,
   notes text,
   finalized_by uuid references public.profiles(id) on delete set null,
   finalized_at timestamptz,
