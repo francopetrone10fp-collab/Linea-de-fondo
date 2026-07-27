@@ -46,18 +46,26 @@ export default function VideoModal({
           </button>
         </div>
 
-        <div className="w-full aspect-video bg-black rounded-xl overflow-hidden">
+        {/* padding-top al 56.25% (16:9) en vez de aspect-ratio: el iframe de
+            Drive lee el tamaño real ya resuelto del contenedor para su
+            layout interno, y en mobile aspect-ratio + height:100% a veces
+            no llega a resolverse a tiempo (video corrido, controles
+            separados del cuerpo). Con este método el alto queda fijado por
+            el ancho antes de que el iframe cargue. */}
+        <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ paddingTop: "56.25%" }}>
           {embed.kind === "youtube" || embed.kind === "vimeo" || embed.kind === "drive" ? (
             <iframe
               src={embed.embedUrl}
-              className="w-full h-full"
+              width="100%"
+              height="100%"
+              className="absolute inset-0 w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           ) : embed.kind === "file" ? (
-            <video src={embed.url} controls autoPlay className="w-full h-full" />
+            <video src={embed.url} controls autoPlay className="absolute inset-0 w-full h-full" />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-center px-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
               <p className="text-[13px] text-text-dim m-0">
                 No se pudo mostrar &quot;{title}&quot; acá adentro. Podés abrir el link directamente.
               </p>
