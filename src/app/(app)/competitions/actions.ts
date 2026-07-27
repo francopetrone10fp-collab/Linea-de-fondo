@@ -36,3 +36,30 @@ export async function deleteCompetition(id: string) {
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
+
+// La temporada es una entidad propia por competencia (no solo un valor
+// derivado del año de los partidos), para poder crearla vacía y que no
+// desaparezca si después se borran todos sus partidos.
+export async function createSeason(competitionId: string, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false as const, error: "Poné un nombre para la temporada" };
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("seasons")
+    .insert({
+      competition_id: competitionId,
+      name: trimmed,
+      created_by: profile.id,
+    })
+    .select("id, name")
+    .single();
+  if (error || !data) {
+    return {
+      ok: false as const,
+      error: error?.code === "23505" ? "Esa temporada ya existe en esta competencia" : "No se pudo guardar la temporada",
+    };
+  }
+  revalidatePath("/competitions", "layout");
+  return { ok: true as const, season: data };
+}

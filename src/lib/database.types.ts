@@ -124,6 +124,24 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["competitions"]["Insert"]>;
         Relationships: [];
       };
+      seasons: {
+        Row: {
+          id: string;
+          competition_id: string;
+          name: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          competition_id: string;
+          name: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["seasons"]["Insert"]>;
+        Relationships: [];
+      };
       partidos: {
         Row: {
           id: string;

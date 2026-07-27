@@ -78,6 +78,18 @@ alter table public.categories
   add column competition_id uuid references public.competitions(id) on delete set null;
 create unique index categories_name_key on public.categories (competition_id, lower(name));
 
+-- Temporadas de una competencia (ej. "2026"): entidad propia, no solo un
+-- valor derivado del año de los partidos, para poder crearla vacía desde la
+-- vista de Competencia y que no desaparezca si se borran todos sus partidos.
+create table public.seasons (
+  id uuid primary key default gen_random_uuid(),
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  name text not null,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index seasons_competition_name_key on public.seasons (competition_id, lower(name));
+
 -- ============================================================
 -- 3. PARTIDOS
 -- ============================================================
@@ -221,6 +233,7 @@ alter table public.referees enable row level security;
 alter table public.teams enable row level security;
 alter table public.categories enable row level security;
 alter table public.competitions enable row level security;
+alter table public.seasons enable row level security;
 alter table public.partidos enable row level security;
 alter table public.partido_referees enable row level security;
 alter table public.clips enable row level security;
@@ -317,6 +330,13 @@ create policy competitions_insert on public.competitions
 
 create policy competitions_delete on public.competitions
   for delete using (public.is_coordinador());
+
+-- ---------- seasons ----------
+create policy seasons_select on public.seasons
+  for select using (public.is_approved());
+
+create policy seasons_insert on public.seasons
+  for insert with check (public.is_approved());
 
 -- ---------- partidos ----------
 create policy partidos_select on public.partidos

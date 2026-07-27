@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, isArbitro } from "@/lib/session";
+import { requireProfile, isArbitro, canEvaluate } from "@/lib/session";
 import { fetchPartidosFull } from "@/app/(app)/partidos/queries";
 import { competitionSlugFor } from "@/app/(app)/partidos/partidoHelpers";
-import { Empty } from "@/app/(app)/teams/TeamsView";
+import CompetitionSeasonsView from "./CompetitionSeasonsView";
 
 const SIN_COMPETENCIA = "sin-competencia";
 
@@ -13,7 +13,7 @@ export default async function CompetitionSeasonsPage({ params }: { params: Promi
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [allPartidos, competitionRow] = await Promise.all([
+  const [allPartidos, competitionRow, { data: seasonRows }] = await Promise.all([
     fetchPartidosFull(supabase),
     competitionId === SIN_COMPETENCIA
       ? Promise.resolve(null)
@@ -23,6 +23,9 @@ export default async function CompetitionSeasonsPage({ params }: { params: Promi
           .eq("id", competitionId)
           .single()
           .then((r) => r.data),
+    competitionId === SIN_COMPETENCIA
+      ? Promise.resolve({ data: [] as { name: string }[] })
+      : supabase.from("seasons").select("name").eq("competition_id", competitionId),
   ]);
 
   if (competitionId !== SIN_COMPETENCIA && !competitionRow) notFound();
@@ -34,7 +37,12 @@ export default async function CompetitionSeasonsPage({ params }: { params: Promi
   partidos.forEach((p) => {
     counts[p.temporada] = (counts[p.temporada] ?? 0) + 1;
   });
-  const seasons = Object.keys(counts).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+  // Las temporadas ya creadas explícitamente (aunque todavía no tengan
+  // partidos) se suman a las que ya tienen partidos cargados, para que una
+  // temporada vacía no desaparezca del listado.
+  const seasonNames = new Set(Object.keys(counts));
+  (seasonRows ?? []).forEach((s) => seasonNames.add(s.name));
+  const seasons = Array.from(seasonNames).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
   const title = isArbitro(profile) ? "Mis partidos" : competitionName;
 
@@ -47,35 +55,13 @@ export default async function CompetitionSeasonsPage({ params }: { params: Promi
         Volver a competencias
       </Link>
 
-      <h1 className="font-display text-2xl font-semibold mb-5">{title}</h1>
-
-      {seasons.length === 0 ? (
-        <Empty title="No hay partidos acá" desc="Registrá el primero desde esta competencia." />
-      ) : (
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}>
-          {seasons.map((season) => (
-            <Link
-              key={season}
-              href={`/competitions/${encodeURIComponent(competitionId)}/${encodeURIComponent(season)}`}
-              className="bg-surface border border-line rounded-xl p-5 flex items-center gap-3.5 hover:border-text-faint"
-            >
-              <span className="w-11 h-11 rounded-[10px] bg-surface-3 text-accent flex items-center justify-center flex-none">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-                </svg>
-              </span>
-              <div>
-                <div className="font-display text-[17px] font-semibold">
-                  {season === "Sin fecha" ? "Sin fecha" : `Temporada ${season}`}
-                </div>
-                <div className="text-[12px] text-text-faint mt-0.5">
-                  {counts[season]} partido{counts[season] === 1 ? "" : "s"}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      <CompetitionSeasonsView
+        competitionId={competitionId}
+        title={title}
+        seasons={seasons}
+        counts={counts}
+        canCreate={competitionId !== SIN_COMPETENCIA && canEvaluate(profile)}
+      />
     </div>
   );
 }
