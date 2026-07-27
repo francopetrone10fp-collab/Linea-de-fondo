@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { colorForTeam } from "@/lib/constants";
@@ -103,7 +102,9 @@ export async function updatePartido(id: string, input: PartidoInput) {
   return { ok: true as const };
 }
 
-export async function deletePartido(id: string, temporada: string, competitionSlug: string) {
+// No redirige: quien llama ya sabe a dónde tiene que quedar (la vista de
+// temporada, se borre o no el último partido) y navega del lado del cliente.
+export async function deletePartido(id: string) {
   const supabase = await createClient();
   const { data: clipRows } = await supabase.from("clips").select("id").eq("partido_id", id);
   const clipIds = (clipRows ?? []).map((c) => c.id);
@@ -116,7 +117,7 @@ export async function deletePartido(id: string, temporada: string, competitionSl
   if (error) return { ok: false as const, error: "No se pudo eliminar el partido" };
 
   revalidatePath("/competitions", "layout");
-  redirect(`/competitions/${encodeURIComponent(competitionSlug)}/${encodeURIComponent(temporada)}`);
+  return { ok: true as const };
 }
 
 export async function finalizePartido(id: string) {

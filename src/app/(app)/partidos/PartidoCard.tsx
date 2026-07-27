@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ColorBadge } from "@/components/Badge";
 import { EVAL_LEVELS, truncateText } from "@/lib/constants";
@@ -102,6 +103,7 @@ export function PartidoCard({
   categories?: DirectoryOption[];
   competitions?: DirectoryOption[];
 }) {
+  const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
   const [isPending, startTransition] = useTransition();
   const competitionSlug = competitionSlugFor(p);
@@ -118,7 +120,12 @@ export function PartidoCard({
         : "¿Eliminar este partido? Esta acción no se puede deshacer.";
     if (!confirm(msg)) return;
     startTransition(async () => {
-      await deletePartido(p.id, temporada, competitionSlug);
+      const res = await deletePartido(p.id);
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      router.refresh();
     });
   }
 

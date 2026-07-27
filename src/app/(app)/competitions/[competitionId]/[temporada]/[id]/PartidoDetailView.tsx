@@ -97,7 +97,12 @@ export default function PartidoDetailView({
         : "¿Eliminar este partido? Esta acción no se puede deshacer.";
     if (!confirm(msg)) return;
     startTransition(async () => {
-      await deletePartido(partido.id, temporada, competitionSlugFor(partido));
+      const res = await deletePartido(partido.id);
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      router.push(`/competitions/${encodeURIComponent(competitionSlugFor(partido))}/${encodeURIComponent(temporada)}`);
     });
   }
 
