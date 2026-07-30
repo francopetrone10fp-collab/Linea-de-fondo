@@ -7,6 +7,17 @@ export type VideoEmbed =
 
 const FILE_EXTENSIONS = ["mp4", "webm", "ogg", "ogv", "mov", "m4v"];
 
+// Los links copiados desde el share sheet del celular (por ejemplo al
+// compartir una transmisión en vivo de YouTube) a veces traen caracteres
+// invisibles pegados (NUL, espacios de ancho cero, BOM). Postgres rechaza
+// el byte NUL en columnas de texto, así que sin esta limpieza el guardado
+// del clip fallaba en silencio para esos links.
+const INVISIBLE_CHARS = /[\x00-\x1f\x7f\u200b-\u200d\ufeff]/g;
+
+export function sanitizeVideoUrl(url: string): string {
+  return url.trim().replace(INVISIBLE_CHARS, "");
+}
+
 // YouTube expresa el punto de inicio en el parámetro `t` (a veces `start`),
 // ya sea en segundos puros ("198") o en formato compuesto ("1h2m3s", "1m30s").
 function parseYouTubeStartSeconds(parsed: URL): number | null {
@@ -28,7 +39,7 @@ function youtubeEmbedUrl(id: string, parsed: URL): string {
 }
 
 export function parseVideoEmbed(rawUrl: string): VideoEmbed {
-  const url = rawUrl.trim();
+  const url = sanitizeVideoUrl(rawUrl);
   let parsed: URL | null = null;
   try {
     parsed = new URL(url);
@@ -37,7 +48,7 @@ export function parseVideoEmbed(rawUrl: string): VideoEmbed {
   }
   const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
 
-  // YouTube: watch?v=, youtu.be/<id>, /embed/<id>, /shorts/<id>
+  // YouTube: watch?v=, youtu.be/<id>, /embed/<id>, /shorts/<id>, /live/<id>
   if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
     let id = parsed.searchParams.get("v");
     if (!id) {

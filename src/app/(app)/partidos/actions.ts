@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { colorForTeam } from "@/lib/constants";
+import { sanitizeVideoUrl } from "@/lib/video-embed";
 import type { Evaluation, Situation, WhistleType } from "@/lib/database.types";
 
 // La categoría (Superliga, U19, etc.) es solo una etiqueta del partido, sin
@@ -202,7 +203,7 @@ export async function createClip(input: ClipInput) {
   const { error } = await supabase.from("clips").insert({
     partido_id: input.partidoId,
     title,
-    video_url: input.videoUrl.trim() || null,
+    video_url: sanitizeVideoUrl(input.videoUrl) || null,
     situation: input.situation,
     quarter: input.quarter,
     clock: input.clock.trim() || null,
@@ -211,7 +212,10 @@ export async function createClip(input: ClipInput) {
     whistle_type: input.whistleType,
     created_by: profile.id,
   });
-  if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+  if (error) {
+    console.error("createClip:", error);
+    return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+  }
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
@@ -224,7 +228,7 @@ export async function updateClip(id: string, input: ClipInput) {
     .from("clips")
     .update({
       title,
-      video_url: input.videoUrl.trim() || null,
+      video_url: sanitizeVideoUrl(input.videoUrl) || null,
       situation: input.situation,
       quarter: input.quarter,
       clock: input.clock.trim() || null,
@@ -233,7 +237,10 @@ export async function updateClip(id: string, input: ClipInput) {
       whistle_type: input.whistleType,
     })
     .eq("id", id);
-  if (error) return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+  if (error) {
+    console.error("updateClip:", error);
+    return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+  }
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
