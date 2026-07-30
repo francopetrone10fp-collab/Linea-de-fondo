@@ -214,7 +214,7 @@ export async function createClip(input: ClipInput) {
   });
   if (error) {
     console.error("createClip:", error);
-    return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+    return { ok: false as const, error: `No se pudo guardar el clip: ${error.message}` };
   }
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
@@ -239,7 +239,7 @@ export async function updateClip(id: string, input: ClipInput) {
     .eq("id", id);
   if (error) {
     console.error("updateClip:", error);
-    return { ok: false as const, error: "No se pudo guardar el clip, probá de nuevo" };
+    return { ok: false as const, error: `No se pudo guardar el clip: ${error.message}` };
   }
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
