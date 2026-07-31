@@ -267,7 +267,10 @@ export async function setClipEvaluation(id: string, evaluation: Evaluation | nul
 // progreso persistido en segundo plano para la primera confirmación.
 export async function recordClipView(clipId: string) {
   const profile = await requireProfile();
-  if (profile.role !== "arbitro" || !profile.referee_id) return { ok: false as const };
+  // No depende del rol: cualquier perfil que ande arbitrando partidos (tenga
+  // un árbitro vinculado) puede registrar su propio progreso, sin importar
+  // si es Árbitro, Instructor o Coordinador General.
+  if (!profile.referee_id) return { ok: false as const };
   const supabase = await createClient();
   const { error } = await supabase.from("clip_views").insert({ clip_id: clipId, referee_id: profile.referee_id });
   if (error && error.code !== "23505") return { ok: false as const };
@@ -285,8 +288,11 @@ export async function recordClipView(clipId: string) {
 // queda libre.
 export async function confirmPartidoRead(partidoId: string) {
   const profile = await requireProfile();
-  if (profile.role !== "arbitro" || !profile.referee_id) {
-    return { ok: false as const, error: "Solo un árbitro asignado puede confirmar la lectura" };
+  // No depende del rol: lo que importa es si este perfil está vinculado a un
+  // árbitro asignado a este partido puntual (lo verifica también la policy
+  // de RLS de partido_reads vía partido_visible_to_arbitro).
+  if (!profile.referee_id) {
+    return { ok: false as const, error: "Solo un árbitro asignado a este partido puede confirmar la lectura" };
   }
   const supabase = await createClient();
 

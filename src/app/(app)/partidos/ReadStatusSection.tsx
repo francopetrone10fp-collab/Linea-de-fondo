@@ -26,14 +26,12 @@ function vezLabel(n: number) {
 export default function ReadStatusSection({
   partido,
   reads,
-  isArbitro,
   myRefereeId,
   totalClips,
   viewedCount,
 }: {
   partido: PartidoFull;
   reads: ReadConfirmation[];
-  isArbitro: boolean;
   myRefereeId: string | null;
   totalClips: number;
   viewedCount: number;
@@ -44,8 +42,12 @@ export default function ReadStatusSection({
 
   if (!partido.finalizedAt) return null;
 
-  if (isArbitro) {
-    if (!myRefereeId || !partido.referees.some((r) => r.id === myRefereeId)) return null;
+  // No depende del rol del perfil: el que ve su propio recordatorio de
+  // confirmación es quien esté asignado como árbitro a ESTE partido puntual
+  // (puede ser Coordinador o Instructor arbitrando).
+  const isAssignedReferee = !!myRefereeId && partido.referees.some((r) => r.id === myRefereeId);
+
+  if (isAssignedReferee) {
     // reads viene ordenado de más viejo a más nuevo (fetchReadsForPartido).
     const myReads = reads.filter((r) => r.refereeId === myRefereeId);
     const hasConfirmedBefore = myReads.length > 0;
@@ -104,7 +106,8 @@ export default function ReadStatusSection({
     );
   }
 
-  // Coordinador / Instructor: historial de confirmaciones por árbitro asignado.
+  // No es uno de los árbitros asignados a este partido: ve el historial de
+  // confirmaciones de la terna en vez de su propio recordatorio.
   if (partido.referees.length === 0) return null;
   const confirmedCount = partido.referees.filter((r) => reads.some((rd) => rd.refereeId === r.id)).length;
 

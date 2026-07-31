@@ -27,7 +27,6 @@ export default function PartidoDetailView({
   temporada,
   canEvaluate,
   canDelete,
-  isArbitro,
   myRefereeId,
   initialViewedClipIds,
   canCreateCompetitions = true,
@@ -43,7 +42,6 @@ export default function PartidoDetailView({
   temporada: string;
   canEvaluate: boolean;
   canDelete: boolean;
-  isArbitro: boolean;
   myRefereeId: string | null;
   initialViewedClipIds: string[];
   canCreateCompetitions?: boolean;
@@ -56,8 +54,11 @@ export default function PartidoDetailView({
   const [viewedClipIds, setViewedClipIds] = useState<Set<string>>(() => new Set(initialViewedClipIds));
 
   const hasConfirmedBefore = reads.some((r) => r.refereeId === myRefereeId);
-  const shouldTrackViews =
-    isArbitro && !!myRefereeId && !!partido.finalizedAt && partido.referees.some((r) => r.id === myRefereeId) && !hasConfirmedBefore;
+  // No depende del rol del perfil: importa si el usuario logueado es uno de
+  // los árbitros asignados a ESTE partido puntual (puede ser Coordinador o
+  // Instructor arbitrando, no solo un perfil con rol Árbitro).
+  const isAssignedReferee = !!myRefereeId && partido.referees.some((r) => r.id === myRefereeId);
+  const shouldTrackViews = isAssignedReferee && !!partido.finalizedAt && !hasConfirmedBefore;
 
   const counts: Record<Evaluation, number> = { mala: 0, estandar: 0, buena: 0, relevante: 0 };
   let pendingCount = 0;
@@ -246,7 +247,6 @@ export default function PartidoDetailView({
       <ReadStatusSection
         partido={partido}
         reads={reads}
-        isArbitro={isArbitro}
         myRefereeId={myRefereeId}
         totalClips={clips.length}
         viewedCount={viewedClipIds.size}

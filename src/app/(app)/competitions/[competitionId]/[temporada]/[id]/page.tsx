@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile, canEvaluate, canDelete, isArbitro, isCoordinador } from "@/lib/session";
+import { requireProfile, canEvaluate, canDelete, isCoordinador } from "@/lib/session";
 import {
   fetchPartidosFull,
   fetchClipsForPartido,
@@ -33,7 +33,7 @@ export default async function PartidoDetailPage({
       supabase.from("referees").select("id, name").order("name"),
       supabase.from("categories").select("id, name").order("name"),
       supabase.from("competitions").select("id, name").order("name"),
-      isArbitro(profile) && profile.referee_id
+      profile.referee_id && partido.referees.some((r) => r.id === profile.referee_id)
         ? fetchClipViewedIds(
             supabase,
             profile.referee_id,
@@ -55,7 +55,6 @@ export default async function PartidoDetailPage({
       temporada={decodeURIComponent(temporada)}
       canEvaluate={canEvaluate(profile)}
       canDelete={canDelete(profile)}
-      isArbitro={isArbitro(profile)}
       myRefereeId={profile.referee_id}
       initialViewedClipIds={viewedClipIds}
       canCreateCompetitions={isCoordinador(profile)}
