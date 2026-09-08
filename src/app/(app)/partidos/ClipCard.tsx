@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { CallTab } from "./PartidoCard";
 import ClipFormModal from "./ClipFormModal";
 import VideoModal from "@/components/VideoModal";
+import CommentsThread from "@/components/CommentsThread";
 import { deleteClip, recordClipView, setClipEvaluation } from "./actions";
 import { EVAL_LEVELS, whistleTypeInfo } from "@/lib/constants";
-import type { ClipFull } from "./queries";
+import type { ClipFull, CommentFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
 
 const CARD_BORDER: Record<string, string> = {
@@ -33,6 +34,7 @@ export default function ClipCard({
   trackView,
   alreadyViewed,
   onViewed,
+  comments = [],
 }: {
   clip: ClipFull;
   canEvaluate: boolean;
@@ -43,6 +45,7 @@ export default function ClipCard({
   trackView?: boolean;
   alreadyViewed?: boolean;
   onViewed?: (clipId: string) => void;
+  comments?: CommentFull[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -145,16 +148,12 @@ export default function ClipCard({
         )}
 
         <div className="flex justify-between items-center mt-1.5">
-          {clip.notes ? (
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="text-accent text-[12.5px] font-semibold flex items-center gap-1"
-            >
-              {expanded ? "Ocultar notas" : "Ver notas"}
-            </button>
-          ) : (
-            <span />
-          )}
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-accent text-[12.5px] font-semibold flex items-center gap-1"
+          >
+            {expanded ? "Ocultar" : comments.length > 0 ? `Comentarios (${comments.length})` : "Comentarios"}
+          </button>
           <div className="flex gap-1">
             {canEvaluate && !locked && (
               <button
@@ -183,9 +182,12 @@ export default function ClipCard({
 
         {expanded && (
           <div className="border-t border-dashed border-line mt-3 pt-3">
-            <p className="text-[12.5px] text-text-dim m-0">
-              <b className="text-text-faint">Notas:</b> {clip.notes}
-            </p>
+            {clip.notes && (
+              <p className="text-[12.5px] text-text-dim mb-3">
+                <b className="text-text-faint">Notas:</b> {clip.notes}
+              </p>
+            )}
+            <CommentsThread entityType="clip" entityId={clip.id} comments={comments} canManage={canEvaluate} />
           </div>
         )}
       </div>

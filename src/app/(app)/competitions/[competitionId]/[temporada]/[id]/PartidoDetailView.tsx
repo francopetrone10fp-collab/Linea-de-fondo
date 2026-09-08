@@ -19,6 +19,7 @@ export default function PartidoDetailView({
   partido,
   clips,
   comments,
+  commentsByClip,
   reads,
   teams,
   referees,
@@ -34,6 +35,7 @@ export default function PartidoDetailView({
   partido: PartidoFull;
   clips: ClipFull[];
   comments: CommentFull[];
+  commentsByClip: Record<string, CommentFull[]>;
   reads: ReadConfirmation[];
   teams: { id: string; name: string }[];
   referees: { id: string; name: string }[];
@@ -238,6 +240,7 @@ export default function PartidoDetailView({
                 trackView={shouldTrackViews}
                 alreadyViewed={viewedClipIds.has(c.id)}
                 onViewed={(clipId) => setViewedClipIds((prev) => new Set(prev).add(clipId))}
+                comments={commentsByClip[c.id] ?? []}
               />
             ))}
           </div>

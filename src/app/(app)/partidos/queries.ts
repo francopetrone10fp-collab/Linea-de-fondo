@@ -156,6 +156,28 @@ export async function fetchComments(supabase: DB, entityType: "partido" | "clip"
   }));
 }
 
+// Comentarios de varios clips de un mismo partido en una sola consulta
+// (evita N+1 al listar todos los clips de la vista de detalle).
+export async function fetchCommentsForClips(supabase: DB, clipIds: string[]): Promise<CommentFull[]> {
+  if (clipIds.length === 0) return [];
+  const { data } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("entity_type", "clip")
+    .in("entity_id", clipIds)
+    .order("created_at");
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    entityType: c.entity_type,
+    entityId: c.entity_id,
+    authorName: c.author_name,
+    authorRole: c.author_role,
+    text: c.text,
+    createdAt: c.created_at,
+    editedAt: c.edited_at,
+  }));
+}
+
 export async function fetchAllClipsMinimal(supabase: DB) {
   const { data } = await supabase
     .from("clips")

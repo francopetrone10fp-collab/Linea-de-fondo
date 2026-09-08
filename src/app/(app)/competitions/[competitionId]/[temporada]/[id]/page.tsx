@@ -5,6 +5,7 @@ import {
   fetchPartidosFull,
   fetchClipsForPartido,
   fetchComments,
+  fetchCommentsForClips,
   fetchReadsForPartido,
   fetchClipViewedIds,
 } from "@/app/(app)/partidos/queries";
@@ -25,9 +26,13 @@ export default async function PartidoDetailPage({
 
   const clips = await fetchClipsForPartido(supabase, id);
 
-  const [comments, reads, { data: teams }, { data: referees }, { data: categories }, { data: competitions }, viewedClipIds] =
+  const [comments, clipComments, reads, { data: teams }, { data: referees }, { data: categories }, { data: competitions }, viewedClipIds] =
     await Promise.all([
       fetchComments(supabase, "partido", id),
+      fetchCommentsForClips(
+        supabase,
+        clips.map((c) => c.id)
+      ),
       fetchReadsForPartido(supabase, id),
       supabase.from("teams").select("id, name").order("name"),
       supabase.from("referees").select("id, name").order("name"),
@@ -42,11 +47,17 @@ export default async function PartidoDetailPage({
         : Promise.resolve([] as string[]),
     ]);
 
+  const commentsByClip: Record<string, typeof clipComments> = {};
+  clipComments.forEach((c) => {
+    (commentsByClip[c.entityId] ??= []).push(c);
+  });
+
   return (
     <PartidoDetailView
       partido={partido}
       clips={clips}
       comments={comments}
+      commentsByClip={commentsByClip}
       reads={reads}
       teams={teams ?? []}
       referees={referees ?? []}
