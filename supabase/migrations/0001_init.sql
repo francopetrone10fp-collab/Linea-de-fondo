@@ -158,15 +158,47 @@ create table public.materials (
 );
 
 -- ============================================================
--- 5b. CLASES (video + notas, la arma Coordinador/Instructor, la ve todo el equipo)
+-- 5b. CLASES (Año > Clase, con Nivel, clips propios y material vinculado;
+-- la arma Coordinador/Instructor, la ve todo el equipo)
 -- ============================================================
+create table public.class_years (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index class_years_name_key on public.class_years (lower(name));
+
 create table public.classes (
   id uuid primary key default gen_random_uuid(),
+  year_id uuid not null references public.class_years(id) on delete cascade,
+  title text not null,
+  video_url text,
+  notes text,
+  levels text[] not null default '{}'::text[]
+    check (levels <@ array['inicial','medio_avanzado']::text[]),
+  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_at timestamptz not null default now()
+);
+create index classes_year_idx on public.classes (year_id);
+
+create table public.class_clips (
+  id uuid primary key default gen_random_uuid(),
+  class_id uuid not null references public.classes(id) on delete cascade,
   title text not null,
   video_url text,
   notes text,
   created_by uuid not null references public.profiles(id) on delete restrict,
   created_at timestamptz not null default now()
+);
+create index class_clips_class_idx on public.class_clips (class_id);
+
+create table public.class_materials (
+  class_id uuid not null references public.classes(id) on delete cascade,
+  material_id uuid not null references public.materials(id) on delete cascade,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  primary key (class_id, material_id)
 );
 
 -- ============================================================
@@ -251,7 +283,10 @@ alter table public.partidos enable row level security;
 alter table public.partido_referees enable row level security;
 alter table public.clips enable row level security;
 alter table public.materials enable row level security;
+alter table public.class_years enable row level security;
 alter table public.classes enable row level security;
+alter table public.class_clips enable row level security;
+alter table public.class_materials enable row level security;
 alter table public.comments enable row level security;
 
 -- ---------- profiles ----------
@@ -416,18 +451,25 @@ create policy materials_update on public.materials
 create policy materials_delete on public.materials
   for delete using (public.is_evaluator());
 
--- ---------- classes ----------
-create policy classes_select on public.classes
-  for select using (public.is_approved());
+-- ---------- class_years / classes / class_clips / class_materials ----------
+create policy class_years_select on public.class_years for select using (public.is_approved());
+create policy class_years_insert on public.class_years for insert with check (public.is_evaluator());
+create policy class_years_update on public.class_years for update using (public.is_evaluator());
+create policy class_years_delete on public.class_years for delete using (public.is_evaluator());
 
-create policy classes_insert on public.classes
-  for insert with check (public.is_evaluator());
+create policy classes_select on public.classes for select using (public.is_approved());
+create policy classes_insert on public.classes for insert with check (public.is_evaluator());
+create policy classes_update on public.classes for update using (public.is_evaluator());
+create policy classes_delete on public.classes for delete using (public.is_evaluator());
 
-create policy classes_update on public.classes
-  for update using (public.is_evaluator());
+create policy class_clips_select on public.class_clips for select using (public.is_approved());
+create policy class_clips_insert on public.class_clips for insert with check (public.is_evaluator());
+create policy class_clips_update on public.class_clips for update using (public.is_evaluator());
+create policy class_clips_delete on public.class_clips for delete using (public.is_evaluator());
 
-create policy classes_delete on public.classes
-  for delete using (public.is_evaluator());
+create policy class_materials_select on public.class_materials for select using (public.is_approved());
+create policy class_materials_insert on public.class_materials for insert with check (public.is_evaluator());
+create policy class_materials_delete on public.class_materials for delete using (public.is_evaluator());
 
 -- ---------- comments ----------
 -- visibilidad: si es de un partido, igual que partidos_select; si es de un clip, igual que clips_select

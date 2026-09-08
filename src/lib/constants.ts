@@ -1,4 +1,4 @@
-import type { Role, Situation, MaterialType, Evaluation, WhistleType } from "@/lib/database.types";
+import type { Role, Situation, MaterialType, Evaluation, WhistleType, ClassLevel } from "@/lib/database.types";
 
 export const SITUATIONS: Situation[] = [
   "Falta personal",
@@ -56,6 +56,17 @@ export const WHISTLE_TYPES: { key: WhistleType; label: string; fullName: string;
 
 export function whistleTypeInfo(key: WhistleType | null | undefined) {
   return WHISTLE_TYPES.find((t) => t.key === key) ?? null;
+}
+
+// Nivel de una clase: multi-selección, porque Inicial y Medio/Avanzado
+// suelen cursar la misma clase juntos.
+export const CLASS_LEVELS: { key: ClassLevel; label: string; color: string; bg: string }[] = [
+  { key: "inicial", label: "Nivel Inicial", color: "#4E8FD6", bg: "#182535" },
+  { key: "medio_avanzado", label: "Nivel Medio/Avanzado", color: "#8A6FD6", bg: "#241C40" },
+];
+
+export function classLevelInfo(key: ClassLevel) {
+  return CLASS_LEVELS.find((l) => l.key === key) ?? CLASS_LEVELS[0];
 }
 
 export const TEAM_COLORS = [

@@ -14,6 +14,7 @@ export type Situation =
 export type MaterialType = "pdf" | "word" | "video" | "presentacion" | "enlace" | "otro";
 export type WhistleType = "QW" | "IW" | "PW" | "CW" | "NCC" | "NCI";
 export type EntityType = "partido" | "clip";
+export type ClassLevel = "inicial" | "medio_avanzado";
 
 export interface Database {
   public: {
@@ -255,9 +256,50 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["materials"]["Insert"]>;
         Relationships: [];
       };
+      class_years: {
+        Row: {
+          id: string;
+          name: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["class_years"]["Insert"]>;
+        Relationships: [];
+      };
       classes: {
         Row: {
           id: string;
+          year_id: string;
+          title: string;
+          video_url: string | null;
+          notes: string | null;
+          levels: ClassLevel[];
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          year_id: string;
+          title: string;
+          video_url?: string | null;
+          notes?: string | null;
+          levels?: ClassLevel[];
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["classes"]["Insert"]>;
+        Relationships: [];
+      };
+      class_clips: {
+        Row: {
+          id: string;
+          class_id: string;
           title: string;
           video_url: string | null;
           notes: string | null;
@@ -266,13 +308,30 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          class_id: string;
           title: string;
           video_url?: string | null;
           notes?: string | null;
           created_by: string;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["classes"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["class_clips"]["Insert"]>;
+        Relationships: [];
+      };
+      class_materials: {
+        Row: {
+          class_id: string;
+          material_id: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          class_id: string;
+          material_id: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["class_materials"]["Insert"]>;
         Relationships: [];
       };
       comments: {
