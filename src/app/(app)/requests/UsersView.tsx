@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { Empty } from "@/app/(app)/teams/TeamsView";
 import { ROLE_LABELS } from "@/lib/constants";
 import { linkProfileReferee, resetProfilePassword } from "./actions";
 import type { Role } from "@/lib/database.types";
@@ -19,6 +20,13 @@ interface RefereeOption {
 
 export default function UsersView({ users, referees }: { users: UserProfile[]; referees: RefereeOption[] }) {
   const [resetTarget, setResetTarget] = useState<UserProfile | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((u) => u.name.toLowerCase().includes(q));
+  }, [users, search]);
 
   return (
     <div className="mt-8">
@@ -30,11 +38,27 @@ export default function UsersView({ users, referees }: { users: UserProfile[]; r
         olvidado.
       </div>
 
-      <div className="flex flex-col gap-2">
-        {users.map((u) => (
-          <UserRow key={u.id} user={u} referees={referees} onResetPassword={() => setResetTarget(u)} />
-        ))}
-      </div>
+      {users.length > 0 && (
+        <div className="mb-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar usuario por nombre..."
+            className="min-w-[240px] w-full max-w-[360px]"
+          />
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <Empty title="Sin resultados" desc={`Ningún usuario coincide con "${search}".`} />
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((u) => (
+            <UserRow key={u.id} user={u} referees={referees} onResetPassword={() => setResetTarget(u)} />
+          ))}
+        </div>
+      )}
 
       {resetTarget && <ResetPasswordModal user={resetTarget} onClose={() => setResetTarget(null)} />}
     </div>
