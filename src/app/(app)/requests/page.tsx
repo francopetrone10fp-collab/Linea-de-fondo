@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
 import { Empty } from "@/app/(app)/teams/TeamsView";
 import RequestsView from "./RequestsView";
+import UsersView from "./UsersView";
 
 export default async function RequestsPage() {
   const profile = await requireProfile();
@@ -15,11 +16,16 @@ export default async function RequestsPage() {
   }
 
   const supabase = await createClient();
-  const { data: pending } = await supabase
-    .from("profiles")
-    .select("id, name, role, created_at")
-    .eq("status", "pending")
-    .order("created_at");
+  const [{ data: pending }, { data: approved }, { data: referees }] = await Promise.all([
+    supabase.from("profiles").select("id, name, role, created_at").eq("status", "pending").order("created_at"),
+    supabase.from("profiles").select("id, name, role, referee_id").eq("status", "approved").order("name"),
+    supabase.from("referees").select("id, name").order("name"),
+  ]);
 
-  return <RequestsView pending={pending ?? []} />;
+  return (
+    <div>
+      <RequestsView pending={pending ?? []} />
+      <UsersView users={approved ?? []} referees={referees ?? []} />
+    </div>
+  );
 }
