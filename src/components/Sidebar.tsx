@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { view: "reportes", href: "/reportes", label: "Reportes", roles: ["coordinador", "instructor"] },
   { view: "requests", href: "/requests", label: "Solicitudes", roles: ["coordinador"] },
   { view: "material", href: "/material", label: "Material didáctico", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "clases", href: "/clases", label: "Clases", roles: ["coordinador", "instructor", "arbitro"] },
 ] as const;
 
 export default function Sidebar({

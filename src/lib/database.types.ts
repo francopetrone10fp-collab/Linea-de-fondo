@@ -255,6 +255,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["materials"]["Insert"]>;
         Relationships: [];
       };
+      classes: {
+        Row: {
+          id: string;
+          title: string;
+          video_url: string | null;
+          notes: string | null;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          video_url?: string | null;
+          notes?: string | null;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["classes"]["Insert"]>;
+        Relationships: [];
+      };
       comments: {
         Row: {
           id: string;

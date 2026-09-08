@@ -158,6 +158,18 @@ create table public.materials (
 );
 
 -- ============================================================
+-- 5b. CLASES (video + notas, la arma Coordinador/Instructor, la ve todo el equipo)
+-- ============================================================
+create table public.classes (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  video_url text,
+  notes text,
+  created_by uuid not null references public.profiles(id) on delete restrict,
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
 -- 6. COMENTARIOS (partido o clip)
 -- ============================================================
 create table public.comments (
@@ -239,6 +251,7 @@ alter table public.partidos enable row level security;
 alter table public.partido_referees enable row level security;
 alter table public.clips enable row level security;
 alter table public.materials enable row level security;
+alter table public.classes enable row level security;
 alter table public.comments enable row level security;
 
 -- ---------- profiles ----------
@@ -401,6 +414,19 @@ create policy materials_update on public.materials
   for update using (public.is_evaluator());
 
 create policy materials_delete on public.materials
+  for delete using (public.is_evaluator());
+
+-- ---------- classes ----------
+create policy classes_select on public.classes
+  for select using (public.is_approved());
+
+create policy classes_insert on public.classes
+  for insert with check (public.is_evaluator());
+
+create policy classes_update on public.classes
+  for update using (public.is_evaluator());
+
+create policy classes_delete on public.classes
   for delete using (public.is_evaluator());
 
 -- ---------- comments ----------
