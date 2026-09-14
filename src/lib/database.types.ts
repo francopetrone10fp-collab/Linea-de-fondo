@@ -445,6 +445,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["designacion_confirmaciones"]["Insert"]>;
         Relationships: [];
       };
+      disponibilidades: {
+        Row: {
+          id: string;
+          referee_id: string;
+          fecha: string;
+          disponible: boolean;
+          categorias: string[];
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          referee_id: string;
+          fecha: string;
+          disponible?: boolean;
+          categorias?: string[];
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["disponibilidades"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { view: "referees", href: "/referees", label: "Árbitros", roles: ["coordinador", "instructor"] },
   { view: "reportes", href: "/reportes", label: "Reportes", roles: ["coordinador", "instructor"] },
   { view: "designaciones", href: "/designaciones", label: "Designaciones", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "disponibilidad", href: "/disponibilidad", label: "Disponibilidad", roles: ["coordinador", "arbitro"] },
   { view: "requests", href: "/requests", label: "Solicitudes", roles: ["coordinador"] },
   { view: "material", href: "/material", label: "Material didáctico", roles: ["coordinador", "instructor", "arbitro"] },
   { view: "clases", href: "/clases", label: "Clases", roles: ["coordinador", "instructor", "arbitro"] },

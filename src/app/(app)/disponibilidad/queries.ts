@@ -1,0 +1,34 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
+
+type DB = SupabaseClient<Database>;
+
+export interface DisponibilidadDia {
+  fecha: string;
+  disponible: boolean;
+  categorias: string[];
+}
+
+// Disponibilidad de un rango de fechas. RLS ya se encarga de que un árbitro
+// solo vea sus propias filas y el coordinador/designador vea todas, así que
+// este mismo fetch sirve tanto para "Mi disponibilidad" como para la matriz.
+export async function fetchDisponibilidad(
+  supabase: DB,
+  range: { desde: string; hasta: string }
+): Promise<Record<string, DisponibilidadDia[]>> {
+  const { data } = await supabase
+    .from("disponibilidades")
+    .select("referee_id, fecha, disponible, categorias")
+    .gte("fecha", range.desde)
+    .lte("fecha", range.hasta);
+
+  const byReferee: Record<string, DisponibilidadDia[]> = {};
+  (data ?? []).forEach((row) => {
+    (byReferee[row.referee_id] ??= []).push({
+      fecha: row.fecha,
+      disponible: row.disponible,
+      categorias: row.categorias,
+    });
+  });
+  return byReferee;
+}

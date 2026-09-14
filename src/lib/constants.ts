@@ -69,6 +69,29 @@ export function classLevelInfo(key: ClassLevel) {
   return CLASS_LEVELS.find((l) => l.key === key) ?? CLASS_LEVELS[0];
 }
 
+// Categorías de disponibilidad de fin de semana: mismas opciones que el
+// formulario de Google que se usaba antes, para no romper el criterio que
+// ya conocen los árbitros.
+export const CATEGORIAS_DISPONIBILIDAD = [
+  "U9 Y U11",
+  "INTANFIL (U13)",
+  "CADETE (U15)",
+  "JUVENIL (U17)",
+  "LIGA PROXIMO (U21)",
+  "TIRA ENTERA",
+  "FULL TIME",
+];
+
+export const DIAS_SEMANA = [
+  { key: "lunes", label: "Lunes" },
+  { key: "martes", label: "Martes" },
+  { key: "miercoles", label: "Miércoles" },
+  { key: "jueves", label: "Jueves" },
+  { key: "viernes", label: "Viernes" },
+  { key: "sabado", label: "Sábado" },
+  { key: "domingo", label: "Domingo" },
+] as const;
+
 export const TEAM_COLORS = [
   "#4E8FD6", "#7F77DD", "#D85A30", "#5DCAA5", "#D4537E",
   "#B4592E", "#6B8E6B", "#8A6FD6", "#4A9EA1", "#C77B3D",
