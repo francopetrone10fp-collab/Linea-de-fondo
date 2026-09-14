@@ -6,6 +6,7 @@ import { useRef, useTransition } from "react";
 import { logout } from "@/app/login/actions";
 import { updateMyPhotoUrl } from "@/app/(app)/profile-actions";
 import { createClient } from "@/lib/supabase/client";
+import NotificationToggle from "@/components/NotificationToggle";
 import { ROLE_LABELS, initials } from "@/lib/constants";
 import type { SessionProfile } from "@/lib/session";
 
@@ -133,8 +134,11 @@ export default function Sidebar({
           );
         })}
       </nav>
-      <div className="mt-auto text-[11px] text-text-faint leading-relaxed">
-        Los datos se guardan y son visibles según el rol de cada perfil.
+      <div className="mt-auto flex flex-col gap-2">
+        <NotificationToggle />
+        <div className="text-[11px] text-text-faint leading-relaxed">
+          Los datos se guardan y son visibles según el rol de cada perfil.
+        </div>
       </div>
     </div>
   );

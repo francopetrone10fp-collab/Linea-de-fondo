@@ -465,6 +465,12 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["disponibilidades"]["Insert"]>;
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: { id: string; profile_id: string; endpoint: string; p256dh: string; auth: string; created_at: string };
+        Insert: { id?: string; profile_id: string; endpoint: string; p256dh: string; auth: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["push_subscriptions"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

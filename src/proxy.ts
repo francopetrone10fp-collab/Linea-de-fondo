@@ -7,6 +7,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // /api queda afuera: esas rutas manejan su propia autenticación (ej. el
+    // cron de recordatorios, que Vercel llama sin cookie de sesión y valida
+    // con un Bearer token en su lugar).
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
