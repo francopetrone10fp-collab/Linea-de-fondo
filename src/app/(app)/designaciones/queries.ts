@@ -39,6 +39,7 @@ export interface DesignacionFull {
   notas: string | null;
   ctNombre: string | null;
   ctMonto: number | null;
+  requiereConfirmacion: boolean;
   arbitros: DesignacionArbitroFull[];
 }
 
@@ -132,6 +133,25 @@ export async function fetchDesignaciones(supabase: DB, range: { desde: string; h
     notas: r.notas,
     ctNombre: r.ct_nombre,
     ctMonto: r.ct_monto,
+    requiereConfirmacion: r.requiere_confirmacion,
     arbitros: (arbByDesignacion.get(r.id) ?? []).sort((a, b) => a.posicion - b.posicion),
   }));
+}
+
+export interface Confirmacion {
+  refereeId: string;
+  confirmedAt: string;
+}
+
+// Quién confirmó cada designación. RLS ya deja ver esto a cualquier árbitro
+// asignado a esa designación (no es sensible como el monto), así que es un
+// select directo, sin necesidad de una función SECURITY DEFINER.
+export async function fetchConfirmaciones(supabase: DB, designacionIds: string[]): Promise<Record<string, Confirmacion[]>> {
+  if (designacionIds.length === 0) return {};
+  const { data } = await supabase.from("designacion_confirmaciones").select("*").in("designacion_id", designacionIds);
+  const byDesignacion: Record<string, Confirmacion[]> = {};
+  (data ?? []).forEach((c) => {
+    (byDesignacion[c.designacion_id] ??= []).push({ refereeId: c.referee_id, confirmedAt: c.confirmed_at });
+  });
+  return byDesignacion;
 }

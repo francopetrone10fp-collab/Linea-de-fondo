@@ -8,6 +8,7 @@ import type { DesignacionFull, TarifaCategoria } from "./queries";
 const ESTADOS: { key: DesignacionEstado; label: string }[] = [
   { key: "programado", label: "Programado" },
   { key: "confirmar", label: "A confirmar" },
+  { key: "confirmado", label: "Confirmado (por los árbitros)" },
   { key: "suspendido", label: "Suspendido" },
   { key: "jugado", label: "Jugado" },
 ];

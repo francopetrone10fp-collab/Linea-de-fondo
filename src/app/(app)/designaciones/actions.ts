@@ -222,7 +222,7 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
 
   const { data: designacion } = await supabase
     .from("designaciones")
-    .select("competencia, categoria")
+    .select("competencia, categoria, estado")
     .eq("id", designacionId)
     .single();
   if (!designacion) return { ok: false as const, error: "Designación no encontrada" };
@@ -241,7 +241,34 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
     if (error) return { ok: false as const, error: "No se pudo quitar el árbitro" };
   }
 
+  // Si el partido ya estaba confirmado por todos y ahora cambió la terna,
+  // esa confirmación quedó vieja: vuelve a "programado" hasta que confirmen
+  // de nuevo (la designacion_confirmaciones anterior del árbitro que salió
+  // deja de contar sola, porque el chequeo compara contra los asignados
+  // actuales).
+  if (designacion.estado === "confirmado") {
+    await supabase.from("designaciones").update({ estado: "programado" }).eq("id", designacionId);
+  }
+
   await recalcularMontosArbitros(supabase, designacionId, designacion.competencia, designacion.categoria);
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
+// El árbitro confirma que va a dirigir este partido. Como designaciones_update
+// es coordinador-only por RLS, el cambio de estado a "confirmado" (cuando ya
+// confirmaron todos los asignados) pasa por una función SECURITY DEFINER.
+export async function confirmDesignacion(designacionId: string) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("designacion_confirmaciones")
+    .upsert({ designacion_id: designacionId, referee_id: profile.referee_id });
+  if (error) return { ok: false as const, error: "No se pudo confirmar" };
+
+  await supabase.rpc("recalcular_confirmacion_designacion", { p_designacion_id: designacionId });
   revalidatePath("/designaciones");
   return { ok: true as const };
 }

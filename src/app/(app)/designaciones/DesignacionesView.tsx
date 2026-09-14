@@ -8,13 +8,14 @@ import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
-import type { Companero, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
+import type { Companero, Confirmacion, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 
 export default function DesignacionesView({
   designaciones,
   tarifas,
   viaticos,
   companeros,
+  confirmaciones,
   referees,
   canManage,
   myRefereeId,
@@ -24,6 +25,7 @@ export default function DesignacionesView({
   tarifas: TarifaCategoria[];
   viaticos: ViaticoLocalidad[];
   companeros: Record<string, Companero[]>;
+  confirmaciones: Record<string, Confirmacion[]>;
   referees: { id: string; name: string }[];
   canManage: boolean;
   myRefereeId: string | null;
@@ -224,12 +226,19 @@ export default function DesignacionesView({
           onEdit={(d) => setEditing(d)}
           sortOrder={sortOrder}
           onToggleSort={() => setSortOrder((s) => (s === "asc" ? "desc" : "asc"))}
+          confirmaciones={confirmaciones}
         />
       )}
 
       {tab === "mias" &&
         (myRefereeId ? (
-          <MisDesignacionesView designaciones={designaciones} myRefereeId={myRefereeId} viaticos={viaticos} companeros={companeros} />
+          <MisDesignacionesView
+            designaciones={designaciones}
+            myRefereeId={myRefereeId}
+            viaticos={viaticos}
+            companeros={companeros}
+            confirmaciones={confirmaciones}
+          />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">
             Tu perfil todavía no está vinculado a un árbitro, así que no podemos mostrarte tus designaciones.

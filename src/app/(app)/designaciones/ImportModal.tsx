@@ -15,6 +15,7 @@ interface WorkingRow extends ParsedImportRow {
 const ESTADO_LABELS: Record<DesignacionEstado, string> = {
   programado: "Programado",
   confirmar: "A confirmar",
+  confirmado: "Confirmado",
   suspendido: "Suspendido",
   jugado: "Jugado",
 };

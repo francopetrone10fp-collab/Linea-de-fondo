@@ -16,7 +16,7 @@ export type WhistleType = "QW" | "IW" | "PW" | "CW" | "NCC" | "NCI";
 export type EntityType = "partido" | "clip";
 export type ClassLevel = "inicial" | "medio_avanzado";
 export type Rama = "masculino" | "femenino";
-export type DesignacionEstado = "programado" | "confirmar" | "suspendido" | "jugado";
+export type DesignacionEstado = "programado" | "confirmar" | "suspendido" | "jugado" | "confirmado";
 export type TarifaModo = "por_arbitro" | "total_partido";
 
 export interface Database {
@@ -406,6 +406,7 @@ export interface Database {
           notas: string | null;
           ct_nombre: string | null;
           ct_monto: number | null;
+          requiere_confirmacion: boolean;
           created_by: string | null;
           created_at: string;
         };
@@ -425,6 +426,7 @@ export interface Database {
           notas?: string | null;
           ct_nombre?: string | null;
           ct_monto?: number | null;
+          requiere_confirmacion?: boolean;
           created_by?: string | null;
           created_at?: string;
         };
@@ -437,6 +439,12 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["designacion_arbitros"]["Insert"]>;
         Relationships: [];
       };
+      designacion_confirmaciones: {
+        Row: { designacion_id: string; referee_id: string; confirmed_at: string };
+        Insert: { designacion_id: string; referee_id: string; confirmed_at?: string };
+        Update: Partial<Database["public"]["Tables"]["designacion_confirmaciones"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -446,6 +454,10 @@ export interface Database {
       };
       recalcular_montos_designaciones: {
         Args: Record<string, never>;
+        Returns: undefined;
+      };
+      recalcular_confirmacion_designacion: {
+        Args: { p_designacion_id: string };
         Returns: undefined;
       };
     };

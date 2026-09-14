@@ -3,13 +3,14 @@
 import { useTransition } from "react";
 import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
 import type { DesignacionEstado } from "@/lib/database.types";
-import type { DesignacionFull } from "./queries";
+import type { Confirmacion, DesignacionFull } from "./queries";
 
 const ESTADO_LABELS: Record<DesignacionEstado, string> = {
   programado: "Programado",
   confirmar: "A confirmar",
   suspendido: "Suspendido",
   jugado: "Jugado",
+  confirmado: "Confirmado",
 };
 
 const ESTADO_STYLES: Record<DesignacionEstado, string> = {
@@ -17,6 +18,7 @@ const ESTADO_STYLES: Record<DesignacionEstado, string> = {
   confirmar: "bg-amber-bg text-amber-text",
   suspendido: "bg-bad-bg text-bad-text",
   jugado: "bg-good-bg text-good-text",
+  confirmado: "bg-good-bg text-good-text",
 };
 
 export const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -27,12 +29,14 @@ export default function DesignacionesGrid({
   onEdit,
   sortOrder,
   onToggleSort,
+  confirmaciones,
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
   onEdit: (d: DesignacionFull) => void;
   sortOrder: "asc" | "desc";
   onToggleSort: () => void;
+  confirmaciones: Record<string, Confirmacion[]>;
 }) {
   if (designaciones.length === 0) {
     return <p className="text-[12.5px] text-text-faint m-0">No hay designaciones para este mes con ese filtro.</p>;
@@ -65,7 +69,7 @@ export default function DesignacionesGrid({
         </thead>
         <tbody>
           {designaciones.map((d) => (
-            <DesignacionRow key={d.id} d={d} referees={referees} onEdit={onEdit} />
+            <DesignacionRow key={d.id} d={d} referees={referees} onEdit={onEdit} confirmados={confirmaciones[d.id] ?? []} />
           ))}
         </tbody>
       </table>
@@ -81,10 +85,12 @@ function DesignacionRow({
   d,
   referees,
   onEdit,
+  confirmados,
 }: {
   d: DesignacionFull;
   referees: { id: string; name: string }[];
   onEdit: (d: DesignacionFull) => void;
+  confirmados: Confirmacion[];
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -150,6 +156,15 @@ function DesignacionRow({
             </option>
           ))}
         </select>
+        {d.requiereConfirmacion && d.arbitros.length > 0 && (
+          <div
+            className={`text-[10.5px] mt-1 ${
+              d.arbitros.every((a) => confirmados.some((c) => c.refereeId === a.refereeId)) ? "text-good-text" : "text-text-faint"
+            }`}
+          >
+            {confirmados.length}/{d.arbitros.length} confirmaron
+          </div>
+        )}
       </td>
       {[1, 2, 3].map((posicion) => (
         <td key={posicion} className="px-2.5 py-2 whitespace-nowrap">
