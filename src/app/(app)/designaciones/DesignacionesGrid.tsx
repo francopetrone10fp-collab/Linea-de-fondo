@@ -196,14 +196,26 @@ function DesignacionRow({
           d.arbitros.length > 0 &&
           (() => {
             const total = d.arbitros.length;
-            const confirmadosCount = d.arbitros.filter((a) => confirmados.some((c) => c.refereeId === a.refereeId)).length;
+            const confirmadosArb = d.arbitros.filter((a) => confirmados.some((c) => c.refereeId === a.refereeId));
+            const pendientesArb = d.arbitros.filter((a) => !confirmados.some((c) => c.refereeId === a.refereeId));
+            const confirmadosCount = confirmadosArb.length;
             const color = confirmadosCount === 0 ? "bg-bad" : confirmadosCount === total ? "bg-good" : "bg-amber";
             return (
-              <div className="flex items-center gap-1.5 mt-1" title={`${confirmadosCount}/${total} confirmaron`}>
-                <span className={`inline-block w-2 h-2 rounded-full flex-none ${color}`} />
-                <span className="text-[10.5px] text-text-faint whitespace-nowrap">
-                  {confirmadosCount}/{total} confirmaron
-                </span>
+              <div className="mt-1 max-w-[150px]">
+                <div className="flex items-center gap-1.5" title={`${confirmadosCount}/${total} confirmaron`}>
+                  <span className={`inline-block w-2 h-2 rounded-full flex-none ${color}`} />
+                  <span className="text-[10.5px] text-text-faint whitespace-nowrap">
+                    {confirmadosCount}/{total} confirmaron
+                  </span>
+                </div>
+                {pendientesArb.length > 0 && (
+                  <div className="text-[10px] leading-tight mt-0.5">
+                    {confirmadosArb.length > 0 && (
+                      <div className="text-good-text">✓ {confirmadosArb.map((a) => a.refereeName).join(", ")}</div>
+                    )}
+                    <div className="text-amber-text">Falta: {pendientesArb.map((a) => a.refereeName).join(", ")}</div>
+                  </div>
+                )}
               </div>
             );
           })()}
