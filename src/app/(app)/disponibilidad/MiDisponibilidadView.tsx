@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setDisponibilidadDia } from "./actions";
+import { setDisponibilidadDia, clearDisponibilidadDia } from "./actions";
 import { weekDates, isWeekend, formatDayLabel } from "./weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, DIAS_SEMANA } from "@/lib/constants";
 import type { DisponibilidadDia } from "./queries";
@@ -41,12 +41,30 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
 
   function onToggleCategoria(cat: string) {
     const yaEsta = categorias.includes(cat);
-    const nuevas = yaEsta ? categorias.filter((c) => c !== cat) : [...categorias, cat];
+    let nuevas: string[];
+    if (yaEsta) {
+      nuevas = categorias.filter((c) => c !== cat);
+    } else if (cat === "FULL TIME") {
+      // FULL TIME cubre cualquier categoría: no tiene sentido combinarlo con otras.
+      nuevas = ["FULL TIME"];
+    } else {
+      nuevas = [...categorias.filter((c) => c !== "FULL TIME"), cat];
+    }
     guardar(nuevas.length > 0, nuevas);
   }
 
   function onNoDisponible() {
     guardar(false, []);
+  }
+
+  function onDesmarcarTodo() {
+    setDisponible(!weekend);
+    setCategorias([]);
+    setRespondido(false);
+    startTransition(async () => {
+      const res = await clearDisponibilidadDia(fecha);
+      if (!res.ok) alert(res.error);
+    });
   }
 
   return (
@@ -101,6 +119,14 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
             <input type="checkbox" checked={respondido && !disponible} onChange={onNoDisponible} className="hidden" />
             NO DISPONIBLE
           </label>
+          {respondido && (
+            <button
+              onClick={onDesmarcarTodo}
+              className="text-[12px] text-text-faint hover:text-text underline px-1"
+            >
+              Desmarcar todo
+            </button>
+          )}
         </div>
       )}
     </div>

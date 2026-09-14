@@ -27,3 +27,19 @@ export async function setDisponibilidadDia(fecha: string, disponible: boolean, c
   revalidatePath("/disponibilidad");
   return { ok: true as const };
 }
+
+// Desmarca todo lo cargado para un día puntual, volviendo a "sin responder".
+export async function clearDisponibilidadDia(fecha: string) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("disponibilidades")
+    .delete()
+    .eq("referee_id", profile.referee_id)
+    .eq("fecha", fecha);
+  if (error) return { ok: false as const, error: "No se pudo desmarcar" };
+  revalidatePath("/disponibilidad");
+  return { ok: true as const };
+}
