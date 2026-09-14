@@ -7,10 +7,12 @@ import type { SessionProfile } from "@/lib/session";
 export default function AppShell({
   profile,
   pendingCount,
+  disponibilidadPendiente,
   children,
 }: {
   profile: SessionProfile;
   pendingCount: number;
+  disponibilidadPendiente: boolean;
   children: React.ReactNode;
 }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -28,7 +30,7 @@ export default function AppShell({
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <div className={`${showMenu ? "block" : "hidden"} md:block`}>
-        <Sidebar profile={profile} pendingCount={pendingCount} onNavigate={closeMenu} />
+        <Sidebar profile={profile} pendingCount={pendingCount} disponibilidadPendiente={disponibilidadPendiente} onNavigate={closeMenu} />
       </div>
 
       <main className={`relative z-10 flex-1 min-w-0 px-8 py-6 pb-16 ${showMenu ? "hidden md:block" : "block"}`}>

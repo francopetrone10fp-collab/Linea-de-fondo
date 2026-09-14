@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MiDisponibilidadView from "./MiDisponibilidadView";
 import DisponibilidadMatrix from "./DisponibilidadMatrix";
-import { addDays, formatWeekRange } from "./weekUtils";
+import { addDays, formatWeekRange } from "@/lib/weekUtils";
 import type { DisponibilidadDia } from "./queries";
 
 export default function DisponibilidadView({

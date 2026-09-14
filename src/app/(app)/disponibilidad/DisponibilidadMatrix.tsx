@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { weekDates, isWeekend } from "./weekUtils";
+import { weekDates, isWeekend } from "@/lib/weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, DIAS_SEMANA } from "@/lib/constants";
 import type { DisponibilidadDia } from "./queries";
 

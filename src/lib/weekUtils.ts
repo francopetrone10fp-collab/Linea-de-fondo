@@ -1,6 +1,6 @@
 // Helpers de fechas para la semana de disponibilidad (lunes a domingo).
-// Nada de esto depende de React, así que lo comparten el server component
-// (page.tsx) y las vistas cliente.
+// Nada de esto depende de React, así que lo comparten server components y
+// vistas cliente, y también el layout (para el aviso de "falta cargar").
 
 export function mondayOf(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");

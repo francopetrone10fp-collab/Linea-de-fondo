@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setDisponibilidadDia, clearDisponibilidadDia } from "./actions";
-import { weekDates, isWeekend, formatDayLabel } from "./weekUtils";
+import { weekDates, isWeekend, formatDayLabel, mondayOf } from "@/lib/weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, DIAS_SEMANA } from "@/lib/constants";
 import type { DisponibilidadDia } from "./queries";
 
@@ -10,8 +10,16 @@ export default function MiDisponibilidadView({ monday, miDisponibilidad }: { mon
   const porFecha = new Map(miDisponibilidad.map((d) => [d.fecha, d]));
   const dates = weekDates(monday);
 
+  const esSemanaActual = monday === mondayOf(new Date().toISOString().slice(0, 10));
+  const faltaFinDeSemana = esSemanaActual && (!porFecha.has(dates[5]) || !porFecha.has(dates[6]));
+
   return (
     <div className="flex flex-col gap-2.5">
+      {faltaFinDeSemana && (
+        <div className="bg-amber-bg text-amber-text border border-amber rounded-xl px-4 py-3 text-[13px] font-medium mb-1">
+          Todavía no cargaste tu disponibilidad para este sábado y/o domingo. Marcala abajo para que te puedan designar.
+        </div>
+      )}
       {dates.map((fecha, i) => (
         <DayCard key={fecha} fecha={fecha} diaLabel={DIAS_SEMANA[i].label} row={porFecha.get(fecha) ?? null} />
       ))}

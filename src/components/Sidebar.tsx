@@ -25,10 +25,12 @@ const NAV_ITEMS = [
 export default function Sidebar({
   profile,
   pendingCount,
+  disponibilidadPendiente,
   onNavigate,
 }: {
   profile: SessionProfile;
   pendingCount: number;
+  disponibilidadPendiente: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -123,6 +125,9 @@ export default function Sidebar({
                 <span className="bg-accent text-accent-ink text-[10px] font-bold rounded-[10px] px-1.5">
                   {pendingCount}
                 </span>
+              )}
+              {item.view === "disponibilidad" && disponibilidadPendiente && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber flex-none" title="Te falta cargar la disponibilidad del fin de semana" />
               )}
             </Link>
           );

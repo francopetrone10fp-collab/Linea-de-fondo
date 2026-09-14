@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
 import { fetchDisponibilidad } from "./queries";
-import { mondayOf } from "./weekUtils";
+import { mondayOf } from "@/lib/weekUtils";
 import DisponibilidadView from "./DisponibilidadView";
 
 export default async function DisponibilidadPage({
