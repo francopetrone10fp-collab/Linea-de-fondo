@@ -25,10 +25,14 @@ export default function DesignacionesGrid({
   designaciones,
   referees,
   onEdit,
+  sortOrder,
+  onToggleSort,
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
   onEdit: (d: DesignacionFull) => void;
+  sortOrder: "asc" | "desc";
+  onToggleSort: () => void;
 }) {
   if (designaciones.length === 0) {
     return <p className="text-[12.5px] text-text-faint m-0">No hay designaciones para este mes con ese filtro.</p>;
@@ -39,7 +43,12 @@ export default function DesignacionesGrid({
       <table className="w-full text-[12.5px] border-collapse min-w-[1200px]">
         <thead>
           <tr className="bg-surface-2 text-text-dim text-[11px] uppercase tracking-wide">
-            <Th>Día / hora</Th>
+            <th className="text-left font-semibold px-2.5 py-2 border-b border-line whitespace-nowrap">
+              <button onClick={onToggleSort} className="flex items-center gap-1 text-text-dim hover:text-text uppercase text-[11px] font-semibold">
+                Día / hora
+                <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
+              </button>
+            </th>
             <Th>Jornada</Th>
             <Th>Categoría</Th>
             <Th>Competencia / rama</Th>

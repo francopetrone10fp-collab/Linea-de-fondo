@@ -48,21 +48,31 @@ export default function DesignacionesView({
     return label.charAt(0).toUpperCase() + label.slice(1);
   }, [month]);
 
-  const competencias = useMemo(
-    () => Array.from(new Set(designaciones.map((d) => d.competencia).filter((c): c is string => !!c))),
-    [designaciones]
-  );
+  const competencias = useMemo(() => {
+    const desdeDatos = designaciones.map((d) => d.competencia).filter((c): c is string => !!c);
+    return Array.from(new Set(["AROB", "LFF", "FBPS", ...desdeDatos]));
+  }, [designaciones]);
   const localidades = useMemo(() => viaticos.map((v) => v.localidad), [viaticos]);
+
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => {
-    if (!q) return designaciones;
-    return designaciones.filter((d) =>
-      [d.jornada, d.categoria, d.competencia, d.equipoLocal, d.equipoVisitante, d.sede, d.ctNombre, ...d.arbitros.map((a) => a.refereeName)]
-        .filter((v): v is string => !!v)
-        .some((v) => v.toLowerCase().includes(q))
-    );
-  }, [designaciones, q]);
+    let list = designaciones;
+    if (q) {
+      list = list.filter((d) =>
+        [d.jornada, d.categoria, d.competencia, d.equipoLocal, d.equipoVisitante, d.sede, d.ctNombre, ...d.arbitros.map((a) => a.refereeName)]
+          .filter((v): v is string => !!v)
+          .some((v) => v.toLowerCase().includes(q))
+      );
+    }
+    const sorted = [...list].sort((a, b) => {
+      const av = `${a.fecha ?? ""} ${a.hora ?? ""}`;
+      const bv = `${b.fecha ?? ""} ${b.hora ?? ""}`;
+      return sortOrder === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+    return sorted;
+  }, [designaciones, q, sortOrder]);
 
   function exportDetalle() {
     const headers = [
@@ -208,7 +218,13 @@ export default function DesignacionesView({
       )}
 
       {tab === "grilla" && canManage && (
-        <DesignacionesGrid designaciones={filtered} referees={referees} onEdit={(d) => setEditing(d)} />
+        <DesignacionesGrid
+          designaciones={filtered}
+          referees={referees}
+          onEdit={(d) => setEditing(d)}
+          sortOrder={sortOrder}
+          onToggleSort={() => setSortOrder((s) => (s === "asc" ? "desc" : "asc"))}
+        />
       )}
 
       {tab === "mias" &&
@@ -236,9 +252,7 @@ export default function DesignacionesView({
         />
       )}
 
-      {showImport && (
-        <ImportModal referees={referees} competencias={competencias.length > 0 ? competencias : ["LFF", "Federativos"]} onClose={() => setShowImport(false)} />
-      )}
+      {showImport && <ImportModal referees={referees} competencias={competencias} onClose={() => setShowImport(false)} />}
     </div>
   );
 }
