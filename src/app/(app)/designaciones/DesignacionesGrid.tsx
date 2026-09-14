@@ -157,15 +157,21 @@ function DesignacionRow({
             </option>
           ))}
         </select>
-        {d.requiereConfirmacion && d.arbitros.length > 0 && (
-          <div
-            className={`text-[10.5px] mt-1 ${
-              d.arbitros.every((a) => confirmados.some((c) => c.refereeId === a.refereeId)) ? "text-good-text" : "text-text-faint"
-            }`}
-          >
-            {confirmados.length}/{d.arbitros.length} confirmaron
-          </div>
-        )}
+        {d.requiereConfirmacion &&
+          d.arbitros.length > 0 &&
+          (() => {
+            const total = d.arbitros.length;
+            const confirmadosCount = d.arbitros.filter((a) => confirmados.some((c) => c.refereeId === a.refereeId)).length;
+            const color = confirmadosCount === 0 ? "bg-bad" : confirmadosCount === total ? "bg-good" : "bg-amber";
+            return (
+              <div className="flex items-center gap-1.5 mt-1" title={`${confirmadosCount}/${total} confirmaron`}>
+                <span className={`inline-block w-2 h-2 rounded-full flex-none ${color}`} />
+                <span className="text-[10.5px] text-text-faint whitespace-nowrap">
+                  {confirmadosCount}/{total} confirmaron
+                </span>
+              </div>
+            );
+          })()}
       </td>
       {[1, 2, 3].map((posicion) => (
         <td key={posicion} className="px-2.5 py-2 whitespace-nowrap">
