@@ -37,11 +37,19 @@ export default function DesignacionesView({
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<DesignacionFull | null>(null);
+  const [selectedDay, setSelectedDay] = useState("");
 
   function changeMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
     const d = new Date(y, m - 1 + delta, 1);
     router.push(`/designaciones?month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
+  function onDayChange(day: string) {
+    setSelectedDay(day);
+    if (day && day.slice(0, 7) !== month) {
+      router.push(`/designaciones?month=${day.slice(0, 7)}`);
+    }
   }
 
   const monthLabel = useMemo(() => {
@@ -69,6 +77,9 @@ export default function DesignacionesView({
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => {
     let list = designaciones;
+    if (selectedDay) {
+      list = list.filter((d) => d.fecha === selectedDay);
+    }
     if (q) {
       list = list.filter((d) =>
         [d.jornada, d.categoria, d.competencia, d.equipoLocal, d.equipoVisitante, d.sede, d.ctNombre, d.notas, ...d.arbitros.map((a) => a.refereeName)]
@@ -86,9 +97,31 @@ export default function DesignacionesView({
     });
     return sorted;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [designaciones, q, sortOrder, confirmaciones]);
+  }, [designaciones, q, sortOrder, confirmaciones, selectedDay]);
 
   const pendingIds = useMemo(() => new Set(filtered.filter(estaPendiente).map((d) => d.id)), [filtered, confirmaciones]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const misDesignaciones = useMemo(
+    () => (selectedDay ? designaciones.filter((d) => d.fecha === selectedDay) : designaciones),
+    [designaciones, selectedDay]
+  );
+
+  // Quién está ocupado a cada (fecha, hora): se arma desde la lista completa
+  // sin filtrar, para no perderse choques que el buscador o el filtro de día
+  // esconderían. Se usa para bloquear la designación repetida de un árbitro
+  // al mismo horario en otro partido.
+  const busyByTime = useMemo(() => {
+    const map = new Map<string, Map<string, string>>();
+    for (const d of designaciones) {
+      if (!d.fecha || !d.hora) continue;
+      const horario = `${d.fecha}|${d.hora}`;
+      for (const a of d.arbitros) {
+        if (!map.has(horario)) map.set(horario, new Map());
+        map.get(horario)!.set(a.refereeId, d.id);
+      }
+    }
+    return map;
+  }, [designaciones]);
 
   function exportDetalle() {
     const headers = [
@@ -207,6 +240,24 @@ export default function DesignacionesView({
               ›
             </button>
           </div>
+          <div className="flex items-center gap-1">
+            <input
+              type="date"
+              value={selectedDay}
+              onChange={(e) => onDayChange(e.target.value)}
+              title="Filtrar por un día puntual"
+              className="text-[13px]"
+            />
+            {selectedDay && (
+              <button
+                onClick={() => setSelectedDay("")}
+                title="Quitar filtro de día"
+                className="text-text-faint hover:text-text px-1.5 py-1 text-[13px]"
+              >
+                ×
+              </button>
+            )}
+          </div>
           {tab === "grilla" && (
             <>
               <input
@@ -242,13 +293,14 @@ export default function DesignacionesView({
           onToggleSort={() => setSortOrder((s) => (s === "asc" ? "desc" : "asc"))}
           confirmaciones={confirmaciones}
           pendingIds={pendingIds}
+          busyByTime={busyByTime}
         />
       )}
 
       {tab === "mias" &&
         (myRefereeId ? (
           <MisDesignacionesView
-            designaciones={designaciones}
+            designaciones={misDesignaciones}
             myRefereeId={myRefereeId}
             viaticos={viaticos}
             companeros={companeros}

@@ -27,7 +27,7 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
   const [competencia, setCompetencia] = useState(competencias[0] ?? "LFF");
   const [rows, setRows] = useState<WorkingRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ inserted: number; updated: number } | null>(null);
+  const [result, setResult] = useState<{ inserted: number; updated: number; conflictos: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function onProcesar() {
@@ -90,7 +90,7 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
         setError(res.error);
         return;
       }
-      setResult({ inserted: res.inserted, updated: res.updated });
+      setResult({ inserted: res.inserted, updated: res.updated, conflictos: res.conflictos });
       router.refresh();
     });
   }
@@ -236,6 +236,15 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
           <div>
             <p className="text-[14px] mb-4">
               Listo: <b>{result.inserted}</b> designaciones nuevas y <b>{result.updated}</b> actualizadas.
+              {result.conflictos > 0 && (
+                <>
+                  {" "}
+                  <span className="text-amber-text">
+                    {result.conflictos} árbitro{result.conflictos === 1 ? "" : "s"} no se {result.conflictos === 1 ? "asignó" : "asignaron"} por
+                    estar ya designado{result.conflictos === 1 ? "" : "s"} a esa misma hora en otro partido.
+                  </span>
+                </>
+              )}
             </p>
             <div className="flex justify-end">
               <button

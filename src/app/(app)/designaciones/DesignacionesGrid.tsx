@@ -32,6 +32,7 @@ export default function DesignacionesGrid({
   onToggleSort,
   confirmaciones,
   pendingIds,
+  busyByTime,
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
@@ -40,6 +41,7 @@ export default function DesignacionesGrid({
   onToggleSort: () => void;
   confirmaciones: Record<string, Confirmacion[]>;
   pendingIds: Set<string>;
+  busyByTime: Map<string, Map<string, string>>;
 }) {
   if (designaciones.length === 0) {
     return <p className="text-[12.5px] text-text-faint m-0">No hay designaciones para este mes con ese filtro.</p>;
@@ -84,7 +86,21 @@ export default function DesignacionesGrid({
                     </td>
                   </tr>
                 )}
-                <DesignacionRow d={d} referees={referees} onEdit={onEdit} confirmados={confirmaciones[d.id] ?? []} />
+                <DesignacionRow
+                  d={d}
+                  referees={referees}
+                  onEdit={onEdit}
+                  confirmados={confirmaciones[d.id] ?? []}
+                  disabledIds={
+                    d.fecha && d.hora
+                      ? new Set(
+                          Array.from(busyByTime.get(`${d.fecha}|${d.hora}`)?.entries() ?? [])
+                            .filter(([, otherId]) => otherId !== d.id)
+                            .map(([refereeId]) => refereeId)
+                        )
+                      : undefined
+                  }
+                />
               </Fragment>
             );
           })}
@@ -103,17 +119,20 @@ function DesignacionRow({
   referees,
   onEdit,
   confirmados,
+  disabledIds,
 }: {
   d: DesignacionFull;
   referees: { id: string; name: string }[];
   onEdit: (d: DesignacionFull) => void;
   confirmados: Confirmacion[];
+  disabledIds?: Set<string>;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function onArbitroChange(posicion: 1 | 2 | 3, refereeId: string) {
     startTransition(async () => {
-      await setDesignacionArbitro(d.id, posicion, refereeId || null);
+      const res = await setDesignacionArbitro(d.id, posicion, refereeId || null);
+      if (!res.ok) alert(res.error);
     });
   }
 
@@ -198,6 +217,7 @@ function DesignacionRow({
             value={arbitro(posicion)}
             onChange={(refereeId) => onArbitroChange(posicion as 1 | 2 | 3, refereeId)}
             className="min-w-[130px]"
+            disabledIds={disabledIds}
           />
           {arbitro(posicion) && (
             <div className="text-[10.5px] text-text-faint mt-0.5">

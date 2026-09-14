@@ -215,6 +215,39 @@ export async function deleteDesignacion(id: string) {
 
 // ---------- Árbitros asignados ----------
 
+// ¿Este árbitro ya está designado en OTRO partido a la misma fecha y hora?
+// Físicamente no puede dirigir dos partidos al mismo tiempo, así que esto
+// bloquea la asignación en vez de dejar cargar el error.
+async function refereeConflicto(
+  supabase: DB,
+  refereeId: string,
+  fecha: string | null,
+  hora: string | null,
+  excludeDesignacionId: string
+) {
+  if (!fecha || !hora) return null;
+  const { data: mismoHorario } = await supabase
+    .from("designaciones")
+    .select("id, categoria, equipo_local, equipo_visitante")
+    .eq("fecha", fecha)
+    .eq("hora", hora)
+    .neq("id", excludeDesignacionId);
+  if (!mismoHorario || mismoHorario.length === 0) return null;
+
+  const { data: asignado } = await supabase
+    .from("designacion_arbitros")
+    .select("designacion_id")
+    .eq("referee_id", refereeId)
+    .in(
+      "designacion_id",
+      mismoHorario.map((d) => d.id)
+    )
+    .limit(1)
+    .maybeSingle();
+  if (!asignado) return null;
+  return mismoHorario.find((d) => d.id === asignado.designacion_id) ?? null;
+}
+
 // Cambio rápido de árbitro en una posición (1, 2 o 3): es el ajuste más
 // frecuente hasta el mismo día del partido.
 export async function setDesignacionArbitro(designacionId: string, posicion: 1 | 2 | 3, refereeId: string | null) {
@@ -222,12 +255,19 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
 
   const { data: designacion } = await supabase
     .from("designaciones")
-    .select("competencia, categoria, estado")
+    .select("competencia, categoria, estado, fecha, hora")
     .eq("id", designacionId)
     .single();
   if (!designacion) return { ok: false as const, error: "Designación no encontrada" };
 
   if (refereeId) {
+    const conflicto = await refereeConflicto(supabase, refereeId, designacion.fecha, designacion.hora, designacionId);
+    if (conflicto) {
+      return {
+        ok: false as const,
+        error: `Ya está designado a esa hora en ${conflicto.equipo_local} vs ${conflicto.equipo_visitante} (${conflicto.categoria}).`,
+      };
+    }
     const { error } = await supabase
       .from("designacion_arbitros")
       .upsert({ designacion_id: designacionId, posicion, referee_id: refereeId, monto: 0 });
@@ -347,8 +387,26 @@ export async function bulkImportDesignaciones(rows: BulkImportRow[]) {
   const { data: tarifasData } = await supabase.from("tarifas_categoria").select("competencia, categoria, monto_ct");
   const ctMontoPorClave = new Map((tarifasData ?? []).map((t) => [`${t.competencia}|${t.categoria}`, t.monto_ct]));
 
+  // Ocupación por horario: qué árbitro ya está asignado a qué designación en
+  // cada (fecha, hora). Arranca con lo que ya hay en la base para el rango de
+  // fechas del import, y se va completando fila por fila para detectar
+  // también choques entre filas del mismo pegado.
+  const horarioPorDesignacion = new Map((existentes ?? []).map((e) => [e.id, `${e.fecha ?? ""}|${e.hora ?? ""}`]));
+  const { data: arbitrosExistentes } = await supabase
+    .from("designacion_arbitros")
+    .select("designacion_id, referee_id")
+    .in("designacion_id", (existentes ?? []).map((e) => e.id));
+  const ocupacion = new Map<string, Map<string, string>>();
+  for (const a of arbitrosExistentes ?? []) {
+    const horario = horarioPorDesignacion.get(a.designacion_id);
+    if (!horario || horario === "|") continue;
+    if (!ocupacion.has(horario)) ocupacion.set(horario, new Map());
+    ocupacion.get(horario)!.set(a.referee_id, a.designacion_id);
+  }
+
   let inserted = 0;
   let updated = 0;
+  let conflictos = 0;
   const designacionesUpsert: Database["public"]["Tables"]["designaciones"]["Insert"][] = [];
   const arbitrosUpsert: Database["public"]["Tables"]["designacion_arbitros"]["Insert"][] = [];
   const idsPorFila: string[] = [];
@@ -381,7 +439,17 @@ export async function bulkImportDesignaciones(rows: BulkImportRow[]) {
       created_by: profile.id,
     });
 
+    const horario = row.fecha && row.hora ? `${row.fecha}|${row.hora}` : null;
     for (const a of row.arbitros) {
+      if (horario) {
+        const ocupadoPor = ocupacion.get(horario)?.get(a.refereeId);
+        if (ocupadoPor && ocupadoPor !== id) {
+          conflictos++;
+          continue;
+        }
+        if (!ocupacion.has(horario)) ocupacion.set(horario, new Map());
+        ocupacion.get(horario)!.set(a.refereeId, id);
+      }
       arbitrosUpsert.push({ designacion_id: id, posicion: a.posicion, referee_id: a.refereeId, monto: 0 });
     }
   }
@@ -397,5 +465,5 @@ export async function bulkImportDesignaciones(rows: BulkImportRow[]) {
   await supabase.rpc("recalcular_montos_designaciones");
 
   revalidatePath("/designaciones");
-  return { ok: true as const, inserted, updated };
+  return { ok: true as const, inserted, updated, conflictos };
 }
