@@ -1,13 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Rama, DesignacionEstado } from "@/lib/database.types";
+import type { Database, Rama, DesignacionEstado, TarifaModo } from "@/lib/database.types";
 
 type DB = SupabaseClient<Database>;
 
 export interface TarifaCategoria {
+  competencia: string;
   categoria: string;
-  montoArbitro1: number;
-  montoArbitro2: number;
+  modo: TarifaModo;
+  montoArbitro: number;
   montoCt: number;
+}
+
+export interface ViaticoLocalidad {
+  localidad: string;
+  monto: number;
 }
 
 export interface DesignacionArbitroFull {
@@ -28,6 +34,7 @@ export interface DesignacionFull {
   equipoLocal: string;
   equipoVisitante: string;
   sede: string | null;
+  localidad: string | null;
   estado: DesignacionEstado;
   notas: string | null;
   ctNombre: string | null;
@@ -36,13 +43,19 @@ export interface DesignacionFull {
 }
 
 export async function fetchTarifas(supabase: DB): Promise<TarifaCategoria[]> {
-  const { data } = await supabase.from("tarifas_categoria").select("*").order("categoria");
+  const { data } = await supabase.from("tarifas_categoria").select("*").order("competencia").order("categoria");
   return (data ?? []).map((t) => ({
+    competencia: t.competencia,
     categoria: t.categoria,
-    montoArbitro1: t.monto_arbitro_1,
-    montoArbitro2: t.monto_arbitro_2,
+    modo: t.modo,
+    montoArbitro: t.monto_arbitro,
     montoCt: t.monto_ct,
   }));
+}
+
+export async function fetchViaticos(supabase: DB): Promise<ViaticoLocalidad[]> {
+  const { data } = await supabase.from("viaticos_localidad").select("*").order("localidad");
+  return (data ?? []).map((v) => ({ localidad: v.localidad, monto: v.monto }));
 }
 
 // Trae las designaciones de un rango de fechas, con sus árbitros asignados.
@@ -90,6 +103,7 @@ export async function fetchDesignaciones(supabase: DB, range: { desde: string; h
     equipoLocal: r.equipo_local,
     equipoVisitante: r.equipo_visitante,
     sede: r.sede,
+    localidad: r.localidad,
     estado: r.estado,
     notas: r.notas,
     ctNombre: r.ct_nombre,

@@ -6,11 +6,12 @@ import DesignacionesGrid from "./DesignacionesGrid";
 import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
-import type { DesignacionFull, TarifaCategoria } from "./queries";
+import type { DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 
 export default function DesignacionesView({
   designaciones,
   tarifas,
+  viaticos,
   referees,
   canManage,
   myRefereeId,
@@ -18,6 +19,7 @@ export default function DesignacionesView({
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
+  viaticos: ViaticoLocalidad[];
   referees: { id: string; name: string }[];
   canManage: boolean;
   myRefereeId: string | null;
@@ -45,6 +47,7 @@ export default function DesignacionesView({
     () => Array.from(new Set(designaciones.map((d) => d.competencia).filter((c): c is string => !!c))),
     [designaciones]
   );
+  const localidades = useMemo(() => viaticos.map((v) => v.localidad), [viaticos]);
 
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => {
@@ -116,14 +119,14 @@ export default function DesignacionesView({
 
       {tab === "mias" &&
         (myRefereeId ? (
-          <MisDesignacionesView designaciones={designaciones} myRefereeId={myRefereeId} />
+          <MisDesignacionesView designaciones={designaciones} myRefereeId={myRefereeId} viaticos={viaticos} />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">
             Tu perfil todavía no está vinculado a un árbitro, así que no podemos mostrarte tus designaciones.
           </p>
         ))}
 
-      {tab === "aranceles" && canManage && <TarifasView tarifas={tarifas} />}
+      {tab === "aranceles" && canManage && <TarifasView tarifas={tarifas} viaticos={viaticos} />}
 
       {(showCreate || editing) && (
         <DesignacionFormModal
@@ -131,6 +134,7 @@ export default function DesignacionesView({
           designacion={editing ?? undefined}
           tarifas={tarifas}
           competencias={competencias}
+          localidades={localidades}
           onClose={() => {
             setShowCreate(false);
             setEditing(null);

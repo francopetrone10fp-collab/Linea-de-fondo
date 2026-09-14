@@ -17,12 +17,14 @@ export default function DesignacionFormModal({
   designacion,
   tarifas,
   competencias,
+  localidades,
   onClose,
 }: {
   mode: "create" | "edit";
   designacion?: DesignacionFull;
   tarifas: TarifaCategoria[];
   competencias: string[];
+  localidades: string[];
   onClose: () => void;
 }) {
   const [jornada, setJornada] = useState(designacion?.jornada ?? "");
@@ -34,6 +36,7 @@ export default function DesignacionFormModal({
   const [equipoLocal, setEquipoLocal] = useState(designacion?.equipoLocal ?? "");
   const [equipoVisitante, setEquipoVisitante] = useState(designacion?.equipoVisitante ?? "");
   const [sede, setSede] = useState(designacion?.sede ?? "");
+  const [localidad, setLocalidad] = useState(designacion?.localidad ?? "");
   const [estado, setEstado] = useState<DesignacionEstado>(designacion?.estado ?? "programado");
   const [notas, setNotas] = useState(designacion?.notas ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export default function DesignacionFormModal({
       equipoLocal,
       equipoVisitante,
       sede,
+      localidad,
       estado,
       notas,
     };
@@ -144,9 +148,26 @@ export default function DesignacionFormModal({
           </Field>
         </div>
 
-        <Field label="Sede / cancha (opcional)">
-          <input type="text" value={sede} onChange={(e) => setSede(e.target.value)} className="w-full" />
-        </Field>
+        <div className="flex gap-2.5">
+          <Field label="Sede / cancha (opcional)" className="flex-1">
+            <input type="text" value={sede} onChange={(e) => setSede(e.target.value)} className="w-full" />
+          </Field>
+          <Field label="Localidad (para el viático, opcional)" className="flex-1">
+            <input
+              type="text"
+              list="designacion-localidades"
+              value={localidad}
+              onChange={(e) => setLocalidad(e.target.value)}
+              placeholder="Ej: Funes"
+              className="w-full"
+            />
+            <datalist id="designacion-localidades">
+              {localidades.map((l) => (
+                <option key={l} value={l} />
+              ))}
+            </datalist>
+          </Field>
+        </div>
 
         <Field label="Notas (opcional)">
           <textarea

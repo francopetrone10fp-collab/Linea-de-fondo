@@ -1,7 +1,16 @@
 import { money } from "./DesignacionesGrid";
-import type { DesignacionFull } from "./queries";
+import type { DesignacionFull, ViaticoLocalidad } from "./queries";
 
-export default function MisDesignacionesView({ designaciones, myRefereeId }: { designaciones: DesignacionFull[]; myRefereeId: string }) {
+export default function MisDesignacionesView({
+  designaciones,
+  myRefereeId,
+  viaticos,
+}: {
+  designaciones: DesignacionFull[];
+  myRefereeId: string;
+  viaticos: ViaticoLocalidad[];
+}) {
+  const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
   const mias = designaciones
     .map((d) => ({ d, mia: d.arbitros.find((a) => a.refereeId === myRefereeId) }))
     .filter((x): x is { d: DesignacionFull; mia: NonNullable<(typeof x)["mia"]> } => !!x.mia);
@@ -32,6 +41,12 @@ export default function MisDesignacionesView({ designaciones, myRefereeId }: { d
                   {d.hora ? ` · ${d.hora.slice(0, 5)}` : ""} · {d.categoria}
                   {d.sede ? ` · ${d.sede}` : ""}
                 </p>
+                {d.localidad && viaticoByLocalidad.has(d.localidad) && (
+                  <p className="text-[11px] text-text-faint m-0 mt-0.5">
+                    Viático en cancha ({d.localidad}): {money.format(viaticoByLocalidad.get(d.localidad)!)} — se cobra
+                    aparte, en efectivo, no está incluido en el monto de al lado.
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2.5">
                 <EstadoBadge estado={d.estado} />

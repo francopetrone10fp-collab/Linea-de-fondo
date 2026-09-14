@@ -17,6 +17,7 @@ export type EntityType = "partido" | "clip";
 export type ClassLevel = "inicial" | "medio_avanzado";
 export type Rama = "masculino" | "femenino";
 export type DesignacionEstado = "programado" | "confirmar" | "suspendido" | "jugado";
+export type TarifaModo = "por_arbitro" | "total_partido";
 
 export interface Database {
   public: {
@@ -364,20 +365,28 @@ export interface Database {
       };
       tarifas_categoria: {
         Row: {
+          competencia: string;
           categoria: string;
-          monto_arbitro_1: number;
-          monto_arbitro_2: number;
+          modo: TarifaModo;
+          monto_arbitro: number;
           monto_ct: number;
           created_at: string;
         };
         Insert: {
+          competencia: string;
           categoria: string;
-          monto_arbitro_1?: number;
-          monto_arbitro_2?: number;
+          modo?: TarifaModo;
+          monto_arbitro?: number;
           monto_ct?: number;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["tarifas_categoria"]["Insert"]>;
+        Relationships: [];
+      };
+      viaticos_localidad: {
+        Row: { localidad: string; monto: number; created_at: string };
+        Insert: { localidad: string; monto?: number; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["viaticos_localidad"]["Insert"]>;
         Relationships: [];
       };
       designaciones: {
@@ -392,6 +401,7 @@ export interface Database {
           equipo_local: string;
           equipo_visitante: string;
           sede: string | null;
+          localidad: string | null;
           estado: DesignacionEstado;
           notas: string | null;
           ct_nombre: string | null;
@@ -410,6 +420,7 @@ export interface Database {
           equipo_local: string;
           equipo_visitante: string;
           sede?: string | null;
+          localidad?: string | null;
           estado?: DesignacionEstado;
           notas?: string | null;
           ct_nombre?: string | null;
