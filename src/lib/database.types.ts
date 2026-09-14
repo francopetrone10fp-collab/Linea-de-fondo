@@ -15,6 +15,8 @@ export type MaterialType = "pdf" | "word" | "video" | "presentacion" | "enlace" 
 export type WhistleType = "QW" | "IW" | "PW" | "CW" | "NCC" | "NCI";
 export type EntityType = "partido" | "clip";
 export type ClassLevel = "inicial" | "medio_avanzado";
+export type Rama = "masculino" | "femenino";
+export type DesignacionEstado = "programado" | "confirmar" | "suspendido" | "jugado";
 
 export interface Database {
   public: {
@@ -358,6 +360,70 @@ export interface Database {
           edited_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["comments"]["Insert"]>;
+        Relationships: [];
+      };
+      tarifas_categoria: {
+        Row: {
+          categoria: string;
+          monto_arbitro_1: number;
+          monto_arbitro_2: number;
+          monto_ct: number;
+          created_at: string;
+        };
+        Insert: {
+          categoria: string;
+          monto_arbitro_1?: number;
+          monto_arbitro_2?: number;
+          monto_ct?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tarifas_categoria"]["Insert"]>;
+        Relationships: [];
+      };
+      designaciones: {
+        Row: {
+          id: string;
+          jornada: string | null;
+          fecha: string | null;
+          hora: string | null;
+          categoria: string;
+          competencia: string | null;
+          rama: Rama | null;
+          equipo_local: string;
+          equipo_visitante: string;
+          sede: string | null;
+          estado: DesignacionEstado;
+          notas: string | null;
+          ct_nombre: string | null;
+          ct_monto: number | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          jornada?: string | null;
+          fecha?: string | null;
+          hora?: string | null;
+          categoria: string;
+          competencia?: string | null;
+          rama?: Rama | null;
+          equipo_local: string;
+          equipo_visitante: string;
+          sede?: string | null;
+          estado?: DesignacionEstado;
+          notas?: string | null;
+          ct_nombre?: string | null;
+          ct_monto?: number | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["designaciones"]["Insert"]>;
+        Relationships: [];
+      };
+      designacion_arbitros: {
+        Row: { designacion_id: string; posicion: number; referee_id: string; monto: number };
+        Insert: { designacion_id: string; posicion: number; referee_id: string; monto?: number };
+        Update: Partial<Database["public"]["Tables"]["designacion_arbitros"]["Insert"]>;
         Relationships: [];
       };
     };

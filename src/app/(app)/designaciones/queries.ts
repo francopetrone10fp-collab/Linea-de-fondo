@@ -1,0 +1,99 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Rama, DesignacionEstado } from "@/lib/database.types";
+
+type DB = SupabaseClient<Database>;
+
+export interface TarifaCategoria {
+  categoria: string;
+  montoArbitro1: number;
+  montoArbitro2: number;
+  montoCt: number;
+}
+
+export interface DesignacionArbitroFull {
+  posicion: number;
+  refereeId: string;
+  refereeName: string;
+  monto: number;
+}
+
+export interface DesignacionFull {
+  id: string;
+  jornada: string | null;
+  fecha: string | null;
+  hora: string | null;
+  categoria: string;
+  competencia: string | null;
+  rama: Rama | null;
+  equipoLocal: string;
+  equipoVisitante: string;
+  sede: string | null;
+  estado: DesignacionEstado;
+  notas: string | null;
+  ctNombre: string | null;
+  ctMonto: number | null;
+  arbitros: DesignacionArbitroFull[];
+}
+
+export async function fetchTarifas(supabase: DB): Promise<TarifaCategoria[]> {
+  const { data } = await supabase.from("tarifas_categoria").select("*").order("categoria");
+  return (data ?? []).map((t) => ({
+    categoria: t.categoria,
+    montoArbitro1: t.monto_arbitro_1,
+    montoArbitro2: t.monto_arbitro_2,
+    montoCt: t.monto_ct,
+  }));
+}
+
+// Trae las designaciones de un rango de fechas, con sus árbitros asignados.
+// Ojo: para un perfil árbitro, RLS ya filtra designacion_arbitros a sus
+// propias filas (no ve el monto de sus colegas), así que este mismo fetch
+// sirve tanto para la grilla del coordinador (ve todo) como para "Mis
+// designaciones" de un árbitro (solo le vuelven sus propias filas).
+export async function fetchDesignaciones(supabase: DB, range: { desde: string; hasta: string }): Promise<DesignacionFull[]> {
+  const { data: rows } = await supabase
+    .from("designaciones")
+    .select("*")
+    .gte("fecha", range.desde)
+    .lte("fecha", range.hasta)
+    .order("fecha", { ascending: true })
+    .order("hora", { ascending: true });
+
+  const ids = (rows ?? []).map((r) => r.id);
+  const [{ data: arbRows }, { data: referees }] = await Promise.all([
+    ids.length > 0
+      ? supabase.from("designacion_arbitros").select("*").in("designacion_id", ids)
+      : Promise.resolve({ data: [] as Database["public"]["Tables"]["designacion_arbitros"]["Row"][] }),
+    supabase.from("referees").select("id, name"),
+  ]);
+  const refereeNameById = new Map((referees ?? []).map((r) => [r.id, r.name]));
+  const arbByDesignacion = new Map<string, DesignacionArbitroFull[]>();
+  (arbRows ?? []).forEach((a) => {
+    const list = arbByDesignacion.get(a.designacion_id) ?? [];
+    list.push({
+      posicion: a.posicion,
+      refereeId: a.referee_id,
+      refereeName: refereeNameById.get(a.referee_id) ?? "—",
+      monto: a.monto,
+    });
+    arbByDesignacion.set(a.designacion_id, list);
+  });
+
+  return (rows ?? []).map((r) => ({
+    id: r.id,
+    jornada: r.jornada,
+    fecha: r.fecha,
+    hora: r.hora,
+    categoria: r.categoria,
+    competencia: r.competencia,
+    rama: r.rama,
+    equipoLocal: r.equipo_local,
+    equipoVisitante: r.equipo_visitante,
+    sede: r.sede,
+    estado: r.estado,
+    notas: r.notas,
+    ctNombre: r.ct_nombre,
+    ctMonto: r.ct_monto,
+    arbitros: (arbByDesignacion.get(r.id) ?? []).sort((a, b) => a.posicion - b.posicion),
+  }));
+}
