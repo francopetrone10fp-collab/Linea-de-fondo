@@ -6,6 +6,7 @@ import DesignacionesGrid from "./DesignacionesGrid";
 import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
+import { downloadCsv } from "@/lib/csv";
 import type { Companero, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 
 export default function DesignacionesView({
@@ -61,6 +62,73 @@ export default function DesignacionesView({
     );
   }, [designaciones, q]);
 
+  function exportDetalle() {
+    const headers = [
+      "Fecha",
+      "Hora",
+      "Jornada",
+      "Categoría",
+      "Competencia",
+      "Rama",
+      "Local",
+      "Visitante",
+      "Sede",
+      "Localidad",
+      "Estado",
+      "Árbitro 1",
+      "Monto 1",
+      "Árbitro 2",
+      "Monto 2",
+      "Árbitro 3",
+      "Monto 3",
+      "Comisionado técnico",
+      "Monto CT",
+      "Notas",
+    ];
+    const rows = filtered.map((d) => {
+      const a = (pos: number) => d.arbitros.find((x) => x.posicion === pos);
+      return [
+        d.fecha,
+        d.hora?.slice(0, 5),
+        d.jornada,
+        d.categoria,
+        d.competencia,
+        d.rama,
+        d.equipoLocal,
+        d.equipoVisitante,
+        d.sede,
+        d.localidad,
+        d.estado,
+        a(1)?.refereeName,
+        a(1)?.monto,
+        a(2)?.refereeName,
+        a(2)?.monto,
+        a(3)?.refereeName,
+        a(3)?.monto,
+        d.ctNombre,
+        d.ctMonto,
+        d.notas,
+      ];
+    });
+    downloadCsv(`designaciones_${month}.csv`, headers, rows);
+  }
+
+  function exportTotales() {
+    const totals = new Map<string, { nombre: string; partidos: number; total: number }>();
+    designaciones.forEach((d) => {
+      d.arbitros.forEach((a) => {
+        const entry = totals.get(a.refereeId) ?? { nombre: a.refereeName, partidos: 0, total: 0 };
+        entry.partidos += 1;
+        entry.total += a.monto;
+        totals.set(a.refereeId, entry);
+      });
+    });
+    const rows = Array.from(totals.values())
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+      .map((t) => [t.nombre, t.partidos, t.total]);
+    downloadCsv(`designaciones_totales_${month}.csv`, ["Árbitro", "Partidos", "Total"], rows);
+  }
+
   return (
     <div>
       <div className="flex justify-between items-start gap-4 flex-wrap mb-4">
@@ -104,13 +172,27 @@ export default function DesignacionesView({
             </button>
           </div>
           {tab === "grilla" && (
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por equipo, árbitro, sede, categoría..."
-              className="flex-1 min-w-[220px]"
-            />
+            <>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por equipo, árbitro, sede, categoría..."
+                className="flex-1 min-w-[220px]"
+              />
+              <button
+                onClick={exportDetalle}
+                className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
+              >
+                Exportar CSV
+              </button>
+              <button
+                onClick={exportTotales}
+                className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
+              >
+                Exportar totales por árbitro
+              </button>
+            </>
           )}
         </div>
       )}
