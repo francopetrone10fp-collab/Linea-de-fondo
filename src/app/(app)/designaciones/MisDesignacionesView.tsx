@@ -27,6 +27,8 @@ export default function MisDesignacionesView({
   const pendientes = mias.filter(
     ({ d }) => d.requiereConfirmacion && !(confirmaciones[d.id] ?? []).some((c) => c.refereeId === myRefereeId)
   ).length;
+  const suspendidos = mias.filter(({ d }) => d.estado === "suspendido");
+  const montoPendienteCobro = suspendidos.reduce((sum, x) => sum + x.mia.monto, 0);
 
   return (
     <div>
@@ -35,6 +37,11 @@ export default function MisDesignacionesView({
         {pendientes > 0 && (
           <span className="text-[12px] font-semibold text-amber-text bg-amber-bg rounded-full px-2.5 py-1">
             {pendientes} partido{pendientes === 1 ? "" : "s"} esperando tu confirmación
+          </span>
+        )}
+        {suspendidos.length > 0 && (
+          <span className="text-[12px] font-semibold text-bad-text bg-bad-bg rounded-full px-2.5 py-1">
+            {suspendidos.length} suspendido{suspendidos.length === 1 ? "" : "s"} · {money.format(montoPendienteCobro)} pendiente de cobro
           </span>
         )}
         <span className="font-display text-[19px] font-semibold">{money.format(total)}</span>
@@ -130,9 +137,12 @@ function DesignacionCard({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-2.5">
-        <EstadoBadge estado={d.estado} />
-        <span className="font-display text-[15px] font-semibold">{money.format(miaMonto)}</span>
+      <div className="flex flex-col items-end gap-1">
+        <div className="flex items-center gap-2.5">
+          <EstadoBadge estado={d.estado} />
+          <span className="font-display text-[15px] font-semibold">{money.format(miaMonto)}</span>
+        </div>
+        {d.estado === "suspendido" && <span className="text-[10.5px] text-bad-text">Pendiente de cobro</span>}
       </div>
     </div>
   );
