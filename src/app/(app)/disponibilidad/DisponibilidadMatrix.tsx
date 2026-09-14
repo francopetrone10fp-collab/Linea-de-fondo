@@ -94,7 +94,19 @@ export default function DisponibilidadMatrix({
 }
 
 function DayCell({ row, weekend }: { row: DisponibilidadDia | null; weekend: boolean }) {
-  if (!row) return <span className="text-text-faint">—</span>;
+  // Entre semana, sin respuesta = disponible por default (solo hay que
+  // marcar cuando alguien NO puede). El fin de semana sí necesita una
+  // respuesta explícita.
+  if (!row) {
+    if (!weekend) {
+      return (
+        <span className="text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-good-bg text-good-text">
+          Disponible
+        </span>
+      );
+    }
+    return <span className="text-text-faint">—</span>;
+  }
 
   if (!weekend) {
     return row.disponible ? (

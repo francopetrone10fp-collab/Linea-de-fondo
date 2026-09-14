@@ -20,11 +20,14 @@ export default function MiDisponibilidadView({ monday, miDisponibilidad }: { mon
 }
 
 function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; row: DisponibilidadDia | null }) {
-  const [disponible, setDisponible] = useState(row?.disponible ?? null);
+  const weekend = isWeekend(fecha);
+  // Entre semana se considera disponible por default, salvo que el árbitro
+  // marque lo contrario. El fin de semana sí necesita una respuesta explícita
+  // (no hay categoría "por default").
+  const [disponible, setDisponible] = useState(row?.disponible ?? !weekend);
   const [categorias, setCategorias] = useState<string[]>(row?.categorias ?? []);
   const [respondido, setRespondido] = useState(row !== null);
   const [isPending, startTransition] = useTransition();
-  const weekend = isWeekend(fecha);
 
   function guardar(nuevoDisponible: boolean, nuevasCategorias: string[]) {
     setDisponible(nuevoDisponible);
@@ -52,7 +55,7 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
         <span className="text-[13.5px] font-semibold">
           {diaLabel} <span className="text-text-faint font-normal">· {formatDayLabel(fecha)}</span>
         </span>
-        {!respondido && <span className="text-[10.5px] text-text-faint uppercase tracking-wide">Sin responder</span>}
+        {weekend && !respondido && <span className="text-[10.5px] text-text-faint uppercase tracking-wide">Sin responder</span>}
       </div>
 
       {!weekend ? (
@@ -60,7 +63,7 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
           <button
             onClick={() => guardar(true, [])}
             className={`text-[12.5px] font-semibold rounded-lg px-3.5 py-2 border ${
-              respondido && disponible ? "bg-good-bg text-good-text border-good" : "bg-transparent text-text-dim border-line"
+              disponible ? "bg-good-bg text-good-text border-good" : "bg-transparent text-text-dim border-line"
             }`}
           >
             Disponible
@@ -68,7 +71,7 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
           <button
             onClick={() => guardar(false, [])}
             className={`text-[12.5px] font-semibold rounded-lg px-3.5 py-2 border ${
-              respondido && !disponible ? "bg-bad-bg text-bad-text border-bad" : "bg-transparent text-text-dim border-line"
+              !disponible ? "bg-bad-bg text-bad-text border-bad" : "bg-transparent text-text-dim border-line"
             }`}
           >
             No disponible
