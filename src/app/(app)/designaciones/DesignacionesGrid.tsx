@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { Fragment, useTransition } from "react";
 import RefereeCombobox from "@/components/RefereeCombobox";
 import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
 import type { DesignacionEstado } from "@/lib/database.types";
@@ -31,6 +31,7 @@ export default function DesignacionesGrid({
   sortOrder,
   onToggleSort,
   confirmaciones,
+  pendingIds,
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
@@ -38,6 +39,7 @@ export default function DesignacionesGrid({
   sortOrder: "asc" | "desc";
   onToggleSort: () => void;
   confirmaciones: Record<string, Confirmacion[]>;
+  pendingIds: Set<string>;
 }) {
   if (designaciones.length === 0) {
     return <p className="text-[12.5px] text-text-faint m-0">No hay designaciones para este mes con ese filtro.</p>;
@@ -69,9 +71,23 @@ export default function DesignacionesGrid({
           </tr>
         </thead>
         <tbody>
-          {designaciones.map((d) => (
-            <DesignacionRow key={d.id} d={d} referees={referees} onEdit={onEdit} confirmados={confirmaciones[d.id] ?? []} />
-          ))}
+          {designaciones.map((d, i) => {
+            const esPendiente = pendingIds.has(d.id);
+            const anteriorEraPendiente = i > 0 && pendingIds.has(designaciones[i - 1].id);
+            const mostrarDivisor = i > 0 && anteriorEraPendiente && !esPendiente;
+            return (
+              <Fragment key={d.id}>
+                {mostrarDivisor && (
+                  <tr>
+                    <td colSpan={13} className="bg-surface-2 text-text-faint text-[10.5px] uppercase tracking-wide px-2.5 py-1.5 border-b border-line">
+                      Confirmados
+                    </td>
+                  </tr>
+                )}
+                <DesignacionRow d={d} referees={referees} onEdit={onEdit} confirmados={confirmaciones[d.id] ?? []} />
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

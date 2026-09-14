@@ -58,6 +58,14 @@ export default function DesignacionesView({
 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
+  // Pendiente de confirmación = tiene árbitros asignados pero no confirmaron
+  // todos. Estas van siempre arriba, sin importar el orden por fecha.
+  function estaPendiente(d: DesignacionFull) {
+    if (!d.requiereConfirmacion || d.arbitros.length === 0) return false;
+    const confirmados = confirmaciones[d.id] ?? [];
+    return !d.arbitros.every((a) => confirmados.some((c) => c.refereeId === a.refereeId));
+  }
+
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => {
     let list = designaciones;
@@ -69,12 +77,18 @@ export default function DesignacionesView({
       );
     }
     const sorted = [...list].sort((a, b) => {
+      const pendA = estaPendiente(a) ? 0 : 1;
+      const pendB = estaPendiente(b) ? 0 : 1;
+      if (pendA !== pendB) return pendA - pendB;
       const av = `${a.fecha ?? ""} ${a.hora ?? ""}`;
       const bv = `${b.fecha ?? ""} ${b.hora ?? ""}`;
       return sortOrder === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
     });
     return sorted;
-  }, [designaciones, q, sortOrder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [designaciones, q, sortOrder, confirmaciones]);
+
+  const pendingIds = useMemo(() => new Set(filtered.filter(estaPendiente).map((d) => d.id)), [filtered, confirmaciones]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function exportDetalle() {
     const headers = [
@@ -227,6 +241,7 @@ export default function DesignacionesView({
           sortOrder={sortOrder}
           onToggleSort={() => setSortOrder((s) => (s === "asc" ? "desc" : "asc"))}
           confirmaciones={confirmaciones}
+          pendingIds={pendingIds}
         />
       )}
 
