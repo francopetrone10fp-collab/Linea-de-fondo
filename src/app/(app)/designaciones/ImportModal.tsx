@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import RefereeCombobox from "@/components/RefereeCombobox";
 import { bulkImportDesignaciones, type BulkImportRow } from "./actions";
 import { parsePastedText, type ParsedImportRow, type RefereeOption } from "./importParse";
 import type { DesignacionEstado } from "@/lib/database.types";
@@ -184,6 +185,7 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
                         {r.equipoLocal} <span className="text-text-faint">vs</span> {r.equipoVisitante}
                       </td>
                       <ArbitroCell
+                        listId={`import-arb1-${idx}`}
                         raw={r.arbitro1?.raw}
                         candidates={r.arbitro1?.candidates}
                         value={r.arbitro1Id}
@@ -191,6 +193,7 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
                         onChange={(v) => updateRow(idx, { arbitro1Id: v })}
                       />
                       <ArbitroCell
+                        listId={`import-arb2-${idx}`}
                         raw={r.arbitro2?.raw}
                         candidates={r.arbitro2?.candidates}
                         value={r.arbitro2Id}
@@ -198,6 +201,7 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
                         onChange={(v) => updateRow(idx, { arbitro2Id: v })}
                       />
                       <ArbitroCell
+                        listId={`import-arb3-${idx}`}
                         raw={r.arbitro3?.raw}
                         candidates={r.arbitro3?.candidates}
                         value={r.arbitro3Id}
@@ -253,12 +257,14 @@ function Th({ children }: { children?: React.ReactNode }) {
 }
 
 function ArbitroCell({
+  listId,
   raw,
   candidates,
   value,
   referees,
   onChange,
 }: {
+  listId: string;
   raw: string | undefined;
   candidates: RefereeOption[] | undefined;
   value: string;
@@ -269,18 +275,14 @@ function ArbitroCell({
   const unresolved = !!raw && !value && (candidates?.length ?? 0) === 0;
   return (
     <td className="px-2 py-1.5 whitespace-nowrap">
-      <select
+      <RefereeCombobox
+        key={value}
+        listId={listId}
+        referees={referees}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         className={`min-w-[130px] ${ambiguous || unresolved ? "border-amber" : ""}`}
-      >
-        <option value="">—</option>
-        {referees.map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.name}
-          </option>
-        ))}
-      </select>
+      />
       {(ambiguous || unresolved) && (
         <div className="text-[10px] text-amber-text mt-0.5">
           “{raw}” {ambiguous ? "es ambiguo" : "no se encontró"}

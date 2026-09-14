@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import RefereeCombobox from "@/components/RefereeCombobox";
 import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
 import type { DesignacionEstado } from "@/lib/database.types";
 import type { Confirmacion, DesignacionFull } from "./queries";
@@ -168,18 +169,14 @@ function DesignacionRow({
       </td>
       {[1, 2, 3].map((posicion) => (
         <td key={posicion} className="px-2.5 py-2 whitespace-nowrap">
-          <select
+          <RefereeCombobox
+            key={arbitro(posicion)}
+            listId={`arb-${d.id}-${posicion}`}
+            referees={referees}
             value={arbitro(posicion)}
-            onChange={(e) => onArbitroChange(posicion as 1 | 2 | 3, e.target.value)}
+            onChange={(refereeId) => onArbitroChange(posicion as 1 | 2 | 3, refereeId)}
             className="min-w-[130px]"
-          >
-            <option value="">—</option>
-            {referees.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+          />
           {arbitro(posicion) && (
             <div className="text-[10.5px] text-text-faint mt-0.5">
               {money.format(d.arbitros.find((a) => a.posicion === posicion)?.monto ?? 0)}
