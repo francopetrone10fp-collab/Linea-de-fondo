@@ -43,6 +43,11 @@ export default function MisDesignacionesView({
                   {d.hora ? ` · ${d.hora.slice(0, 5)}` : ""} · {d.categoria}
                   {d.sede ? ` · ${d.sede}` : ""}
                 </p>
+                {d.notas && (
+                  <p className="text-[12.5px] text-amber-text bg-amber-bg rounded-md px-2 py-1 m-0 mt-1.5 inline-block">
+                    {d.notas}
+                  </p>
+                )}
                 {d.localidad && viaticoByLocalidad.has(d.localidad) && (
                   <p className="text-[11px] text-text-faint m-0 mt-0.5">
                     Viático en cancha ({d.localidad}): {money.format(viaticoByLocalidad.get(d.localidad)!)} — se cobra

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado } from "./actions";
+import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
 import type { DesignacionEstado } from "@/lib/database.types";
 import type { DesignacionFull } from "./queries";
 
@@ -59,6 +59,7 @@ export default function DesignacionesGrid({
             <Th>Árbitro 2</Th>
             <Th>Árbitro 3</Th>
             <Th>Comisionado técnico</Th>
+            <Th>Observaciones</Th>
             <Th></Th>
           </tr>
         </thead>
@@ -103,6 +104,13 @@ function DesignacionRow({
     if (value === (d.ctNombre ?? "")) return;
     startTransition(async () => {
       await setDesignacionCt(d.id, value);
+    });
+  }
+
+  function onNotasBlur(value: string) {
+    if (value === (d.notas ?? "")) return;
+    startTransition(async () => {
+      await setDesignacionNotas(d.id, value);
     });
   }
 
@@ -174,6 +182,16 @@ function DesignacionRow({
           className="min-w-[110px]"
         />
         {d.ctNombre && d.ctMonto != null && <div className="text-[10.5px] text-text-faint mt-0.5">{money.format(d.ctMonto)}</div>}
+      </td>
+      <td className="px-2.5 py-2">
+        <input
+          key={`notas-${d.id}-${d.notas ?? ""}`}
+          type="text"
+          defaultValue={d.notas ?? ""}
+          onBlur={(e) => onNotasBlur(e.target.value)}
+          placeholder="Observaciones..."
+          className="min-w-[160px]"
+        />
       </td>
       <td className="px-2.5 py-2 whitespace-nowrap">
         <div className="flex gap-1">

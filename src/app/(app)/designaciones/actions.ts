@@ -192,6 +192,19 @@ export async function setDesignacionEstado(id: string, estado: DesignacionEstado
   return { ok: true as const };
 }
 
+// Cambio rápido de observaciones (visibles para los árbitros designados en
+// "Mis designaciones"), sin abrir el formulario completo.
+export async function setDesignacionNotas(id: string, notas: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("designaciones")
+    .update({ notas: notas.trim() || null })
+    .eq("id", id);
+  if (error) return { ok: false as const, error: "No se pudieron guardar las observaciones" };
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
 export async function deleteDesignacion(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("designaciones").delete().eq("id", id);

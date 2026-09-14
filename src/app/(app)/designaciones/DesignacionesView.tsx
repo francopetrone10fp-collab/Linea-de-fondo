@@ -61,7 +61,7 @@ export default function DesignacionesView({
     let list = designaciones;
     if (q) {
       list = list.filter((d) =>
-        [d.jornada, d.categoria, d.competencia, d.equipoLocal, d.equipoVisitante, d.sede, d.ctNombre, ...d.arbitros.map((a) => a.refereeName)]
+        [d.jornada, d.categoria, d.competencia, d.equipoLocal, d.equipoVisitante, d.sede, d.ctNombre, d.notas, ...d.arbitros.map((a) => a.refereeName)]
           .filter((v): v is string => !!v)
           .some((v) => v.toLowerCase().includes(q))
       );

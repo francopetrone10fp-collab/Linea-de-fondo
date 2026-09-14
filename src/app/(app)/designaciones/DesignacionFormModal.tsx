@@ -169,7 +169,7 @@ export default function DesignacionFormModal({
           </Field>
         </div>
 
-        <Field label="Notas (opcional)">
+        <Field label="Observaciones (opcional, las ven los árbitros designados)">
           <textarea
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
