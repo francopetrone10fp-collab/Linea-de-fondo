@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
-import type { DesignacionEstado, Rama, TarifaModo } from "@/lib/database.types";
+import type { Database, DesignacionEstado, Rama, TarifaModo } from "@/lib/database.types";
 
 type DB = Awaited<ReturnType<typeof createClient>>;
 
@@ -259,4 +259,103 @@ export async function setDesignacionCt(designacionId: string, nombre: string) {
   if (error) return { ok: false as const, error: "No se pudo guardar el comisionado técnico" };
   revalidatePath("/designaciones");
   return { ok: true as const };
+}
+
+// ---------- Importación masiva (pegado desde la planilla de Drive) ----------
+
+export interface BulkImportRow {
+  jornada: string | null;
+  fecha: string | null;
+  hora: string | null;
+  categoria: string;
+  competencia: string;
+  rama: Rama;
+  equipoLocal: string;
+  equipoVisitante: string;
+  sede: string | null;
+  estado: DesignacionEstado;
+  notas: string | null;
+  ctNombre: string | null;
+  arbitros: { posicion: 1 | 2 | 3; refereeId: string }[];
+}
+
+function claveNatural(fecha: string | null, hora: string | null, categoria: string, local: string, visitante: string) {
+  return `${fecha ?? ""}|${hora ?? ""}|${categoria}|${local}|${visitante}`;
+}
+
+export async function bulkImportDesignaciones(rows: BulkImportRow[]) {
+  if (rows.length === 0) return { ok: false as const, error: "No hay filas para importar" };
+
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const fechas = rows.map((r) => r.fecha).filter((f): f is string => !!f);
+  const desde = fechas.length > 0 ? fechas.reduce((a, b) => (a < b ? a : b)) : null;
+  const hasta = fechas.length > 0 ? fechas.reduce((a, b) => (a > b ? a : b)) : null;
+
+  let existentesQuery = supabase
+    .from("designaciones")
+    .select("id, fecha, hora, categoria, equipo_local, equipo_visitante");
+  if (desde) existentesQuery = existentesQuery.gte("fecha", desde);
+  if (hasta) existentesQuery = existentesQuery.lte("fecha", hasta);
+  const { data: existentes } = await existentesQuery;
+
+  const idPorClave = new Map(
+    (existentes ?? []).map((e) => [claveNatural(e.fecha, e.hora, e.categoria, e.equipo_local, e.equipo_visitante), e.id])
+  );
+
+  const { data: tarifasData } = await supabase.from("tarifas_categoria").select("competencia, categoria, monto_ct");
+  const ctMontoPorClave = new Map((tarifasData ?? []).map((t) => [`${t.competencia}|${t.categoria}`, t.monto_ct]));
+
+  let inserted = 0;
+  let updated = 0;
+  const designacionesUpsert: Database["public"]["Tables"]["designaciones"]["Insert"][] = [];
+  const arbitrosUpsert: Database["public"]["Tables"]["designacion_arbitros"]["Insert"][] = [];
+  const idsPorFila: string[] = [];
+
+  for (const row of rows) {
+    const clave = claveNatural(row.fecha, row.hora, row.categoria, row.equipoLocal, row.equipoVisitante);
+    const existingId = idPorClave.get(clave);
+    const id = existingId ?? crypto.randomUUID();
+    idsPorFila.push(id);
+    if (existingId) updated++;
+    else inserted++;
+
+    const ctMonto = row.ctNombre ? (ctMontoPorClave.get(`${row.competencia}|${row.categoria}`) ?? 0) : null;
+
+    designacionesUpsert.push({
+      id,
+      jornada: row.jornada,
+      fecha: row.fecha,
+      hora: row.hora,
+      categoria: row.categoria,
+      competencia: row.competencia,
+      rama: row.rama,
+      equipo_local: row.equipoLocal,
+      equipo_visitante: row.equipoVisitante,
+      sede: row.sede,
+      estado: row.estado,
+      notas: row.notas,
+      ct_nombre: row.ctNombre,
+      ct_monto: ctMonto,
+      created_by: profile.id,
+    });
+
+    for (const a of row.arbitros) {
+      arbitrosUpsert.push({ designacion_id: id, posicion: a.posicion, referee_id: a.refereeId, monto: 0 });
+    }
+  }
+
+  const { error: desError } = await supabase.from("designaciones").upsert(designacionesUpsert);
+  if (desError) return { ok: false as const, error: "No se pudieron guardar las designaciones" };
+
+  if (arbitrosUpsert.length > 0) {
+    const { error: arbError } = await supabase.from("designacion_arbitros").upsert(arbitrosUpsert);
+    if (arbError) return { ok: false as const, error: "No se pudieron asignar los árbitros" };
+  }
+
+  await supabase.rpc("recalcular_montos_designaciones");
+
+  revalidatePath("/designaciones");
+  return { ok: true as const, inserted, updated };
 }

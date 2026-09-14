@@ -444,6 +444,10 @@ export interface Database {
         Args: { p_designacion_ids: string[] };
         Returns: { designacion_id: string; referee_id: string; referee_name: string; posicion: number }[];
       };
+      recalcular_montos_designaciones: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
     };
   };
 }

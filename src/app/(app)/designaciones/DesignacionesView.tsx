@@ -6,6 +6,7 @@ import DesignacionesGrid from "./DesignacionesGrid";
 import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
+import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
 import type { Companero, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 
@@ -32,6 +33,7 @@ export default function DesignacionesView({
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<DesignacionFull | null>(null);
 
   function changeMonth(delta: number) {
@@ -137,12 +139,20 @@ export default function DesignacionesView({
           <p className="text-text-dim text-[13px] m-0">Partidos designados a árbitros y lo que cobra cada uno.</p>
         </div>
         {canManage && tab === "grilla" && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
-          >
-            + Nueva designación
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowImport(true)}
+              className="bg-transparent text-text-dim border border-line rounded-lg text-[13.5px] px-4 py-2.5"
+            >
+              Importar
+            </button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+            >
+              + Nueva designación
+            </button>
+          </div>
         )}
       </div>
 
@@ -224,6 +234,10 @@ export default function DesignacionesView({
             setEditing(null);
           }}
         />
+      )}
+
+      {showImport && (
+        <ImportModal referees={referees} competencias={competencias.length > 0 ? competencias : ["LFF", "Federativos"]} onClose={() => setShowImport(false)} />
       )}
     </div>
   );
