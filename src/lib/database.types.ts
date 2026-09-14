@@ -439,6 +439,11 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      designaciones_companeros: {
+        Args: { p_designacion_ids: string[] };
+        Returns: { designacion_id: string; referee_id: string; referee_name: string; posicion: number }[];
+      };
+    };
   };
 }

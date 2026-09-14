@@ -58,6 +58,30 @@ export async function fetchViaticos(supabase: DB): Promise<ViaticoLocalidad[]> {
   return (data ?? []).map((v) => ({ localidad: v.localidad, monto: v.monto }));
 }
 
+export interface Companero {
+  refereeId: string;
+  refereeName: string;
+  posicion: number;
+}
+
+// Con quién dirigió cada partido (solo nombre y posición, nunca el monto):
+// pasa por una función SECURITY DEFINER porque RLS restringe designacion_arbitros
+// a la propia fila de cada árbitro.
+export async function fetchCompaneros(supabase: DB, designacionIds: string[]): Promise<Record<string, Companero[]>> {
+  if (designacionIds.length === 0) return {};
+  const { data } = await supabase.rpc("designaciones_companeros", { p_designacion_ids: designacionIds });
+  const byDesignacion: Record<string, Companero[]> = {};
+  (data ?? []).forEach((c) => {
+    (byDesignacion[c.designacion_id] ??= []).push({
+      refereeId: c.referee_id,
+      refereeName: c.referee_name,
+      posicion: c.posicion,
+    });
+  });
+  Object.values(byDesignacion).forEach((list) => list.sort((a, b) => a.posicion - b.posicion));
+  return byDesignacion;
+}
+
 // Trae las designaciones de un rango de fechas, con sus árbitros asignados.
 // Ojo: para un perfil árbitro, RLS ya filtra designacion_arbitros a sus
 // propias filas (no ve el monto de sus colegas), así que este mismo fetch

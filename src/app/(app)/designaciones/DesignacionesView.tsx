@@ -6,12 +6,13 @@ import DesignacionesGrid from "./DesignacionesGrid";
 import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
-import type { DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
+import type { Companero, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 
 export default function DesignacionesView({
   designaciones,
   tarifas,
   viaticos,
+  companeros,
   referees,
   canManage,
   myRefereeId,
@@ -20,6 +21,7 @@ export default function DesignacionesView({
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
   viaticos: ViaticoLocalidad[];
+  companeros: Record<string, Companero[]>;
   referees: { id: string; name: string }[];
   canManage: boolean;
   myRefereeId: string | null;
@@ -119,7 +121,7 @@ export default function DesignacionesView({
 
       {tab === "mias" &&
         (myRefereeId ? (
-          <MisDesignacionesView designaciones={designaciones} myRefereeId={myRefereeId} viaticos={viaticos} />
+          <MisDesignacionesView designaciones={designaciones} myRefereeId={myRefereeId} viaticos={viaticos} companeros={companeros} />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">
             Tu perfil todavía no está vinculado a un árbitro, así que no podemos mostrarte tus designaciones.

@@ -1,14 +1,16 @@
 import { money } from "./DesignacionesGrid";
-import type { DesignacionFull, ViaticoLocalidad } from "./queries";
+import type { Companero, DesignacionFull, ViaticoLocalidad } from "./queries";
 
 export default function MisDesignacionesView({
   designaciones,
   myRefereeId,
   viaticos,
+  companeros,
 }: {
   designaciones: DesignacionFull[];
   myRefereeId: string;
   viaticos: ViaticoLocalidad[];
+  companeros: Record<string, Companero[]>;
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
   const mias = designaciones
@@ -47,6 +49,14 @@ export default function MisDesignacionesView({
                     aparte, en efectivo, no está incluido en el monto de al lado.
                   </p>
                 )}
+                {(() => {
+                  const compas = (companeros[d.id] ?? []).filter((c) => c.refereeId !== myRefereeId);
+                  return compas.length > 0 ? (
+                    <p className="text-[12px] text-text-dim m-0 mt-1">
+                      Con {compas.map((c) => c.refereeName).join(" y ")}
+                    </p>
+                  ) : null;
+                })()}
               </div>
               <div className="flex items-center gap-2.5">
                 <EstadoBadge estado={d.estado} />

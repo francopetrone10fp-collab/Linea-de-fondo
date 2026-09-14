@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
-import { fetchDesignaciones, fetchTarifas, fetchViaticos } from "./queries";
+import { fetchDesignaciones, fetchTarifas, fetchViaticos, fetchCompaneros } from "./queries";
 import DesignacionesView from "./DesignacionesView";
 
 function monthRange(month: string) {
@@ -25,10 +25,14 @@ export default async function DesignacionesPage({
   const { desde, hasta } = monthRange(month);
 
   const supabase = await createClient();
-  const [designaciones, tarifas, viaticos, { data: referees }] = await Promise.all([
-    fetchDesignaciones(supabase, { desde, hasta }),
+  const designaciones = await fetchDesignaciones(supabase, { desde, hasta });
+  const [tarifas, viaticos, companeros, { data: referees }] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
+    fetchCompaneros(
+      supabase,
+      designaciones.map((d) => d.id)
+    ),
     supabase.from("referees").select("id, name").order("name"),
   ]);
 
@@ -37,6 +41,7 @@ export default async function DesignacionesPage({
       designaciones={designaciones}
       tarifas={tarifas}
       viaticos={viaticos}
+      companeros={companeros}
       referees={referees ?? []}
       canManage={canManage}
       myRefereeId={profile.referee_id}
