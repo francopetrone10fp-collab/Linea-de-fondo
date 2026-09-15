@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
+import { sendPushToProfiles } from "@/lib/push/send";
 import type { Database, DesignacionEstado, Rama, TarifaModo } from "@/lib/database.types";
 
 type DB = Awaited<ReturnType<typeof createClient>>;
@@ -255,7 +256,7 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
 
   const { data: designacion } = await supabase
     .from("designaciones")
-    .select("competencia, categoria, estado, fecha, hora")
+    .select("competencia, categoria, estado, fecha, hora, equipo_local, equipo_visitante")
     .eq("id", designacionId)
     .single();
   if (!designacion) return { ok: false as const, error: "Designación no encontrada" };
@@ -272,6 +273,23 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
       .from("designacion_arbitros")
       .upsert({ designacion_id: designacionId, posicion, referee_id: refereeId, monto: 0 });
     if (error) return { ok: false as const, error: "No se pudo asignar el árbitro" };
+
+    // Avisale al árbitro que lo nominaron (si tiene notificaciones activadas;
+    // si no tiene perfil vinculado o no las activó, esto no hace nada).
+    const { data: prof } = await supabase.from("profiles").select("id").eq("referee_id", refereeId).maybeSingle();
+    if (prof) {
+      const cuando = [
+        designacion.fecha ? new Date(designacion.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) : null,
+        designacion.hora?.slice(0, 5),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      sendPushToProfiles([prof.id], {
+        title: "Te designaron a un partido",
+        body: `${designacion.equipo_local} vs ${designacion.equipo_visitante}${cuando ? ` · ${cuando}` : ""}`,
+        url: "/designaciones",
+      }).catch(() => {});
+    }
   } else {
     const { error } = await supabase
       .from("designacion_arbitros")
