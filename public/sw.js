@@ -21,7 +21,11 @@ self.addEventListener("push", (event) => {
   const options = {
     body: payload.body || "",
     icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    // El badge tiene que ser una silueta blanca sobre transparente: Android
+    // la usa para el ícono chico de la barra de notificaciones y la tiñe
+    // solo, así que una imagen a color (como icon-192.png) se ve como un
+    // bloque sólido sin forma.
+    badge: "/badge-96.png",
     data: { url: payload.url || "/" },
   };
 
