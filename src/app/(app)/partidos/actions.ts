@@ -10,20 +10,33 @@ import type { Evaluation, Situation, WhistleType } from "@/lib/database.types";
 
 type DB = Awaited<ReturnType<typeof createClient>>;
 
-// Le avisa al árbitro protagonista del clip (si tiene perfil y notificaciones
-// activadas) que se cargó o cambió un clip sobre una jugada suya. No bloquea
-// la acción principal: es un "fire and forget", igual que en designaciones.
-async function notificarClip(supabase: DB, input: ClipInput, evento: "nuevo" | "actualizado") {
-  if (!input.refereeId) return;
-  const [{ data: prof }, { data: partido }] = await Promise.all([
-    supabase.from("profiles").select("id").eq("referee_id", input.refereeId).maybeSingle(),
-    supabase.from("partidos").select("competition_id, temporada").eq("id", input.partidoId).maybeSingle(),
+// Cuando se finaliza la evaluación de un partido, les avisa a los árbitros
+// asignados (los que tengan perfil y notificaciones activadas) que ya
+// pueden ver su evaluación. No bloquea la acción principal.
+async function notificarEvaluacionFinalizada(supabase: DB, partidoId: string) {
+  const [{ data: partido }, { data: refs }] = await Promise.all([
+    supabase.from("partidos").select("competition_id, temporada, team_local_id, team_visit_id").eq("id", partidoId).maybeSingle(),
+    supabase.from("partido_referees").select("referee_id").eq("partido_id", partidoId),
   ]);
-  if (!prof) return;
-  const url = partido?.competition_id ? `/competitions/${partido.competition_id}/${partido.temporada}/${input.partidoId}` : "/competitions";
-  sendPushToProfiles([prof.id], {
-    title: evento === "nuevo" ? "Nuevo clip sobre tu partido" : "Se actualizó un clip tuyo",
-    body: `${input.title} · ${input.situation}`,
+  const refereeIds = (refs ?? []).map((r) => r.referee_id).filter((x): x is string => !!x);
+  if (refereeIds.length === 0) return;
+
+  const { data: perfiles } = await supabase.from("profiles").select("id").in("referee_id", refereeIds);
+  const profileIds = (perfiles ?? []).map((p) => p.id);
+  if (profileIds.length === 0) return;
+
+  const teamIds = [partido?.team_local_id, partido?.team_visit_id].filter((x): x is string => !!x);
+  const { data: teams } = teamIds.length > 0 ? await supabase.from("teams").select("id, name").in("id", teamIds) : { data: [] };
+  const nameById = new Map((teams ?? []).map((t) => [t.id, t.name]));
+  const local = partido?.team_local_id ? nameById.get(partido.team_local_id) : null;
+  const visitante = partido?.team_visit_id ? nameById.get(partido.team_visit_id) : null;
+  const partidoLabel = local && visitante ? `${local} vs ${visitante}` : "tu partido";
+
+  const url = partido?.competition_id ? `/competitions/${partido.competition_id}/${partido.temporada}/${partidoId}` : "/competitions";
+
+  await sendPushToProfiles(profileIds, {
+    title: "Tu evaluación está lista",
+    body: `Se finalizó la evaluación de ${partidoLabel}.`,
     url,
   }).catch(() => {});
 }
@@ -153,6 +166,7 @@ export async function finalizePartido(id: string) {
     .update({ finalized_by: profile.id, finalized_at: new Date().toISOString() })
     .eq("id", id);
   if (error) return { ok: false as const, error: "No se pudo finalizar" };
+  await notificarEvaluacionFinalizada(supabase, id);
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
@@ -237,7 +251,6 @@ export async function createClip(input: ClipInput) {
     console.error("createClip:", error);
     return { ok: false as const, error: `No se pudo guardar el clip: ${error.message}` };
   }
-  await notificarClip(supabase, input, "nuevo");
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
@@ -263,7 +276,6 @@ export async function updateClip(id: string, input: ClipInput) {
     console.error("updateClip:", error);
     return { ok: false as const, error: `No se pudo guardar el clip: ${error.message}` };
   }
-  await notificarClip(supabase, input, "actualizado");
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
