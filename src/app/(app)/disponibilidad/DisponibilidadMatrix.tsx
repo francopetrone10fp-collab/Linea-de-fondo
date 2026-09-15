@@ -3,7 +3,16 @@
 import { useMemo, useState } from "react";
 import { weekDates, isWeekend } from "@/lib/weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, DIAS_SEMANA } from "@/lib/constants";
+import { downloadCsv } from "@/lib/csv";
 import type { DisponibilidadDia } from "./queries";
+
+// Mismo criterio que <DayCell> pero como texto plano, para el CSV.
+function cellText(row: DisponibilidadDia | null, weekend: boolean): string {
+  if (!weekend) return !row || row.disponible ? "Disponible" : "No disponible";
+  if (!row) return "Sin responder";
+  if (!row.disponible || row.categorias.length === 0) return "No disponible";
+  return row.categorias.join(", ");
+}
 
 export default function DisponibilidadMatrix({
   monday,
@@ -31,6 +40,15 @@ export default function DisponibilidadMatrix({
     return list;
   }, [referees, q, categoriaFiltro, disponibilidadPorArbitro]);
 
+  function exportCsv() {
+    const headers = ["Árbitro", ...DIAS_SEMANA.map((d) => d.label)];
+    const rows = filtered.map((r) => {
+      const porFecha = new Map((disponibilidadPorArbitro[r.id] ?? []).map((d) => [d.fecha, d]));
+      return [r.name, ...dates.map((fecha) => cellText(porFecha.get(fecha) ?? null, isWeekend(fecha)))];
+    });
+    downloadCsv(`disponibilidad_${monday}.csv`, headers, rows);
+  }
+
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-3.5 flex-wrap">
@@ -49,6 +67,12 @@ export default function DisponibilidadMatrix({
             </option>
           ))}
         </select>
+        <button
+          onClick={exportCsv}
+          className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
+        >
+          Exportar CSV
+        </button>
       </div>
 
       <div className="overflow-x-auto border border-line rounded-xl">
@@ -97,27 +121,21 @@ function DayCell({ row, weekend }: { row: DisponibilidadDia | null; weekend: boo
   // Entre semana, sin respuesta = disponible por default (solo hay que
   // marcar cuando alguien NO puede). El fin de semana sí necesita una
   // respuesta explícita.
-  if (!row) {
-    if (!weekend) {
-      return (
-        <span className="text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-good-bg text-good-text">
-          Disponible
-        </span>
-      );
-    }
-    return <span className="text-text-faint">—</span>;
-  }
-
   if (!weekend) {
-    return row.disponible ? (
-      <span className="text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-good-bg text-good-text">
-        Disponible
-      </span>
-    ) : (
-      <span className="text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-bad-bg text-bad-text">
-        No disponible
+    const disponible = cellText(row, weekend) === "Disponible";
+    return (
+      <span
+        className={`text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+          disponible ? "bg-good-bg text-good-text" : "bg-bad-bg text-bad-text"
+        }`}
+      >
+        {cellText(row, weekend)}
       </span>
     );
+  }
+
+  if (!row) {
+    return <span className="text-text-faint">—</span>;
   }
 
   if (!row.disponible || row.categorias.length === 0) {
