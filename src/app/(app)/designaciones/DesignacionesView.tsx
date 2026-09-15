@@ -71,6 +71,7 @@ export default function DesignacionesView({
   // todos. Estas van siempre arriba, sin importar el orden por fecha.
   function estaPendiente(d: DesignacionFull) {
     if (!d.requiereConfirmacion || d.arbitros.length === 0) return false;
+    if (d.estado === "suspendido" || d.estado === "jugado") return false;
     const confirmados = confirmaciones[d.id] ?? [];
     return !d.arbitros.every((a) => confirmados.some((c) => c.refereeId === a.refereeId));
   }

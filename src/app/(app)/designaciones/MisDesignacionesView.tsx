@@ -24,8 +24,16 @@ export default function MisDesignacionesView({
     .filter((x): x is { d: DesignacionFull; mia: NonNullable<(typeof x)["mia"]> } => !!x.mia);
 
   const total = mias.reduce((sum, x) => sum + x.mia.monto, 0);
+  // Mismo criterio que puedeConfirmar más abajo: un partido ya jugado o
+  // suspendido no tiene botón de confirmar, así que tampoco puede contar acá
+  // como "pendiente" (si no, el cartel de arriba promete algo que la tarjeta
+  // no deja hacer).
   const pendientes = mias.filter(
-    ({ d }) => d.requiereConfirmacion && !(confirmaciones[d.id] ?? []).some((c) => c.refereeId === myRefereeId)
+    ({ d }) =>
+      d.requiereConfirmacion &&
+      d.estado !== "suspendido" &&
+      d.estado !== "jugado" &&
+      !(confirmaciones[d.id] ?? []).some((c) => c.refereeId === myRefereeId)
   ).length;
   const suspendidos = mias.filter(({ d }) => d.estado === "suspendido");
   const montoPendienteCobro = suspendidos.reduce((sum, x) => sum + x.mia.monto, 0);

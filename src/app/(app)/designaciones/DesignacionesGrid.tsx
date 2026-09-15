@@ -194,6 +194,8 @@ function DesignacionRow({
         </select>
         {d.requiereConfirmacion &&
           d.arbitros.length > 0 &&
+          d.estado !== "suspendido" &&
+          d.estado !== "jugado" &&
           (() => {
             const total = d.arbitros.length;
             const confirmadosArb = d.arbitros.filter((a) => confirmados.some((c) => c.refereeId === a.refereeId));
