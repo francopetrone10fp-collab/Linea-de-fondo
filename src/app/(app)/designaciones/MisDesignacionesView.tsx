@@ -90,7 +90,8 @@ function DesignacionCard({
 
   function onConfirmar() {
     startTransition(async () => {
-      await confirmDesignacion(d.id);
+      const res = await confirmDesignacion(d.id);
+      if (!res.ok) alert(res.error);
     });
   }
 
