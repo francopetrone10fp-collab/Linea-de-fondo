@@ -51,6 +51,11 @@ export default function DisponibilidadMatrix({
 
   return (
     <div>
+      <div className="text-[12.5px] text-text-dim mb-2.5">
+        <b className="text-text font-semibold">{referees.length}</b> árbitro{referees.length === 1 ? "" : "s"} activo
+        {referees.length === 1 ? "" : "s"}
+        {filtered.length !== referees.length && ` · ${filtered.length} coinciden con el filtro`}
+      </div>
       <div className="flex items-center gap-2.5 mb-3.5 flex-wrap">
         <input
           type="text"
