@@ -90,10 +90,12 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
   const fechaFmt = (fecha: string | null) =>
     fecha ? new Date(fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) : "—";
 
+  // Este reporte está pensado para compartir (con equipos, árbitros, etc.),
+  // así que no muestra montos — eso queda para "Totales por árbitro", que es
+  // un documento interno.
   const arbitroCell = (d: DesignacionFull, pos: number) => {
     const a = d.arbitros.find((x) => x.posicion === pos);
-    if (!a) return "—";
-    return `${esc(a.refereeName)}<br><span style="color:#5C6672;font-size:10px;">${money.format(a.monto)}</span>`;
+    return a ? esc(a.refereeName) : "—";
   };
 
   const trs = rows
@@ -109,14 +111,13 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
         <td>${arbitroCell(d, 1)}</td>
         <td>${arbitroCell(d, 2)}</td>
         <td>${arbitroCell(d, 3)}</td>
-        <td>${d.ctNombre ? `${esc(d.ctNombre)}${d.ctMonto != null ? `<br><span style="color:#5C6672;font-size:10px;">${money.format(d.ctMonto)}</span>` : ""}` : "—"}</td>
+        <td>${d.ctNombre ? esc(d.ctNombre) : "—"}</td>
         <td style="color:#97A1AE;max-width:160px;">${esc(d.notas) || "—"}</td>
       </tr>`
     )
     .join("");
 
   const totalPartidos = rows.length;
-  const totalMonto = rows.reduce((sum, d) => sum + d.arbitros.reduce((s, a) => s + a.monto, 0) + (d.ctMonto ?? 0), 0);
 
   const body =
     rows.length === 0
@@ -127,7 +128,7 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
         </tr></thead><tbody>${trs}</tbody></table>`;
 
   const generatedAt = new Date().toLocaleString("es-AR");
-  const foot = `<span>Generado el ${esc(generatedAt)}</span><span><b>${totalPartidos}</b> partido${totalPartidos === 1 ? "" : "s"}</span><span><b>${esc(money.format(totalMonto))}</b> total a liquidar</span>`;
+  const foot = `<span>Generado el ${esc(generatedAt)}</span><span><b>${totalPartidos}</b> partido${totalPartidos === 1 ? "" : "s"}</span>`;
 
   return shell({
     orientation: "landscape",
