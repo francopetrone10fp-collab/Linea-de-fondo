@@ -5,7 +5,28 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { colorForTeam } from "@/lib/constants";
 import { sanitizeVideoUrl } from "@/lib/video-embed";
+import { sendPushToProfiles } from "@/lib/push/send";
 import type { Evaluation, Situation, WhistleType } from "@/lib/database.types";
+
+type DB = Awaited<ReturnType<typeof createClient>>;
+
+// Le avisa al árbitro protagonista del clip (si tiene perfil y notificaciones
+// activadas) que se cargó o cambió un clip sobre una jugada suya. No bloquea
+// la acción principal: es un "fire and forget", igual que en designaciones.
+async function notificarClip(supabase: DB, input: ClipInput, evento: "nuevo" | "actualizado") {
+  if (!input.refereeId) return;
+  const [{ data: prof }, { data: partido }] = await Promise.all([
+    supabase.from("profiles").select("id").eq("referee_id", input.refereeId).maybeSingle(),
+    supabase.from("partidos").select("competition_id, temporada").eq("id", input.partidoId).maybeSingle(),
+  ]);
+  if (!prof) return;
+  const url = partido?.competition_id ? `/competitions/${partido.competition_id}/${partido.temporada}/${input.partidoId}` : "/competitions";
+  sendPushToProfiles([prof.id], {
+    title: evento === "nuevo" ? "Nuevo clip sobre tu partido" : "Se actualizó un clip tuyo",
+    body: `${input.title} · ${input.situation}`,
+    url,
+  }).catch(() => {});
+}
 
 // La categoría (Superliga, U19, etc.) es solo una etiqueta del partido, sin
 // sección propia de administración — se crea al vuelo desde el formulario de
@@ -216,6 +237,7 @@ export async function createClip(input: ClipInput) {
     console.error("createClip:", error);
     return { ok: false as const, error: `No se pudo guardar el clip: ${error.message}` };
   }
+  await notificarClip(supabase, input, "nuevo");
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
@@ -241,6 +263,7 @@ export async function updateClip(id: string, input: ClipInput) {
     console.error("updateClip:", error);
     return { ok: false as const, error: `No se pudo guardar el clip: ${error.message}` };
   }
+  await notificarClip(supabase, input, "actualizado");
   revalidatePath("/competitions", "layout");
   return { ok: true as const };
 }
