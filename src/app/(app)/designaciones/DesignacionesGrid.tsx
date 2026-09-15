@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import RefereeCombobox from "@/components/RefereeCombobox";
 import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
 import type { DesignacionEstado } from "@/lib/database.types";
@@ -43,13 +43,40 @@ export default function DesignacionesGrid({
   pendingIds: Set<string>;
   busyByTime: Map<string, Map<string, string>>;
 }) {
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const tableWrapRef = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+
+  useEffect(() => {
+    function updateWidth() {
+      if (tableWrapRef.current) setScrollWidth(tableWrapRef.current.scrollWidth);
+    }
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, [designaciones]);
+
+  function syncFromTop() {
+    if (topScrollRef.current && tableWrapRef.current) tableWrapRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+  }
+  function syncFromTable() {
+    if (topScrollRef.current && tableWrapRef.current) topScrollRef.current.scrollLeft = tableWrapRef.current.scrollLeft;
+  }
+
   if (designaciones.length === 0) {
     return <p className="text-[12.5px] text-text-faint m-0">No hay designaciones para este mes con ese filtro.</p>;
   }
 
   return (
-    <div className="overflow-x-auto border border-line rounded-xl">
-      <table className="w-full text-[12.5px] border-collapse min-w-[1200px]">
+    <div>
+      {/* Barra de scroll horizontal arriba, sincronizada con la de la tabla,
+          para no tener que bajar hasta el final de una lista larga para
+          moverse a los costados. */}
+      <div ref={topScrollRef} onScroll={syncFromTop} className="overflow-x-auto overflow-y-hidden" style={{ height: 14 }}>
+        <div style={{ width: scrollWidth, height: 1 }} />
+      </div>
+      <div ref={tableWrapRef} onScroll={syncFromTable} className="overflow-x-auto border border-line rounded-xl">
+        <table className="w-full text-[12.5px] border-collapse min-w-[1200px]">
         <thead>
           <tr className="bg-surface-2 text-text-dim text-[11px] uppercase tracking-wide">
             <th className="text-left font-semibold px-2.5 py-2 border-b border-line whitespace-nowrap">
@@ -105,7 +132,8 @@ export default function DesignacionesGrid({
             );
           })}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }
