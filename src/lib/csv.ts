@@ -5,7 +5,10 @@ function escapeCsvCell(value: string | number | null | undefined): string {
 }
 
 export function toCsv(headers: string[], rows: (string | number | null | undefined)[][]): string {
-  const lines = [headers, ...rows].map((row) => row.map(escapeCsvCell).join(","));
+  // Excel en configuración regional es-AR (coma como separador decimal) usa
+  // ";" como separador de listas al abrir un CSV con doble click — con ","
+  // no separa en columnas, todo cae amontonado en la columna A.
+  const lines = [headers, ...rows].map((row) => row.map(escapeCsvCell).join(";"));
   // BOM para que Excel/Sheets reconozcan bien los acentos.
   return "﻿" + lines.join("\r\n");
 }

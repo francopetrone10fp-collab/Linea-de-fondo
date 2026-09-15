@@ -8,6 +8,7 @@ import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
+import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 
 export default function DesignacionesView({
@@ -174,7 +175,7 @@ export default function DesignacionesView({
     downloadCsv(`designaciones_${month}.csv`, headers, rows);
   }
 
-  function exportTotales() {
+  function computeTotales() {
     const totals = new Map<string, { nombre: string; partidos: number; total: number }>();
     designaciones.forEach((d) => {
       d.arbitros.forEach((a) => {
@@ -184,10 +185,20 @@ export default function DesignacionesView({
         totals.set(a.refereeId, entry);
       });
     });
-    const rows = Array.from(totals.values())
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
-      .map((t) => [t.nombre, t.partidos, t.total]);
+    return Array.from(totals.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }
+
+  function exportTotales() {
+    const rows = computeTotales().map((t) => [t.nombre, t.partidos, t.total]);
     downloadCsv(`designaciones_totales_${month}.csv`, ["Árbitro", "Partidos", "Total"], rows);
+  }
+
+  function exportDetallePdf() {
+    openHtmlForPrint(buildDesignacionesDetalleHtml(filtered, monthLabel));
+  }
+
+  function exportTotalesPdf() {
+    openHtmlForPrint(buildDesignacionesTotalesHtml(computeTotales(), monthLabel));
   }
 
   return (
@@ -278,6 +289,18 @@ export default function DesignacionesView({
                 className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
               >
                 Exportar totales por árbitro
+              </button>
+              <button
+                onClick={exportDetallePdf}
+                className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
+              >
+                Exportar PDF
+              </button>
+              <button
+                onClick={exportTotalesPdf}
+                className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
+              >
+                Exportar totales PDF
               </button>
             </>
           )}
