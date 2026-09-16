@@ -3,15 +3,24 @@
 import { useMemo, useState } from "react";
 import { weekDates, isWeekend } from "@/lib/weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, DIAS_SEMANA } from "@/lib/constants";
-import { downloadCsv } from "@/lib/csv";
+import { downloadExcel, type ExcelCellStyle } from "@/lib/excel";
 import type { DisponibilidadDia } from "./queries";
 
-// Mismo criterio que <DayCell> pero como texto plano, para el CSV.
+// Mismo criterio que <DayCell> pero como texto plano, para el export.
 function cellText(row: DisponibilidadDia | null, weekend: boolean): string {
   if (!weekend) return !row || row.disponible ? "Disponible" : "No disponible";
   if (!row) return "Sin responder";
   if (!row.disponible || row.categorias.length === 0) return "No disponible";
   return row.categorias.join(", ");
+}
+
+// Mismas categorías que cellText, pero una por renglón (para el Excel) y el
+// color de celda que le corresponde a cada estado.
+function cellExcel(row: DisponibilidadDia | null, weekend: boolean): { value: string; style: ExcelCellStyle } {
+  if (!weekend) return !row || row.disponible ? { value: "Disponible", style: "good" } : { value: "No disponible", style: "bad" };
+  if (!row) return { value: "Sin responder", style: "neutral" };
+  if (!row.disponible || row.categorias.length === 0) return { value: "No disponible", style: "bad" };
+  return { value: row.categorias.join("\n"), style: "good" };
 }
 
 export default function DisponibilidadMatrix({
@@ -40,13 +49,19 @@ export default function DisponibilidadMatrix({
     return list;
   }, [referees, q, categoriaFiltro, disponibilidadPorArbitro]);
 
-  function exportCsv() {
-    const headers = ["Árbitro", ...DIAS_SEMANA.map((d) => d.label)];
+  function exportExcel() {
+    const columns = [
+      { header: "Árbitro", widthPx: 200 },
+      ...DIAS_SEMANA.map((d, i) => ({ header: d.label, widthPx: i >= 5 ? 220 : 110 })),
+    ];
     const rows = filtered.map((r) => {
       const porFecha = new Map((disponibilidadPorArbitro[r.id] ?? []).map((d) => [d.fecha, d]));
-      return [r.name, ...dates.map((fecha) => cellText(porFecha.get(fecha) ?? null, isWeekend(fecha)))];
+      return [
+        { value: r.name, style: null },
+        ...dates.map((fecha) => cellExcel(porFecha.get(fecha) ?? null, isWeekend(fecha))),
+      ];
     });
-    downloadCsv(`disponibilidad_${monday}.csv`, headers, rows);
+    downloadExcel(`disponibilidad_${monday}.xls`, columns, rows);
   }
 
   return (
@@ -73,10 +88,10 @@ export default function DisponibilidadMatrix({
           ))}
         </select>
         <button
-          onClick={exportCsv}
+          onClick={exportExcel}
           className="bg-transparent text-text-dim border border-line rounded-lg text-[12px] px-2.5 py-2 whitespace-nowrap"
         >
-          Exportar CSV
+          Exportar Excel
         </button>
       </div>
 
