@@ -23,6 +23,8 @@ function cellExcel(row: DisponibilidadDia | null, weekend: boolean): { value: st
   return { value: row.categorias.join("\n"), style: "good" };
 }
 
+const SIN_RESPONDER = "__sin_responder__";
+
 export default function DisponibilidadMatrix({
   monday,
   referees,
@@ -36,18 +38,27 @@ export default function DisponibilidadMatrix({
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const dates = weekDates(monday);
 
+  const sabado = dates[5];
+  const domingo = dates[6];
+
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => {
     let list = referees;
     if (q) list = list.filter((r) => r.name.toLowerCase().includes(q));
-    if (categoriaFiltro) {
+    if (categoriaFiltro === SIN_RESPONDER) {
+      list = list.filter((r) => {
+        const rows = disponibilidadPorArbitro[r.id] ?? [];
+        const fechasRespondidas = new Set(rows.map((row) => row.fecha));
+        return !fechasRespondidas.has(sabado) || !fechasRespondidas.has(domingo);
+      });
+    } else if (categoriaFiltro) {
       list = list.filter((r) => {
         const rows = disponibilidadPorArbitro[r.id] ?? [];
         return rows.some((row) => isWeekend(row.fecha) && row.disponible && row.categorias.includes(categoriaFiltro));
       });
     }
     return list;
-  }, [referees, q, categoriaFiltro, disponibilidadPorArbitro]);
+  }, [referees, q, categoriaFiltro, disponibilidadPorArbitro, sabado, domingo]);
 
   function exportExcel() {
     const columns = [
@@ -86,6 +97,7 @@ export default function DisponibilidadMatrix({
               {c}
             </option>
           ))}
+          <option value={SIN_RESPONDER}>Sin responder</option>
         </select>
         <button
           onClick={exportExcel}
