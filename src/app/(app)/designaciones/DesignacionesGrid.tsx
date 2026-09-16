@@ -3,8 +3,10 @@
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import RefereeCombobox from "@/components/RefereeCombobox";
 import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
+import { disponibilidadBlockReason } from "@/lib/constants";
 import type { DesignacionEstado } from "@/lib/database.types";
 import type { Confirmacion, DesignacionFull } from "./queries";
+import type { DisponibilidadDia } from "../disponibilidad/queries";
 
 const ESTADO_LABELS: Record<DesignacionEstado, string> = {
   programado: "Programado",
@@ -33,6 +35,7 @@ export default function DesignacionesGrid({
   confirmaciones,
   pendingIds,
   busyByTime,
+  disponibilidadPorArbitro,
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
@@ -42,6 +45,7 @@ export default function DesignacionesGrid({
   confirmaciones: Record<string, Confirmacion[]>;
   pendingIds: Set<string>;
   busyByTime: Map<string, Map<string, string>>;
+  disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
 }) {
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableWrapRef = useRef<HTMLDivElement>(null);
@@ -118,15 +122,26 @@ export default function DesignacionesGrid({
                   referees={referees}
                   onEdit={onEdit}
                   confirmados={confirmaciones[d.id] ?? []}
-                  disabledIds={
-                    d.fecha && d.hora
-                      ? new Set(
-                          Array.from(busyByTime.get(`${d.fecha}|${d.hora}`)?.entries() ?? [])
-                            .filter(([, otherId]) => otherId !== d.id)
-                            .map(([refereeId]) => refereeId)
-                        )
-                      : undefined
-                  }
+                  disabled={(() => {
+                    const map = new Map<string, string>();
+                    // Disponibilidad: el árbitro marcó que no puede ese día, o
+                    // (fin de semana) marcó otras categorías pero no esta.
+                    if (d.fecha) {
+                      for (const r of referees) {
+                        const fila = (disponibilidadPorArbitro[r.id] ?? []).find((x) => x.fecha === d.fecha);
+                        const motivo = disponibilidadBlockReason(fila ?? null, d.fecha, d.categoria);
+                        if (motivo) map.set(r.id, motivo);
+                      }
+                    }
+                    // Choque de horario: ya designado a esa hora en otro partido.
+                    if (d.fecha && d.hora) {
+                      const ocupados = busyByTime.get(`${d.fecha}|${d.hora}`)?.entries() ?? [];
+                      for (const [refereeId, otherId] of ocupados) {
+                        if (otherId !== d.id) map.set(refereeId, "Ya está designado a esa hora en otro partido.");
+                      }
+                    }
+                    return map;
+                  })()}
                 />
               </Fragment>
             );
@@ -147,13 +162,13 @@ function DesignacionRow({
   referees,
   onEdit,
   confirmados,
-  disabledIds,
+  disabled,
 }: {
   d: DesignacionFull;
   referees: { id: string; name: string }[];
   onEdit: (d: DesignacionFull) => void;
   confirmados: Confirmacion[];
-  disabledIds?: Set<string>;
+  disabled?: Map<string, string>;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -259,7 +274,7 @@ function DesignacionRow({
             value={arbitro(posicion)}
             onChange={(refereeId) => onArbitroChange(posicion as 1 | 2 | 3, refereeId)}
             className="min-w-[130px]"
-            disabledIds={disabledIds}
+            disabled={disabled}
           />
           {arbitro(posicion) && (
             <div className="text-[10.5px] text-text-faint mt-0.5">

@@ -10,6 +10,7 @@ import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
+import type { DisponibilidadDia } from "../disponibilidad/queries";
 
 export default function DesignacionesView({
   designaciones,
@@ -17,6 +18,7 @@ export default function DesignacionesView({
   viaticos,
   companeros,
   confirmaciones,
+  disponibilidadPorArbitro,
   referees,
   canManage,
   myRefereeId,
@@ -27,6 +29,7 @@ export default function DesignacionesView({
   viaticos: ViaticoLocalidad[];
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
+  disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
   referees: { id: string; name: string }[];
   canManage: boolean;
   myRefereeId: string | null;
@@ -318,6 +321,7 @@ export default function DesignacionesView({
           confirmaciones={confirmaciones}
           pendingIds={pendingIds}
           busyByTime={busyByTime}
+          disponibilidadPorArbitro={disponibilidadPorArbitro}
         />
       )}
 

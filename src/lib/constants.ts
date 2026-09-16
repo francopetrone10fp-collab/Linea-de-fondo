@@ -1,4 +1,5 @@
 import type { Role, Situation, MaterialType, Evaluation, WhistleType, ClassLevel } from "@/lib/database.types";
+import { isWeekend } from "@/lib/weekUtils";
 
 export const SITUATIONS: Situation[] = [
   "Falta personal",
@@ -81,6 +82,50 @@ export const CATEGORIAS_DISPONIBILIDAD = [
   "TIRA ENTERA",
   "FULL TIME",
 ];
+
+// Mapea la categoría real de un partido (texto libre, ej. "SUB 15 - Cadete
+// C") al casillero de disponibilidad que le corresponde. Es una heurística
+// por palabras clave — si no reconoce la categoría devuelve null, y en ese
+// caso el bloqueo por disponibilidad no aplica (mejor no bloquear una
+// designación válida que bloquear de más por una categoría rara).
+export function categoriaToDisponibilidadBucket(categoria: string): string | null {
+  const c = categoria.toUpperCase();
+  if (c.includes("SUB 9") || c.includes("SUB 11") || c.includes("MINI")) return "U9 Y U11";
+  if (c.includes("SUB 13") || c.includes("INFANTIL")) return "INTANFIL (U13)";
+  if (c.includes("SUB 15") || c.includes("CADETE")) return "CADETE (U15)";
+  if (c.includes("SUB 17") || c.includes("JUVENIL")) return "JUVENIL (U17)";
+  if (c.includes("SUB 21") || c.includes("LIGA PROXIMO") || c.includes("LIGA PRÓXIMO")) return "LIGA PROXIMO (U21)";
+  if (c.includes("PRIMERA")) return "TIRA ENTERA";
+  return null;
+}
+
+// Motivo de bloqueo (o null si puede designarse) al querer poner a este
+// árbitro en un partido de esa fecha y categoría, según lo que cargó en
+// Disponibilidad. Entre semana solo importa el sí/no; el fin de semana
+// también importa la categoría marcada (salvo que haya puesto FULL TIME,
+// que cubre cualquier categoría). Si no cargó nada para esa fecha, no se
+// bloquea — "sin responder" no es lo mismo que "no disponible".
+export function disponibilidadBlockReason(
+  disponibilidad: { disponible: boolean; categorias: string[] } | null | undefined,
+  fecha: string,
+  categoria: string
+): string | null {
+  if (!disponibilidad) return null;
+
+  if (!isWeekend(fecha)) {
+    return disponibilidad.disponible ? null : "Marcó que no está disponible ese día.";
+  }
+
+  if (!disponibilidad.disponible || disponibilidad.categorias.length === 0) {
+    return "Marcó que no está disponible ese día.";
+  }
+  if (disponibilidad.categorias.includes("FULL TIME")) return null;
+
+  const bucket = categoriaToDisponibilidadBucket(categoria);
+  if (!bucket || disponibilidad.categorias.includes(bucket)) return null;
+
+  return `Solo marcó disponibilidad para: ${disponibilidad.categorias.join(", ")}.`;
+}
 
 export const DIAS_SEMANA = [
   { key: "lunes", label: "Lunes" },

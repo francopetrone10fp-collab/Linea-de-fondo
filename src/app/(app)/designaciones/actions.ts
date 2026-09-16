@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { sendPushToProfiles } from "@/lib/push/send";
+import { disponibilidadBlockReason } from "@/lib/constants";
 import type { Database, DesignacionEstado, Rama, TarifaModo } from "@/lib/database.types";
 
 type DB = Awaited<ReturnType<typeof createClient>>;
@@ -269,6 +270,18 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
         error: `Ya está designado a esa hora en ${conflicto.equipo_local} vs ${conflicto.equipo_visitante} (${conflicto.categoria}).`,
       };
     }
+
+    if (designacion.fecha) {
+      const { data: disponibilidad } = await supabase
+        .from("disponibilidades")
+        .select("disponible, categorias")
+        .eq("referee_id", refereeId)
+        .eq("fecha", designacion.fecha)
+        .maybeSingle();
+      const bloqueo = disponibilidadBlockReason(disponibilidad, designacion.fecha, designacion.categoria);
+      if (bloqueo) return { ok: false as const, error: bloqueo };
+    }
+
     const { error } = await supabase
       .from("designacion_arbitros")
       .upsert({ designacion_id: designacionId, posicion, referee_id: refereeId, monto: 0 });

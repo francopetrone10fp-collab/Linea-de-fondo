@@ -13,7 +13,7 @@ export default function RefereeCombobox({
   onChange,
   placeholder = "Buscar árbitro...",
   className = "",
-  disabledIds,
+  disabled,
 }: {
   listId: string;
   referees: { id: string; name: string }[];
@@ -22,35 +22,37 @@ export default function RefereeCombobox({
   placeholder?: string;
   className?: string;
   // Árbitros que no se pueden elegir acá (ej: ya designados a esa misma
-  // hora en otro partido). No se ocultan del datalist para no confundir,
-  // pero commit() rechaza la selección.
-  disabledIds?: Set<string>;
+  // hora en otro partido, o marcaron que no están disponibles), con el
+  // motivo a mostrar. No se ocultan del datalist para no confundir, pero
+  // commit() rechaza la selección.
+  disabled?: Map<string, string>;
 }) {
   const selected = referees.find((r) => r.id === value);
   const [text, setText] = useState(selected?.name ?? "");
-  const [warning, setWarning] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
 
   function commit(raw: string) {
     const trimmed = raw.trim();
     if (!trimmed) {
-      setWarning(false);
+      setWarning(null);
       setText("");
       if (value) onChange("");
       return;
     }
     const match = referees.find((r) => r.name.toLowerCase() === trimmed.toLowerCase());
     if (match) {
-      if (disabledIds?.has(match.id) && match.id !== value) {
-        setWarning(true);
+      const reason = disabled?.get(match.id);
+      if (reason && match.id !== value) {
+        setWarning(reason);
         setText(selected?.name ?? "");
         return;
       }
-      setWarning(false);
+      setWarning(null);
       setText(match.name);
       if (match.id !== value) onChange(match.id);
     } else {
       // No coincide con ningún árbitro: volvemos al último valor válido.
-      setWarning(false);
+      setWarning(null);
       setText(selected?.name ?? "");
     }
   }
@@ -72,7 +74,7 @@ export default function RefereeCombobox({
           <option key={r.id} value={r.name} />
         ))}
       </datalist>
-      {warning && <div className="text-[10px] text-amber-text mt-0.5">Ya designado a esa hora</div>}
+      {warning && <div className="text-[10px] text-amber-text mt-0.5">{warning}</div>}
     </>
   );
 }
