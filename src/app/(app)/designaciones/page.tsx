@@ -15,15 +15,19 @@ function monthRange(month: string) {
 export default async function DesignacionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; desde?: string; hasta?: string }>;
 }) {
   const profile = await requireProfile();
   const canManage = isCoordinador(profile);
   if (!canManage && !profile.referee_id) redirect("/competitions");
 
-  const { month: monthParam } = await searchParams;
+  const { month: monthParam, desde: desdeParam, hasta: hastaParam } = await searchParams;
   const month = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : new Date().toISOString().slice(0, 7);
-  const { desde, hasta } = monthRange(month);
+  const isValidDate = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  // Además de navegar mes a mes, se puede pisar el rango con "desde"/"hasta"
+  // en la URL (para exportar un período que no coincide con un mes calendario).
+  const customRange = isValidDate(desdeParam) && isValidDate(hastaParam) && desdeParam! <= hastaParam!;
+  const { desde, hasta } = customRange ? { desde: desdeParam!, hasta: hastaParam! } : monthRange(month);
 
   const supabase = await createClient();
   const designaciones = await fetchDesignaciones(supabase, { desde, hasta });
@@ -54,6 +58,9 @@ export default async function DesignacionesPage({
       canManage={canManage}
       myRefereeId={profile.referee_id}
       month={month}
+      desde={desde}
+      hasta={hasta}
+      customRange={customRange}
     />
   );
 }

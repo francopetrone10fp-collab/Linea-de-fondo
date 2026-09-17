@@ -23,6 +23,9 @@ export default function DesignacionesView({
   canManage,
   myRefereeId,
   month,
+  desde,
+  hasta,
+  customRange,
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
@@ -34,6 +37,9 @@ export default function DesignacionesView({
   canManage: boolean;
   myRefereeId: string | null;
   month: string;
+  desde: string;
+  hasta: string;
+  customRange: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
@@ -49,6 +55,16 @@ export default function DesignacionesView({
     router.push(`/designaciones?month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
   }
 
+  function applyRange(nextDesde: string, nextHasta: string) {
+    if (nextDesde && nextHasta && nextDesde <= nextHasta) {
+      router.push(`/designaciones?desde=${nextDesde}&hasta=${nextHasta}`);
+    }
+  }
+
+  function clearRange() {
+    router.push("/designaciones");
+  }
+
   function onDayChange(day: string) {
     setSelectedDay(day);
     if (day && day.slice(0, 7) !== month) {
@@ -61,6 +77,16 @@ export default function DesignacionesView({
     const label = new Date(y, m - 1, 1).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
     return label.charAt(0).toUpperCase() + label.slice(1);
   }, [month]);
+
+  function formatDate(iso: string) {
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  // Con rango personalizado, el título y los nombres de archivo reflejan el
+  // período exacto elegido en vez del mes calendario.
+  const rangeLabel = customRange ? `${formatDate(desde)} – ${formatDate(hasta)}` : monthLabel;
+  const rangeSlug = customRange ? `${desde}_a_${hasta}` : month;
 
   const competencias = useMemo(() => {
     const desdeDatos = designaciones.map((d) => d.competencia).filter((c): c is string => !!c);
@@ -176,7 +202,7 @@ export default function DesignacionesView({
         d.notas,
       ];
     });
-    downloadCsv(`designaciones_${month}.csv`, headers, rows);
+    downloadCsv(`designaciones_${rangeSlug}.csv`, headers, rows);
   }
 
   function computeTotales() {
@@ -194,15 +220,15 @@ export default function DesignacionesView({
 
   function exportTotales() {
     const rows = computeTotales().map((t) => [t.nombre, t.partidos, t.total]);
-    downloadCsv(`designaciones_totales_${month}.csv`, ["Árbitro", "Partidos", "Total"], rows);
+    downloadCsv(`designaciones_totales_${rangeSlug}.csv`, ["Árbitro", "Partidos", "Total"], rows);
   }
 
   function exportDetallePdf() {
-    openHtmlForPrint(buildDesignacionesDetalleHtml(filtered, monthLabel));
+    openHtmlForPrint(buildDesignacionesDetalleHtml(filtered, rangeLabel));
   }
 
   function exportTotalesPdf() {
-    openHtmlForPrint(buildDesignacionesTotalesHtml(computeTotales(), monthLabel));
+    openHtmlForPrint(buildDesignacionesTotalesHtml(computeTotales(), rangeLabel));
   }
 
   return (
@@ -250,11 +276,12 @@ export default function DesignacionesView({
             <button onClick={() => changeMonth(-1)} className="px-2 py-1 text-text-dim hover:text-text" aria-label="Mes anterior">
               ‹
             </button>
-            <span className="text-[13px] font-medium px-1.5 min-w-[130px] text-center capitalize">{monthLabel}</span>
+            <span className="text-[13px] font-medium px-1.5 min-w-[130px] text-center capitalize">{rangeLabel}</span>
             <button onClick={() => changeMonth(1)} className="px-2 py-1 text-text-dim hover:text-text" aria-label="Mes siguiente">
               ›
             </button>
           </div>
+          <RangeFilter key={`${desde}|${hasta}`} desde={desde} hasta={hasta} customRange={customRange} onApply={applyRange} onClear={clearRange} />
           <div className="flex items-center gap-1">
             <input
               type="date"
@@ -357,6 +384,59 @@ export default function DesignacionesView({
       )}
 
       {showImport && <ImportModal referees={referees} competencias={competencias} onClose={() => setShowImport(false)} />}
+    </div>
+  );
+}
+
+// Estado local para no pisar lo que el usuario está tipeando hasta que
+// termine de elegir las dos fechas. El padre lo remonta con `key={desde|hasta}`
+// cada vez que el rango efectivo cambia desde el server, así se resincroniza
+// sin necesitar un efecto.
+function RangeFilter({
+  desde,
+  hasta,
+  customRange,
+  onApply,
+  onClear,
+}: {
+  desde: string;
+  hasta: string;
+  customRange: boolean;
+  onApply: (desde: string, hasta: string) => void;
+  onClear: () => void;
+}) {
+  const [desdeInput, setDesdeInput] = useState(desde);
+  const [hastaInput, setHastaInput] = useState(hasta);
+
+  return (
+    <div className="flex items-center gap-1.5 bg-surface-2 border border-line rounded-lg px-2 py-1">
+      <span className="text-[10.5px] text-text-faint uppercase tracking-wide">Rango</span>
+      <input
+        type="date"
+        value={desdeInput}
+        onChange={(e) => {
+          setDesdeInput(e.target.value);
+          onApply(e.target.value, hastaInput);
+        }}
+        title="Desde"
+        className="text-[13px]"
+      />
+      <span className="text-text-faint text-[12px]">–</span>
+      <input
+        type="date"
+        value={hastaInput}
+        onChange={(e) => {
+          setHastaInput(e.target.value);
+          onApply(desdeInput, e.target.value);
+        }}
+        title="Hasta"
+        className="text-[13px]"
+      />
+      {customRange && (
+        <button onClick={onClear} title="Volver a la vista mensual" className="text-text-faint hover:text-text px-1 text-[13px]">
+          ×
+        </button>
+      )}
     </div>
   );
 }
