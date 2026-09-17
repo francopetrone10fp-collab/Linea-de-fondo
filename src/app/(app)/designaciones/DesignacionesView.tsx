@@ -137,18 +137,18 @@ export default function DesignacionesView({
     [designaciones, selectedDay]
   );
 
-  // Quién está ocupado a cada (fecha, hora): se arma desde la lista completa
-  // sin filtrar, para no perderse choques que el buscador o el filtro de día
-  // esconderían. Se usa para bloquear la designación repetida de un árbitro
-  // al mismo horario en otro partido.
-  const busyByTime = useMemo(() => {
-    const map = new Map<string, Map<string, string>>();
+  // Todos los partidos asignados a cada árbitro (fecha, hora, id de la
+  // designación), armado desde la lista completa sin filtrar para no
+  // perderse choques que el buscador o el filtro de día esconderían. Sirve
+  // tanto para bloquear un segundo partido el mismo día como para el aviso
+  // informativo de partidos en otras fechas.
+  const assignmentsByReferee = useMemo(() => {
+    const map = new Map<string, { fecha: string; hora: string | null; designacionId: string }[]>();
     for (const d of designaciones) {
-      if (!d.fecha || !d.hora) continue;
-      const horario = `${d.fecha}|${d.hora}`;
+      if (!d.fecha) continue;
       for (const a of d.arbitros) {
-        if (!map.has(horario)) map.set(horario, new Map());
-        map.get(horario)!.set(a.refereeId, d.id);
+        if (!map.has(a.refereeId)) map.set(a.refereeId, []);
+        map.get(a.refereeId)!.push({ fecha: d.fecha, hora: d.hora, designacionId: d.id });
       }
     }
     return map;
@@ -347,7 +347,7 @@ export default function DesignacionesView({
           onToggleSort={() => setSortOrder((s) => (s === "asc" ? "desc" : "asc"))}
           confirmaciones={confirmaciones}
           pendingIds={pendingIds}
-          busyByTime={busyByTime}
+          assignmentsByReferee={assignmentsByReferee}
           disponibilidadPorArbitro={disponibilidadPorArbitro}
         />
       )}

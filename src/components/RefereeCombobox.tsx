@@ -27,6 +27,7 @@ export default function RefereeCombobox({
   placeholder = "Buscar árbitro...",
   className = "",
   disabled,
+  info,
 }: {
   listId?: string;
   referees: { id: string; name: string }[];
@@ -39,13 +40,16 @@ export default function RefereeCombobox({
   // motivo a mostrar. No se ocultan de la lista para no confundir, pero
   // seleccionarlos solo muestra el motivo en vez de asignarlos.
   disabled?: Map<string, string>;
+  // Aviso puramente informativo (ej: ya tiene otro partido asignado otro
+  // día): se muestra en la lista y debajo del input, pero no impide elegirlo.
+  info?: Map<string, string>;
 }) {
   const selected = referees.find((r) => r.id === value);
   const [text, setText] = useState(selected?.name ?? "");
   const [warning, setWarning] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [rect, setRect] = useState<{ left: number; width: number; maxHeight: number; top?: number; bottom?: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +59,19 @@ export default function RefereeCombobox({
   useLayoutEffect(() => {
     if (!open || !inputRef.current) return;
     const r = inputRef.current.getBoundingClientRect();
-    setRect({ top: r.bottom + 4, left: r.left, width: Math.max(r.width, 180) });
+    const margin = 8;
+    const desiredHeight = 240;
+    const spaceBelow = window.innerHeight - r.bottom - margin;
+    const spaceAbove = r.top - margin;
+    const width = Math.max(r.width, 180);
+    // Si no entra abajo, se abre para arriba — así siempre queda un
+    // desplegable completo y navegable por scroll interno, en vez de
+    // cortado contra el borde de la pantalla.
+    if (spaceBelow >= 120 || spaceBelow >= spaceAbove) {
+      setRect({ top: r.bottom + 4, left: r.left, width, maxHeight: Math.max(120, Math.min(desiredHeight, spaceBelow)) });
+    } else {
+      setRect({ bottom: window.innerHeight - r.top + 4, left: r.left, width, maxHeight: Math.max(120, Math.min(desiredHeight, spaceAbove)) });
+    }
   }, [open, text]);
 
   useEffect(() => {
@@ -158,11 +174,19 @@ export default function RefereeCombobox({
         typeof document !== "undefined" &&
         createPortal(
           <div
-            style={{ position: "fixed", top: rect.top, left: rect.left, minWidth: rect.width, zIndex: 1000 }}
-            className="max-h-[240px] overflow-y-auto bg-surface border border-line rounded-lg shadow-lg py-1"
+            style={{
+              position: "fixed",
+              left: rect.left,
+              minWidth: rect.width,
+              maxHeight: rect.maxHeight,
+              zIndex: 1000,
+              ...(rect.top != null ? { top: rect.top } : { bottom: rect.bottom }),
+            }}
+            className="overflow-y-auto bg-surface border border-line rounded-lg shadow-lg py-1"
           >
             {filtered.map((r, i) => {
               const reason = disabled?.get(r.id);
+              const nota = !reason ? info?.get(r.id) : undefined;
               return (
                 <button
                   key={r.id}
@@ -171,13 +195,14 @@ export default function RefereeCombobox({
                     e.preventDefault();
                     select(r);
                   }}
-                  title={reason}
+                  title={reason ?? nota}
                   className={`block w-full text-left px-2.5 py-1.5 text-[12.5px] whitespace-nowrap hover:bg-surface-2 ${
                     i === highlight ? "bg-surface-2" : ""
                   } ${reason ? "text-text-faint" : "text-text"}`}
                 >
                   {r.name}
                   {reason && <span className="ml-1.5 text-amber-text">⚠</span>}
+                  {nota && <span className="ml-1.5 text-text-faint">ℹ</span>}
                 </button>
               );
             })}
@@ -185,6 +210,7 @@ export default function RefereeCombobox({
           document.body
         )}
       {warning && <div className="text-[10px] text-amber-text mt-0.5">{warning}</div>}
+      {!warning && value && info?.get(value) && <div className="text-[10px] text-text-faint mt-0.5">{info.get(value)}</div>}
     </div>
   );
 }

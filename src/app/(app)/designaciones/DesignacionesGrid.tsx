@@ -26,6 +26,11 @@ const ESTADO_STYLES: Record<DesignacionEstado, string> = {
 
 export const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
+function formatDiaMes(fecha: string): string {
+  const [, m, d] = fecha.split("-");
+  return `${d}/${m}`;
+}
+
 export default function DesignacionesGrid({
   designaciones,
   referees,
@@ -34,7 +39,7 @@ export default function DesignacionesGrid({
   onToggleSort,
   confirmaciones,
   pendingIds,
-  busyByTime,
+  assignmentsByReferee,
   disponibilidadPorArbitro,
 }: {
   designaciones: DesignacionFull[];
@@ -44,7 +49,7 @@ export default function DesignacionesGrid({
   onToggleSort: () => void;
   confirmaciones: Record<string, Confirmacion[]>;
   pendingIds: Set<string>;
-  busyByTime: Map<string, Map<string, string>>;
+  assignmentsByReferee: Map<string, { fecha: string; hora: string | null; designacionId: string }[]>;
   disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
 }) {
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -122,25 +127,41 @@ export default function DesignacionesGrid({
                   referees={referees}
                   onEdit={onEdit}
                   confirmados={confirmaciones[d.id] ?? []}
-                  disabled={(() => {
-                    const map = new Map<string, string>();
+                  {...(() => {
+                    const disabledMap = new Map<string, string>();
+                    const infoMap = new Map<string, string>();
                     // Disponibilidad: el árbitro marcó que no puede ese día, o
                     // (fin de semana) marcó otras categorías pero no esta.
                     if (d.fecha) {
                       for (const r of referees) {
                         const fila = (disponibilidadPorArbitro[r.id] ?? []).find((x) => x.fecha === d.fecha);
                         const motivo = disponibilidadBlockReason(fila ?? null, d.fecha, d.categoria);
-                        if (motivo) map.set(r.id, motivo);
+                        if (motivo) disabledMap.set(r.id, motivo);
                       }
                     }
-                    // Choque de horario: ya designado a esa hora en otro partido.
-                    if (d.fecha && d.hora) {
-                      const ocupados = busyByTime.get(`${d.fecha}|${d.hora}`)?.entries() ?? [];
-                      for (const [refereeId, otherId] of ocupados) {
-                        if (otherId !== d.id) map.set(refereeId, "Ya está designado a esa hora en otro partido.");
+                    if (d.fecha) {
+                      for (const [refereeId, rows] of assignmentsByReferee) {
+                        // Mismo día, otro partido: se bloquea (no puede estar en
+                        // dos partidos el mismo día). Otro día: solo se avisa,
+                        // a modo informativo, sin impedir la designación.
+                        const mismoDia = rows.filter((r) => r.fecha === d.fecha && r.designacionId !== d.id);
+                        if (mismoDia.length > 0) {
+                          const mismaHora = mismoDia.some((r) => r.hora && d.hora && r.hora === d.hora);
+                          disabledMap.set(
+                            refereeId,
+                            mismaHora ? "Ya está designado a esa hora en otro partido." : "Ya tiene otro partido asignado ese mismo día."
+                          );
+                          continue;
+                        }
+                        const otrosDias = rows.filter((r) => r.designacionId !== d.id);
+                        if (otrosDias.length === 1) {
+                          infoMap.set(refereeId, `Ya tiene un partido asignado el ${formatDiaMes(otrosDias[0].fecha)}.`);
+                        } else if (otrosDias.length > 1) {
+                          infoMap.set(refereeId, `Ya tiene ${otrosDias.length} partidos asignados en otras fechas.`);
+                        }
                       }
                     }
-                    return map;
+                    return { disabled: disabledMap, info: infoMap };
                   })()}
                 />
               </Fragment>
@@ -163,12 +184,14 @@ function DesignacionRow({
   onEdit,
   confirmados,
   disabled,
+  info,
 }: {
   d: DesignacionFull;
   referees: { id: string; name: string }[];
   onEdit: (d: DesignacionFull) => void;
   confirmados: Confirmacion[];
   disabled?: Map<string, string>;
+  info?: Map<string, string>;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -275,6 +298,7 @@ function DesignacionRow({
             onChange={(refereeId) => onArbitroChange(posicion as 1 | 2 | 3, refereeId)}
             className="min-w-[130px]"
             disabled={disabled}
+            info={info}
           />
           {arbitro(posicion) && (
             <div className="text-[10.5px] text-text-faint mt-0.5">
