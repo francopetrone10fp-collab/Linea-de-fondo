@@ -78,7 +78,12 @@ export default function RefereeCombobox({
   useEffect(() => {
     if (!open) return;
     function onDocMouseDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // Clickear/arrastrar la barra de scroll de la lista (que vive en el
+      // portal, fuera de wrapRef) no cuenta como "click afuera" — si no, se
+      // cerraba apenas se tocaba el scrollbar y nunca se llegaba a bajar.
+      if (wrapRef.current?.contains(target) || listRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onScroll(e: Event) {
       // El scroll dentro de la lista misma (el portal, fuera de wrapRef) no
