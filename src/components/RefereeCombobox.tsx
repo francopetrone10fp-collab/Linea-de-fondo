@@ -52,6 +52,7 @@ export default function RefereeCombobox({
   const [rect, setRect] = useState<{ left: number; width: number; maxHeight: number; top?: number; bottom?: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const q = normalize(text.trim());
   const filtered = q ? referees.filter((r) => normalize(r.name).includes(q)) : referees;
@@ -79,16 +80,23 @@ export default function RefereeCombobox({
     function onDocMouseDown(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     }
-    function onScroll() {
+    function onScroll(e: Event) {
+      // El scroll dentro de la lista misma (el portal, fuera de wrapRef) no
+      // debe cerrarla — si no, apenas se intenta bajar con la rueda del
+      // mouse o el dedo, el desplegable se cerraba antes de poder scrollear.
+      if (e.target instanceof Node && listRef.current?.contains(e.target)) return;
+      setOpen(false);
+    }
+    function onResize() {
       setOpen(false);
     }
     document.addEventListener("mousedown", onDocMouseDown);
     window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onDocMouseDown);
       window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
@@ -174,6 +182,7 @@ export default function RefereeCombobox({
         typeof document !== "undefined" &&
         createPortal(
           <div
+            ref={listRef}
             style={{
               position: "fixed",
               left: rect.left,
