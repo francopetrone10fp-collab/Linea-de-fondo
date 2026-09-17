@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { setDisponibilidadDia, clearDisponibilidadDia } from "./actions";
-import { weekDates, isWeekend, formatDayLabel, mondayOf } from "@/lib/weekUtils";
-import { CATEGORIAS_DISPONIBILIDAD, DIAS_SEMANA } from "@/lib/constants";
+import { weekDates, isWeekend, isSunday, formatDayLabel, mondayOf } from "@/lib/weekUtils";
+import { CATEGORIAS_DISPONIBILIDAD, CATEGORIAS_DISPONIBILIDAD_SABADO, DIAS_SEMANA } from "@/lib/constants";
 import type { DisponibilidadDia } from "./queries";
 
 export default function MiDisponibilidadView({ monday, miDisponibilidad }: { monday: string; miDisponibilidad: DisponibilidadDia[] }) {
@@ -105,7 +105,7 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {CATEGORIAS_DISPONIBILIDAD.map((cat) => {
+          {(isSunday(fecha) ? CATEGORIAS_DISPONIBILIDAD : CATEGORIAS_DISPONIBILIDAD_SABADO).map((cat) => {
             const checked = categorias.includes(cat);
             return (
               <label

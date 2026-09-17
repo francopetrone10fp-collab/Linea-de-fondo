@@ -26,6 +26,10 @@ export function isWeekend(dateStr: string): boolean {
   return day === 0 || day === 6;
 }
 
+export function isSunday(dateStr: string): boolean {
+  return new Date(dateStr + "T12:00:00").getDay() === 0;
+}
+
 export function formatDayLabel(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });

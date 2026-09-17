@@ -80,8 +80,13 @@ export const CATEGORIAS_DISPONIBILIDAD = [
   "JUVENIL (U17)",
   "LIGA PROXIMO (U21)",
   "TIRA ENTERA",
+  "PRIMERA DIVISIÓN",
   "FULL TIME",
 ];
+
+// PRIMERA DIVISIÓN solo se juega los domingos, así que es la única categoría
+// que no se ofrece como opción el sábado.
+export const CATEGORIAS_DISPONIBILIDAD_SABADO = CATEGORIAS_DISPONIBILIDAD.filter((c) => c !== "PRIMERA DIVISIÓN");
 
 // Mapea la categoría real de un partido (texto libre, ej. "SUB 15 - Cadete
 // C") al casillero de disponibilidad que le corresponde. Es una heurística
@@ -95,7 +100,7 @@ export function categoriaToDisponibilidadBucket(categoria: string): string | nul
   if (c.includes("SUB 15") || c.includes("CADETE")) return "CADETE (U15)";
   if (c.includes("SUB 17") || c.includes("JUVENIL")) return "JUVENIL (U17)";
   if (c.includes("SUB 21") || c.includes("LIGA PROXIMO") || c.includes("LIGA PRÓXIMO")) return "LIGA PROXIMO (U21)";
-  if (c.includes("PRIMERA")) return "TIRA ENTERA";
+  if (c.includes("PRIMERA")) return "PRIMERA DIVISIÓN";
   return null;
 }
 
