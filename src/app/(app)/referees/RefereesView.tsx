@@ -56,7 +56,8 @@ export default function RefereesView({
   function onDelete(id: string, refName: string) {
     if (!confirm(`¿Eliminar a "${refName}" del directorio? Sus clips ya cargados no se borran.`)) return;
     startTransition(async () => {
-      await deleteReferee(id);
+      const res = await deleteReferee(id);
+      if (!res.ok) alert(res.error);
     });
   }
 
@@ -91,7 +92,11 @@ export default function RefereesView({
     )
       return;
     startTransition(async () => {
-      await mergeReferees(mergeSource.id, mergeTarget);
+      const res = await mergeReferees(mergeSource.id, mergeTarget);
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
       setMergeSource(null);
       setMergeTarget("");
     });
