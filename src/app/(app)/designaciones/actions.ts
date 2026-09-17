@@ -282,27 +282,14 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
       if (bloqueo) return { ok: false as const, error: bloqueo };
     }
 
+    // Se guarda sin publicar: todavía no le aparece al árbitro en su perfil
+    // ni le llega la notificación — eso pasa recién cuando el coordinador
+    // hace click en "Confirmar" (confirmarArbitro más abajo). Así hay margen
+    // para corregir un error de tipeo antes de que el árbitro se entere.
     const { error } = await supabase
       .from("designacion_arbitros")
-      .upsert({ designacion_id: designacionId, posicion, referee_id: refereeId, monto: 0 });
+      .upsert({ designacion_id: designacionId, posicion, referee_id: refereeId, monto: 0, publicado: false });
     if (error) return { ok: false as const, error: "No se pudo asignar el árbitro" };
-
-    // Avisale al árbitro que lo nominaron (si tiene notificaciones activadas;
-    // si no tiene perfil vinculado o no las activó, esto no hace nada).
-    const { data: prof } = await supabase.from("profiles").select("id").eq("referee_id", refereeId).maybeSingle();
-    if (prof) {
-      const cuando = [
-        designacion.fecha ? new Date(designacion.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) : null,
-        designacion.hora?.slice(0, 5),
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      sendPushToProfiles([prof.id], {
-        title: "Te designaron a un partido",
-        body: `${designacion.equipo_local} vs ${designacion.equipo_visitante}${cuando ? ` · ${cuando}` : ""}`,
-        url: "/designaciones",
-      }).catch(() => {});
-    }
   } else {
     const { error } = await supabase
       .from("designacion_arbitros")
@@ -322,6 +309,52 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
   }
 
   await recalcularMontosArbitros(supabase, designacionId, designacion.competencia, designacion.categoria);
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
+// Publica una designación de árbitro que quedó sin confirmar (ver el
+// comentario en setDesignacionArbitro): recién ahí le aparece al árbitro en
+// "Mis designaciones" y le llega la notificación.
+export async function confirmarArbitro(designacionId: string, posicion: 1 | 2 | 3) {
+  const supabase = await createClient();
+
+  const { data: fila } = await supabase
+    .from("designacion_arbitros")
+    .select("referee_id, publicado")
+    .eq("designacion_id", designacionId)
+    .eq("posicion", posicion)
+    .maybeSingle();
+  if (!fila) return { ok: false as const, error: "No se encontró esa asignación" };
+  if (fila.publicado) return { ok: true as const };
+
+  const { error } = await supabase
+    .from("designacion_arbitros")
+    .update({ publicado: true })
+    .eq("designacion_id", designacionId)
+    .eq("posicion", posicion);
+  if (error) return { ok: false as const, error: "No se pudo confirmar" };
+
+  const { data: designacion } = await supabase
+    .from("designaciones")
+    .select("fecha, hora, equipo_local, equipo_visitante")
+    .eq("id", designacionId)
+    .single();
+  const { data: prof } = await supabase.from("profiles").select("id").eq("referee_id", fila.referee_id).maybeSingle();
+  if (designacion && prof) {
+    const cuando = [
+      designacion.fecha ? new Date(designacion.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) : null,
+      designacion.hora?.slice(0, 5),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    sendPushToProfiles([prof.id], {
+      title: "Te designaron a un partido",
+      body: `${designacion.equipo_local} vs ${designacion.equipo_visitante}${cuando ? ` · ${cuando}` : ""}`,
+      url: "/designaciones",
+    }).catch(() => {});
+  }
+
   revalidatePath("/designaciones");
   return { ok: true as const };
 }

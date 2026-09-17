@@ -33,7 +33,8 @@ export async function GET(request: Request) {
   const { data: arbitros } = await supabase
     .from("designacion_arbitros")
     .select("designacion_id, referee_id")
-    .in("designacion_id", designacionIds);
+    .in("designacion_id", designacionIds)
+    .eq("publicado", true);
 
   const designacionPorId = new Map((designaciones ?? []).map((d) => [d.id, d]));
   const designacionesPorReferee = new Map<string, { hora: string | null; categoria: string; equipo_local: string; equipo_visitante: string }[]>();

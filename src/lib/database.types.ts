@@ -434,8 +434,8 @@ export interface Database {
         Relationships: [];
       };
       designacion_arbitros: {
-        Row: { designacion_id: string; posicion: number; referee_id: string; monto: number };
-        Insert: { designacion_id: string; posicion: number; referee_id: string; monto?: number };
+        Row: { designacion_id: string; posicion: number; referee_id: string; monto: number; publicado: boolean };
+        Insert: { designacion_id: string; posicion: number; referee_id: string; monto?: number; publicado?: boolean };
         Update: Partial<Database["public"]["Tables"]["designacion_arbitros"]["Insert"]>;
         Relationships: [];
       };

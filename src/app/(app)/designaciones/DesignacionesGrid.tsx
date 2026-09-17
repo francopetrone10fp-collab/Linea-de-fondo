@@ -2,7 +2,14 @@
 
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import RefereeCombobox from "@/components/RefereeCombobox";
-import { deleteDesignacion, setDesignacionArbitro, setDesignacionCt, setDesignacionEstado, setDesignacionNotas } from "./actions";
+import {
+  confirmarArbitro,
+  deleteDesignacion,
+  setDesignacionArbitro,
+  setDesignacionCt,
+  setDesignacionEstado,
+  setDesignacionNotas,
+} from "./actions";
 import { disponibilidadBlockReason } from "@/lib/constants";
 import type { DesignacionEstado } from "@/lib/database.types";
 import type { Confirmacion, DesignacionFull } from "./queries";
@@ -208,6 +215,13 @@ function DesignacionRow({
     });
   }
 
+  function onConfirmarArbitro(posicion: 1 | 2 | 3) {
+    startTransition(async () => {
+      const res = await confirmarArbitro(d.id, posicion);
+      if (!res.ok) alert(res.error);
+    });
+  }
+
   function onEstadoChange(estado: DesignacionEstado) {
     startTransition(async () => {
       await setDesignacionEstado(d.id, estado);
@@ -235,7 +249,8 @@ function DesignacionRow({
     });
   }
 
-  const arbitro = (posicion: number) => d.arbitros.find((a) => a.posicion === posicion)?.refereeId ?? "";
+  const arbitroFull = (posicion: number) => d.arbitros.find((a) => a.posicion === posicion);
+  const arbitro = (posicion: number) => arbitroFull(posicion)?.refereeId ?? "";
 
   return (
     <tr className={`border-b border-line last:border-b-0 ${isPending ? "opacity-60" : ""}`}>
@@ -306,10 +321,18 @@ function DesignacionRow({
             disabled={disabled}
             info={info}
           />
-          {arbitro(posicion) && (
-            <div className="text-[10.5px] text-text-faint mt-0.5">
-              {money.format(d.arbitros.find((a) => a.posicion === posicion)?.monto ?? 0)}
-            </div>
+          {arbitroFull(posicion) && (
+            <div className="text-[10.5px] text-text-faint mt-0.5">{money.format(arbitroFull(posicion)!.monto)}</div>
+          )}
+          {arbitroFull(posicion) && !arbitroFull(posicion)!.publicado && (
+            <button
+              onClick={() => onConfirmarArbitro(posicion as 1 | 2 | 3)}
+              disabled={isPending}
+              title="Todavía no le aparece al árbitro ni le llegó la notificación"
+              className="mt-1 flex items-center gap-1 text-[10.5px] font-semibold text-amber-text bg-amber-bg disabled:opacity-50 rounded-full px-2 py-0.5"
+            >
+              Confirmar
+            </button>
           )}
         </td>
       ))}

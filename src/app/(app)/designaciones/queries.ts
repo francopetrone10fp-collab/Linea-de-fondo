@@ -21,6 +21,9 @@ export interface DesignacionArbitroFull {
   refereeId: string;
   refereeName: string;
   monto: number;
+  // Todavía no lo confirmó el coordinador: no le aparece al árbitro en su
+  // perfil ni le llegó la notificación (ver setDesignacionArbitro/confirmarArbitro).
+  publicado: boolean;
 }
 
 export interface DesignacionFull {
@@ -113,6 +116,7 @@ export async function fetchDesignaciones(supabase: DB, range: { desde: string; h
       refereeId: a.referee_id,
       refereeName: refereeNameById.get(a.referee_id) ?? "—",
       monto: a.monto,
+      publicado: a.publicado,
     });
     arbByDesignacion.set(a.designacion_id, list);
   });
