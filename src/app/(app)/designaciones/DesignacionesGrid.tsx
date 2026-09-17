@@ -141,23 +141,29 @@ export default function DesignacionesGrid({
                     }
                     if (d.fecha) {
                       for (const [refereeId, rows] of assignmentsByReferee) {
-                        // Mismo día, otro partido: se bloquea (no puede estar en
-                        // dos partidos el mismo día). Otro día: solo se avisa,
-                        // a modo informativo, sin impedir la designación.
-                        const mismoDia = rows.filter((r) => r.fecha === d.fecha && r.designacionId !== d.id);
-                        if (mismoDia.length > 0) {
-                          const mismaHora = mismoDia.some((r) => r.hora && d.hora && r.hora === d.hora);
-                          disabledMap.set(
-                            refereeId,
-                            mismaHora ? "Ya está designado a esa hora en otro partido." : "Ya tiene otro partido asignado ese mismo día."
-                          );
+                        const otros = rows.filter((r) => r.designacionId !== d.id);
+                        if (otros.length === 0) continue;
+                        // Solo se bloquea el choque exacto de día Y horario — en
+                        // un mismo día se puede dirigir varios partidos seguidos
+                        // (ej: categorías de inferiores). El resto queda como
+                        // aviso informativo, sin impedir la designación.
+                        const mismaHora = d.hora && otros.some((r) => r.fecha === d.fecha && r.hora === d.hora);
+                        if (mismaHora) {
+                          disabledMap.set(refereeId, "Ya está designado a esa hora en otro partido.");
                           continue;
                         }
-                        const otrosDias = rows.filter((r) => r.designacionId !== d.id);
-                        if (otrosDias.length === 1) {
-                          infoMap.set(refereeId, `Ya tiene un partido asignado el ${formatDiaMes(otrosDias[0].fecha)}.`);
-                        } else if (otrosDias.length > 1) {
-                          infoMap.set(refereeId, `Ya tiene ${otrosDias.length} partidos asignados en otras fechas.`);
+                        const mismoDiaOtraHora = otros.filter((r) => r.fecha === d.fecha);
+                        if (mismoDiaOtraHora.length > 0) {
+                          infoMap.set(
+                            refereeId,
+                            mismoDiaOtraHora.length === 1
+                              ? "Ya tiene otro partido asignado ese mismo día."
+                              : `Ya tiene otros ${mismoDiaOtraHora.length} partidos asignados ese mismo día.`
+                          );
+                        } else if (otros.length === 1) {
+                          infoMap.set(refereeId, `Ya tiene un partido asignado el ${formatDiaMes(otros[0].fecha)}.`);
+                        } else {
+                          infoMap.set(refereeId, `Ya tiene ${otros.length} partidos asignados en otras fechas.`);
                         }
                       }
                     }
