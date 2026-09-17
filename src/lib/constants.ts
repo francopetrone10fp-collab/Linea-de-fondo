@@ -107,9 +107,9 @@ export function categoriaToDisponibilidadBucket(categoria: string): string | nul
 // Motivo de bloqueo (o null si puede designarse) al querer poner a este
 // árbitro en un partido de esa fecha y categoría, según lo que cargó en
 // Disponibilidad. Entre semana solo importa el sí/no; el fin de semana
-// también importa la categoría marcada (salvo que haya puesto FULL TIME,
-// que cubre cualquier categoría). Si no cargó nada para esa fecha, no se
-// bloquea — "sin responder" no es lo mismo que "no disponible".
+// también importa la categoría marcada (salvo que haya puesto FULL TIME o
+// TIRA ENTERA, que cubren cualquier categoría). Si no cargó nada para esa
+// fecha, no se bloquea — "sin responder" no es lo mismo que "no disponible".
 export function disponibilidadBlockReason(
   disponibilidad: { disponible: boolean; categorias: string[] } | null | undefined,
   fecha: string,
@@ -124,7 +124,7 @@ export function disponibilidadBlockReason(
   if (!disponibilidad.disponible || disponibilidad.categorias.length === 0) {
     return "Marcó que no está disponible ese día.";
   }
-  if (disponibilidad.categorias.includes("FULL TIME")) return null;
+  if (disponibilidad.categorias.includes("FULL TIME") || disponibilidad.categorias.includes("TIRA ENTERA")) return null;
 
   const bucket = categoriaToDisponibilidadBucket(categoria);
   if (!bucket || disponibilidad.categorias.includes(bucket)) return null;
