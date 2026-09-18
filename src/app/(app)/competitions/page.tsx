@@ -7,7 +7,7 @@ export default async function CompetitionsPage() {
   const supabase = await createClient();
 
   const [{ data: competitions }, { data: partidos }] = await Promise.all([
-    supabase.from("competitions").select("id, name, color").order("name"),
+    supabase.from("competitions").select("id, name, color, photo_url").order("name"),
     supabase.from("partidos").select("competition_id"),
   ]);
 

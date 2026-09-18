@@ -32,6 +32,14 @@ export async function createCompetition(name: string) {
   return { ok: true as const, competition: data };
 }
 
+export async function updateCompetitionPhotoUrl(id: string, url: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("competitions").update({ photo_url: url }).eq("id", id);
+  if (error) return { ok: false as const, error: "No se pudo actualizar el logo" };
+  revalidatePath("/competitions", "layout");
+  return { ok: true as const };
+}
+
 export async function deleteCompetition(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("competitions").delete().eq("id", id);

@@ -1,16 +1,19 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import SectionIcon from "@/components/SectionIcon";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
-import { createCompetition, deleteCompetition } from "./actions";
+import { resizeImageToBlob } from "@/components/Sidebar";
+import { createClient } from "@/lib/supabase/client";
+import { createCompetition, deleteCompetition, updateCompetitionPhotoUrl } from "./actions";
 
 interface Competition {
   id: string;
   name: string;
   color: string;
+  photo_url: string | null;
 }
 
 export default function CompetitionsView({
@@ -30,6 +33,28 @@ export default function CompetitionsView({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  function onPhotoChange(id: string, file: File | undefined) {
+    if (!file) return;
+    startTransition(async () => {
+      try {
+        const blob = await resizeImageToBlob(file, 240);
+        const supabase = createClient();
+        const path = `competitions/${id}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+        if (uploadError) return;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("avatars").getPublicUrl(path);
+        await updateCompetitionPhotoUrl(id, `${publicUrl}?v=${Date.now()}`);
+      } catch {
+        // ignoramos archivos inválidos
+      }
+    });
+  }
 
   const filteredCompetitions = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -113,7 +138,26 @@ export default function CompetitionsView({
             return (
               <div key={c.id} className="relative bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5 hover:border-text-faint">
                 <Link href={`/competitions/${c.id}`} aria-label={`Ver partidos de ${c.name}`} className="absolute inset-0 rounded-[11px]" />
-                <ColorBadge name={c.name} color={c.color} size={34} />
+                <button
+                  type="button"
+                  disabled={!canCreateCompetitions}
+                  onClick={() => fileRefs.current[c.id]?.click()}
+                  title={canCreateCompetitions ? "Cambiar logo" : undefined}
+                  className={`relative z-10 flex-none ${canCreateCompetitions ? "cursor-pointer" : "cursor-default"}`}
+                >
+                  <ColorBadge name={c.name} color={c.color} photoUrl={c.photo_url} size={34} />
+                </button>
+                {canCreateCompetitions && (
+                  <input
+                    ref={(el) => {
+                      fileRefs.current[c.id] = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => onPhotoChange(c.id, e.target.files?.[0])}
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {c.name}
