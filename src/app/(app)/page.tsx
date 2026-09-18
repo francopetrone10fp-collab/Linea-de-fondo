@@ -1,11 +1,36 @@
 import Link from "next/link";
 import { requireProfile, getNavBadges } from "@/lib/session";
-import { NAV_ITEMS, ROLE_LABELS } from "@/lib/constants";
+import { NAV_ITEMS, initials } from "@/lib/constants";
+import { RolePill } from "@/components/Sidebar";
 
 // Pantalla de inicio: antes había que abrir el menú (el hamburger de
 // "☰ Menú" en mobile) para ver a qué secciones tenés acceso. Ahora el menú
 // ES la pantalla de inicio — los mismos accesos del Sidebar, filtrados por
-// rol, como tarjetas grandes y tocables.
+// rol, como tarjetas grandes y tocables, cada una con su propio color para
+// ubicarse rápido.
+type TileColor = "blue" | "violet" | "good" | "relevant" | "amber" | "bad";
+
+const TILE_COLOR: Partial<Record<(typeof NAV_ITEMS)[number]["view"], TileColor>> = {
+  stats: "blue",
+  teams: "relevant",
+  referees: "violet",
+  reportes: "good",
+  designaciones: "blue",
+  disponibilidad: "amber",
+  requests: "bad",
+  material: "violet",
+  clases: "relevant",
+};
+
+const TILE_STYLES: Record<TileColor, { bar: string; bg: string; iconBg: string; text: string; border: string }> = {
+  blue: { bar: "bg-blue", bg: "bg-blue-bg", iconBg: "bg-blue/15", text: "text-blue-text", border: "border-blue/20" },
+  violet: { bar: "bg-violet", bg: "bg-violet-bg", iconBg: "bg-violet/15", text: "text-violet-text", border: "border-violet/20" },
+  good: { bar: "bg-good", bg: "bg-good-bg", iconBg: "bg-good/15", text: "text-good-text", border: "border-good/20" },
+  relevant: { bar: "bg-relevant", bg: "bg-relevant-bg", iconBg: "bg-relevant/15", text: "text-relevant-text", border: "border-relevant/20" },
+  amber: { bar: "bg-amber", bg: "bg-amber-bg", iconBg: "bg-amber/15", text: "text-amber-text", border: "border-amber/20" },
+  bad: { bar: "bg-bad", bg: "bg-bad-bg", iconBg: "bg-bad/15", text: "text-bad-text", border: "border-bad/20" },
+};
+
 export default async function InicioPage() {
   const profile = await requireProfile();
   const { pendingCount, disponibilidadPendiente } = await getNavBadges(profile);
@@ -13,25 +38,58 @@ export default async function InicioPage() {
 
   return (
     <div>
-      <div className="mb-5">
-        <h1 className="font-display text-2xl font-semibold mb-1.5">Hola, {profile.name.split(" ")[0]}</h1>
-        <p className="text-text-dim text-[13px] m-0">Accesos disponibles para tu perfil ({ROLE_LABELS[profile.role]}).</p>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="w-12 h-12 rounded-full bg-accent text-accent-ink flex items-center justify-center font-semibold text-[15px] font-display flex-none overflow-hidden">
+          {profile.photo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={profile.photo_url} alt={profile.name} className="w-full h-full object-cover rounded-full" />
+          ) : (
+            initials(profile.name)
+          )}
+        </span>
+        <div>
+          <h1 className="font-display text-2xl font-semibold leading-tight">Hola, {profile.name.split(" ")[0]}</h1>
+          <RolePill role={profile.role} />
+        </div>
       </div>
 
-      <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
+      <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
         {items.map((item) => {
+          if (item.view === "competitions") {
+            return (
+              <Link
+                key={item.view}
+                href={item.href}
+                className="relative bg-accent hover:bg-accent-dim rounded-2xl p-4 flex flex-col items-start justify-between gap-3 min-h-[120px]"
+              >
+                <span className="w-10 h-10 rounded-xl bg-accent-ink/15 text-accent-ink flex items-center justify-center flex-none">
+                  <NavIcon view={item.view} />
+                </span>
+                <span className="font-display font-bold uppercase tracking-wide text-[14.5px] leading-snug text-accent-ink">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          }
+
+          const color = TILE_COLOR[item.view] ?? "blue";
+          const style = TILE_STYLES[color];
           const badgeCount = item.view === "requests" && pendingCount > 0 ? pendingCount : null;
           const badgeDot = item.view === "disponibilidad" && disponibilidadPendiente;
+
           return (
             <Link
               key={item.view}
               href={item.href}
-              className="relative bg-surface border border-line hover:border-text-faint rounded-2xl p-4 flex flex-col items-start gap-3 min-h-[110px]"
+              className={`relative overflow-hidden ${style.bg} border ${style.border} hover:brightness-110 rounded-2xl p-4 flex flex-col items-start justify-between gap-3 min-h-[120px]`}
             >
-              <span className="w-10 h-10 rounded-xl bg-surface-2 text-accent flex items-center justify-center flex-none">
+              <span className={`absolute top-0 left-0 right-0 h-[3px] ${style.bar}`} />
+              <span className={`w-10 h-10 rounded-xl ${style.iconBg} ${style.text} flex items-center justify-center flex-none`}>
                 <NavIcon view={item.view} />
               </span>
-              <span className="text-[13.5px] font-semibold leading-tight">{item.label}</span>
+              <span className={`font-display font-bold uppercase tracking-wide text-[14.5px] leading-snug ${style.text}`}>
+                {item.label}
+              </span>
               {badgeCount != null && (
                 <span className="absolute top-3 right-3 bg-accent text-accent-ink text-[10px] font-bold rounded-[10px] px-1.5">
                   {badgeCount}

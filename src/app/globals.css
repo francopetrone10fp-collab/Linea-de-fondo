@@ -30,6 +30,12 @@
   --relevant: #16a184;
   --relevant-bg: #0f2e28;
   --relevant-text: #7fe0c9;
+  --blue: #4e8fd6;
+  --blue-bg: #16283d;
+  --blue-text: #bfdbff;
+  --violet: #9b7fe0;
+  --violet-bg: #241c33;
+  --violet-text: #d0c0f2;
   --radius: 10px;
 }
 
@@ -58,6 +64,12 @@
   --color-relevant: var(--relevant);
   --color-relevant-bg: var(--relevant-bg);
   --color-relevant-text: var(--relevant-text);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-blue-text: var(--blue-text);
+  --color-violet: var(--violet);
+  --color-violet-bg: var(--violet-bg);
+  --color-violet-text: var(--violet-text);
   --font-display: var(--font-barlow-condensed), sans-serif;
   --font-body: var(--font-barlow), sans-serif;
   --font-mono: var(--font-plex-mono), monospace;

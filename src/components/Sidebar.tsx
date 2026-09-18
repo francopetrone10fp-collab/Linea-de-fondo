@@ -131,7 +131,7 @@ export default function Sidebar({
   );
 }
 
-function RolePill({ role }: { role: SessionProfile["role"] }) {
+export function RolePill({ role }: { role: SessionProfile["role"] }) {
   if (role === "arbitro") {
     return (
       <span className="inline-block text-[9.5px] font-bold uppercase tracking-wide px-1.5 rounded-full bg-surface-3 text-text-dim">
