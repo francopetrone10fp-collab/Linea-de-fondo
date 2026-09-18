@@ -19,6 +19,22 @@ export const ROLE_LABELS: Record<Role, string> = {
   arbitro: "Árbitro",
 };
 
+// Accesos del menú, compartidos entre el Sidebar y la pantalla de inicio
+// (ambos filtran por rol de la misma lista, para que no se puedan desincronizar).
+export const NAV_ITEMS = [
+  { view: "inicio", href: "/", label: "Inicio", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "competitions", href: "/competitions", label: "Competencias", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "stats", href: "/stats", label: "Estadísticas", roles: ["coordinador", "instructor"] },
+  { view: "teams", href: "/teams", label: "Equipos", roles: ["coordinador", "instructor"] },
+  { view: "referees", href: "/referees", label: "Árbitros", roles: ["coordinador", "instructor"] },
+  { view: "reportes", href: "/reportes", label: "Reportes", roles: ["coordinador", "instructor"] },
+  { view: "designaciones", href: "/designaciones", label: "Designaciones", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "disponibilidad", href: "/disponibilidad", label: "Disponibilidad", roles: ["coordinador", "arbitro"] },
+  { view: "requests", href: "/requests", label: "Solicitudes", roles: ["coordinador"] },
+  { view: "material", href: "/material", label: "Material didáctico", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "clases", href: "/clases", label: "Clases", roles: ["coordinador", "instructor", "arbitro"] },
+] as const;
+
 export const EVAL_LEVELS: { key: Evaluation; label: string }[] = [
   { key: "mala", label: "No recomendable" },
   { key: "estandar", label: "Estándar" },

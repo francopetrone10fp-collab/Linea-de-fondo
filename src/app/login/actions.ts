@@ -102,7 +102,7 @@ export async function signUp(input: { name: string; role: Role; password: string
   if (signInError) {
     return { ok: false as const, error: "Perfil creado, pero no se pudo iniciar sesión. Probá ingresar de nuevo." };
   }
-  redirect("/competitions");
+  redirect("/");
 }
 
 export async function signIn(input: { name: string; password: string }) {
@@ -136,7 +136,7 @@ export async function signIn(input: { name: string; password: string }) {
     };
   }
 
-  redirect("/competitions");
+  redirect("/");
 }
 
 export async function logout() {

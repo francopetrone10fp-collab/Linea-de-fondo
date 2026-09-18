@@ -7,21 +7,8 @@ import { logout } from "@/app/login/actions";
 import { updateMyPhotoUrl } from "@/app/(app)/profile-actions";
 import { createClient } from "@/lib/supabase/client";
 import NotificationToggle from "@/components/NotificationToggle";
-import { ROLE_LABELS, initials } from "@/lib/constants";
+import { ROLE_LABELS, NAV_ITEMS, initials } from "@/lib/constants";
 import type { SessionProfile } from "@/lib/session";
-
-const NAV_ITEMS = [
-  { view: "competitions", href: "/competitions", label: "Competencias", roles: ["coordinador", "instructor", "arbitro"] },
-  { view: "stats", href: "/stats", label: "Estadísticas", roles: ["coordinador", "instructor"] },
-  { view: "teams", href: "/teams", label: "Equipos", roles: ["coordinador", "instructor"] },
-  { view: "referees", href: "/referees", label: "Árbitros", roles: ["coordinador", "instructor"] },
-  { view: "reportes", href: "/reportes", label: "Reportes", roles: ["coordinador", "instructor"] },
-  { view: "designaciones", href: "/designaciones", label: "Designaciones", roles: ["coordinador", "instructor", "arbitro"] },
-  { view: "disponibilidad", href: "/disponibilidad", label: "Disponibilidad", roles: ["coordinador", "arbitro"] },
-  { view: "requests", href: "/requests", label: "Solicitudes", roles: ["coordinador"] },
-  { view: "material", href: "/material", label: "Material didáctico", roles: ["coordinador", "instructor", "arbitro"] },
-  { view: "clases", href: "/clases", label: "Clases", roles: ["coordinador", "instructor", "arbitro"] },
-] as const;
 
 export default function Sidebar({
   profile,
@@ -109,7 +96,7 @@ export default function Sidebar({
 
       <nav className="flex flex-col gap-1">
         {NAV_ITEMS.filter((item) => (item.roles as readonly string[]).includes(profile.role)).map((item) => {
-          const active = pathname.startsWith(item.href);
+          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link
               key={item.view}
