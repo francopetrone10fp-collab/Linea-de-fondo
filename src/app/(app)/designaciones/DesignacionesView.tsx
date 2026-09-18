@@ -118,15 +118,37 @@ export default function DesignacionesView({
           .some((v) => v.toLowerCase().includes(q))
       );
     }
-    const sorted = [...list].sort((a, b) => {
-      const pendA = estaPendiente(a) ? 0 : 1;
-      const pendB = estaPendiente(b) ? 0 : 1;
-      if (pendA !== pendB) return pendA - pendB;
-      const av = `${a.fecha ?? ""} ${a.hora ?? ""}`;
-      const bv = `${b.fecha ?? ""} ${b.hora ?? ""}`;
-      return sortOrder === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-    });
-    return sorted;
+    // Agrupa en "tiras" los partidos del mismo día entre el mismo local y
+    // visitante (categorías distintas jugadas seguidas en la misma cancha) y
+    // los deja siempre juntos y en orden cronológico dentro del grupo — así
+    // en la grilla y en el PDF exportado, los árbitros ven quién juega justo
+    // antes o después para coordinar un reemplazo.
+    function agruparEnTiras(items: DesignacionFull[]) {
+      const porBloque = new Map<string, DesignacionFull[]>();
+      const clavesEnOrden: string[] = [];
+      for (const d of items) {
+        const clave = `${d.fecha ?? ""}|${d.equipoLocal}|${d.equipoVisitante}`;
+        if (!porBloque.has(clave)) {
+          porBloque.set(clave, []);
+          clavesEnOrden.push(clave);
+        }
+        porBloque.get(clave)!.push(d);
+      }
+      const bloques = clavesEnOrden.map((clave) => {
+        const rows = [...porBloque.get(clave)!].sort((a, b) => (a.hora ?? "99:99").localeCompare(b.hora ?? "99:99"));
+        return { fecha: rows[0]?.fecha ?? "", horaMin: rows[0]?.hora ?? "99:99", rows };
+      });
+      bloques.sort((a, b) => {
+        const av = `${a.fecha} ${a.horaMin}`;
+        const bv = `${b.fecha} ${b.horaMin}`;
+        return sortOrder === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      return bloques.flatMap((b) => b.rows);
+    }
+
+    const pendientes = list.filter(estaPendiente);
+    const resto = list.filter((d) => !estaPendiente(d));
+    return [...agruparEnTiras(pendientes), ...agruparEnTiras(resto)];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designaciones, q, sortOrder, confirmaciones, selectedDay]);
 
