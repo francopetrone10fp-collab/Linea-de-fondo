@@ -5,6 +5,7 @@ import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { MATERIAL_TYPES, materialTypeInfo, truncateText } from "@/lib/constants";
 import { createMaterial, deleteMaterial, updateMaterial } from "./actions";
 import VideoModal from "@/components/VideoModal";
+import SectionIcon from "@/components/SectionIcon";
 import type { MaterialType } from "@/lib/database.types";
 
 interface Material {
@@ -78,7 +79,10 @@ export default function MaterialView({ materials, canManage }: { materials: Mate
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Material didáctico</h1>
+        <div className="flex items-center gap-2.5">
+          <SectionIcon view="material" />
+          <h1 className="font-display text-2xl font-semibold">Material didáctico</h1>
+        </div>
         {canManage && (
           <button
             onClick={openCreate}

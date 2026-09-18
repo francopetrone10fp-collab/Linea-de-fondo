@@ -6,6 +6,7 @@ import { BarsChart } from "@/components/charts/BarsChart";
 import { EVAL_LEVELS, EVAL_COLORS, WHISTLE_TYPES } from "@/lib/constants";
 import { StatCard } from "@/components/StatCard";
 import RotateHint from "@/components/RotateHint";
+import SectionIcon from "@/components/SectionIcon";
 import type { Evaluation } from "@/lib/database.types";
 
 export default async function StatsPage() {
@@ -24,7 +25,10 @@ export default async function StatsPage() {
   if (scoped.length === 0) {
     return (
       <div>
-        <h1 className="font-display text-2xl font-semibold mb-5">{title}</h1>
+        <div className="flex items-center gap-2.5 mb-5">
+          <SectionIcon view="stats" />
+          <h1 className="font-display text-2xl font-semibold">{title}</h1>
+        </div>
         <Empty
           title="Todavía no hay datos"
           desc={
@@ -121,7 +125,10 @@ export default async function StatsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold mb-5">{title}</h1>
+      <div className="flex items-center gap-2.5 mb-5">
+        <SectionIcon view="stats" />
+        <h1 className="font-display text-2xl font-semibold">{title}</h1>
+      </div>
       <RotateHint />
 
       <div className="grid gap-3.5 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>

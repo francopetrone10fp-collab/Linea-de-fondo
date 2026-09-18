@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import MiDisponibilidadView from "./MiDisponibilidadView";
 import DisponibilidadMatrix from "./DisponibilidadMatrix";
+import SectionIcon from "@/components/SectionIcon";
 import { addDays, formatWeekRange } from "@/lib/weekUtils";
 import type { DisponibilidadDia } from "./queries";
 
@@ -31,7 +32,10 @@ export default function DisponibilidadView({
     <div>
       <div className="flex justify-between items-start gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold mb-1.5">Disponibilidad</h1>
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <SectionIcon view="disponibilidad" />
+            <h1 className="font-display text-2xl font-semibold">Disponibilidad</h1>
+          </div>
           <p className="text-text-dim text-[13px] m-0">
             {canManage
               ? "Quién está disponible esta semana y para qué categoría el fin de semana."

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
+import SectionIcon from "@/components/SectionIcon";
 import { createClassYear, deleteClassYear } from "./actions";
 
 interface Year {
@@ -48,7 +49,10 @@ export default function YearsView({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Clases</h1>
+        <div className="flex items-center gap-2.5">
+          <SectionIcon view="clases" />
+          <h1 className="font-display text-2xl font-semibold">Clases</h1>
+        </div>
         {canManage && (
           <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
             <input

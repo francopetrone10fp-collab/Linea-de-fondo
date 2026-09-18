@@ -6,6 +6,7 @@ import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
 import { StatCard } from "@/components/StatCard";
 import RotateHint from "@/components/RotateHint";
+import SectionIcon from "@/components/SectionIcon";
 import { SITUATIONS, WHISTLE_TYPES, EVAL_LEVELS, evalLabel, whistleTypeInfo } from "@/lib/constants";
 import { EMPTY_FILTERS, applyReportFilters, filtersToSearchParams, type ReportFilters } from "./filters";
 import { buildAggregateStats } from "./aggregate";
@@ -97,7 +98,10 @@ export default function ReportsView({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Reportes</h1>
+        <div className="flex items-center gap-2.5">
+          <SectionIcon view="reportes" />
+          <h1 className="font-display text-2xl font-semibold">Reportes</h1>
+        </div>
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={downloadCsv}

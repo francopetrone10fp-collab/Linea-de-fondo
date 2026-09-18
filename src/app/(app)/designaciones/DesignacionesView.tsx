@@ -8,6 +8,7 @@ import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
+import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
@@ -257,7 +258,10 @@ export default function DesignacionesView({
     <div>
       <div className="flex justify-between items-start gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold mb-1.5">Designaciones</h1>
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <SectionIcon view="designaciones" />
+            <h1 className="font-display text-2xl font-semibold">Designaciones</h1>
+          </div>
           <p className="text-text-dim text-[13px] m-0">Partidos designados a árbitros y lo que cobra cada uno.</p>
         </div>
         {canManage && tab === "grilla" && (

@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
+import SectionIcon from "@/components/SectionIcon";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { createReferee, deleteReferee, mergeReferees, updateRefereePhotoUrl } from "./actions";
 import { createClient } from "@/lib/supabase/client";
@@ -105,7 +106,10 @@ export default function RefereesView({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Árbitros ({referees.length})</h1>
+        <div className="flex items-center gap-2.5">
+          <SectionIcon view="referees" />
+          <h1 className="font-display text-2xl font-semibold">Árbitros ({referees.length})</h1>
+        </div>
         <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
           <input
             type="text"

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
+import SectionIcon from "@/components/SectionIcon";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { createCompetition, deleteCompetition } from "./actions";
 
@@ -57,7 +58,10 @@ export default function CompetitionsView({
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
-        <h1 className="font-display text-2xl font-semibold">Competencias ({competitions.length})</h1>
+        <div className="flex items-center gap-2.5">
+          <SectionIcon view="competitions" />
+          <h1 className="font-display text-2xl font-semibold">Competencias ({competitions.length})</h1>
+        </div>
         {canCreateCompetitions && (
           <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">
             <input

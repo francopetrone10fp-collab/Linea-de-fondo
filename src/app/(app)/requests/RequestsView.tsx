@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Empty } from "@/app/(app)/teams/TeamsView";
+import SectionIcon from "@/components/SectionIcon";
 import { ROLE_LABELS } from "@/lib/constants";
 import { approveRequest, rejectRequest } from "./actions";
 import type { Role } from "@/lib/database.types";
@@ -19,7 +20,10 @@ export default function RequestsView({ pending }: { pending: PendingUser[] }) {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold mb-5">Solicitudes de acceso</h1>
+      <div className="flex items-center gap-2.5 mb-5">
+        <SectionIcon view="requests" />
+        <h1 className="font-display text-2xl font-semibold">Solicitudes de acceso</h1>
+      </div>
       <div className="bg-surface-2 border border-line rounded-[9px] px-3.5 py-2.5 text-[12.5px] text-text-dim mb-5">
         Estos perfiles se crearon pidiendo un rol que no reconocimos automáticamente. Elegí el rol
         correcto y aprobalos, o rechazalos si no corresponde.
