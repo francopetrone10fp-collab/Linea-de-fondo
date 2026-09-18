@@ -72,6 +72,7 @@ export interface Database {
           name: string;
           color: string;
           starter: boolean;
+          photo_url: string | null;
           created_by: string | null;
           created_at: string;
         };
@@ -80,6 +81,7 @@ export interface Database {
           name: string;
           color: string;
           starter?: boolean;
+          photo_url?: string | null;
           created_by?: string | null;
           created_at?: string;
         };

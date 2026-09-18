@@ -7,7 +7,7 @@ export default async function TeamsPage() {
   const supabase = await createClient();
 
   const [{ data: teams }, { data: local }, { data: visit }] = await Promise.all([
-    supabase.from("teams").select("id, name, color").order("name"),
+    supabase.from("teams").select("id, name, color, photo_url").order("name"),
     supabase.from("partidos").select("team_local_id"),
     supabase.from("partidos").select("team_visit_id"),
   ]);

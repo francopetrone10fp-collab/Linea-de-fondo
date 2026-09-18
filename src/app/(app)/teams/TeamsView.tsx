@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import SectionIcon from "@/components/SectionIcon";
-import { createTeam, deleteTeam } from "./actions";
+import { resizeImageToBlob } from "@/components/Sidebar";
+import { createClient } from "@/lib/supabase/client";
+import { createTeam, deleteTeam, updateTeamPhotoUrl } from "./actions";
 
 interface Team {
   id: string;
   name: string;
   color: string;
+  photo_url: string | null;
 }
 
 export default function TeamsView({
@@ -27,6 +30,28 @@ export default function TeamsView({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  function onPhotoChange(id: string, file: File | undefined) {
+    if (!file) return;
+    startTransition(async () => {
+      try {
+        const blob = await resizeImageToBlob(file, 240);
+        const supabase = createClient();
+        const path = `teams/${id}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+        if (uploadError) return;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("avatars").getPublicUrl(path);
+        await updateTeamPhotoUrl(id, `${publicUrl}?v=${Date.now()}`);
+      } catch {
+        // ignoramos archivos inválidos
+      }
+    });
+  }
 
   const filteredTeams = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -110,7 +135,26 @@ export default function TeamsView({
                     className="absolute inset-0 rounded-[11px] hover:border-text-faint"
                   />
                 )}
-                <ColorBadge name={t.name} color={t.color} size={34} />
+                <button
+                  type="button"
+                  disabled={!canManage}
+                  onClick={() => fileRefs.current[t.id]?.click()}
+                  title={canManage ? "Cambiar logo" : undefined}
+                  className={`relative z-10 flex-none ${canManage ? "cursor-pointer" : "cursor-default"}`}
+                >
+                  <ColorBadge name={t.name} color={t.color} photoUrl={t.photo_url} size={34} />
+                </button>
+                {canManage && (
+                  <input
+                    ref={(el) => {
+                      fileRefs.current[t.id] = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => onPhotoChange(t.id, e.target.files?.[0])}
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {t.name}

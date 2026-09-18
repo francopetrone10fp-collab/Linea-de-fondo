@@ -18,7 +18,7 @@ export default async function TeamProfilePage({ params }: { params: Promise<{ id
 
   const supabase = await createClient();
   const [{ data: team }, allPartidos, clipsMinimal] = await Promise.all([
-    supabase.from("teams").select("id, name, color").eq("id", id).single(),
+    supabase.from("teams").select("id, name, color, photo_url").eq("id", id).single(),
     fetchPartidosFull(supabase),
     fetchAllClipsMinimal(supabase),
   ]);
@@ -50,7 +50,7 @@ export default async function TeamProfilePage({ params }: { params: Promise<{ id
       </Link>
 
       <div className="flex items-center gap-3.5 mb-6">
-        <ColorBadge name={team.name} color={team.color} size={56} />
+        <ColorBadge name={team.name} color={team.color} photoUrl={team.photo_url} size={56} />
         <h1 className="font-display text-2xl font-semibold">{team.name}</h1>
       </div>
 

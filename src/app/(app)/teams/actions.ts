@@ -26,6 +26,15 @@ export async function createTeam(name: string) {
   return { ok: true as const };
 }
 
+export async function updateTeamPhotoUrl(id: string, url: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("teams").update({ photo_url: url }).eq("id", id);
+  if (error) return { ok: false as const, error: "No se pudo actualizar el logo" };
+  revalidatePath("/teams");
+  revalidatePath("/competitions", "layout");
+  return { ok: true as const };
+}
+
 export async function deleteTeam(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("teams").delete().eq("id", id);
