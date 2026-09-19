@@ -243,6 +243,29 @@ const TEAM_NAME_ALIASES: Record<string, string> = {
   "talleres-as": "Talleres A.S",
   "union-a-seco": "Unión de Arroyo Seco",
   "union-a-s": "Unión de Arroyo Seco",
+  // "Gimnasia" / "Gimnasia y Esg(r).": Gimnasia y Esgrima (Rosario) = G.E.R.
+  gimnasia: "G.E.R.",
+  "gimnasia-y-esg": "G.E.R.",
+  "gimnasia-y-esg-b": 'G.E.R. "B"',
+  "gimnasia-y-esgr": "G.E.R.",
+  "gimnasia-y-esgr-b": 'G.E.R. "B"',
+  "newell-s": "NOB",
+  "c-a-o-v-a": "Olegario V. Andrade",
+  caova: "Olegario V. Andrade",
+  paganini: "Paganini Alumni",
+  // Alumni, sin más aclaración, siempre es el de Casilda en esta liga —
+  // el directorio solo tiene cargado el equipo "B" de ese club.
+  "alumni-de-casilda": 'Alumni "B"',
+  "alumni-de-casilda-b": 'Alumni "B"',
+  "velocidad-y-resistencia": "Velocidad",
+  "velocidad-y-resistencia-b": 'Velocidad "B"',
+  // Servando Bayo: el directorio solo tiene el logo cargado en el equipo
+  // "C", pero es el mismo club/escudo para las demás categorías.
+  "servando-bayo": 'Servando Bayo "C"',
+  "servando-bayo-b": 'Servando Bayo "C"',
+  // Regatas (Rosario) — distinto del Regatas San Nicolás. El directorio
+  // solo tiene cargado el logo en el equipo "B" de este club.
+  regatas: 'Regatas "B"',
 };
 
 // Designaciones guarda el equipo como texto libre (no como referencia a la
