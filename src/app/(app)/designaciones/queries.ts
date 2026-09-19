@@ -147,6 +147,56 @@ export interface Confirmacion {
   confirmedAt: string;
 }
 
+export interface ConfirmacionEvento {
+  designacionId: string;
+  refereeId: string;
+  refereeName: string;
+  confirmedAt: string;
+  equipoLocal: string;
+  equipoVisitante: string;
+  fecha: string | null;
+  hora: string | null;
+}
+
+// Feed de "Fulano confirmó su partido" para la campana de notificaciones de
+// la grilla (solo coordinador/instructor la ven). RLS de
+// designacion_confirmaciones ya deja a is_coordinador() ver todas las filas,
+// no solo las de designaciones donde participa.
+export async function fetchConfirmacionesRecientes(supabase: DB, limit = 20): Promise<ConfirmacionEvento[]> {
+  const { data: confirmaciones } = await supabase
+    .from("designacion_confirmaciones")
+    .select("designacion_id, referee_id, confirmed_at")
+    .order("confirmed_at", { ascending: false })
+    .limit(limit);
+  if (!confirmaciones || confirmaciones.length === 0) return [];
+
+  const designacionIds = Array.from(new Set(confirmaciones.map((c) => c.designacion_id)));
+  const refereeIds = Array.from(new Set(confirmaciones.map((c) => c.referee_id)));
+  const [{ data: designaciones }, { data: referees }] = await Promise.all([
+    supabase.from("designaciones").select("id, equipo_local, equipo_visitante, fecha, hora").in("id", designacionIds),
+    supabase.from("referees").select("id, name").in("id", refereeIds),
+  ]);
+  const designacionById = new Map((designaciones ?? []).map((d) => [d.id, d]));
+  const refereeNameById = new Map((referees ?? []).map((r) => [r.id, r.name]));
+
+  return confirmaciones
+    .map((c) => {
+      const d = designacionById.get(c.designacion_id);
+      if (!d) return null;
+      return {
+        designacionId: c.designacion_id,
+        refereeId: c.referee_id,
+        refereeName: refereeNameById.get(c.referee_id) ?? "—",
+        confirmedAt: c.confirmed_at,
+        equipoLocal: d.equipo_local,
+        equipoVisitante: d.equipo_visitante,
+        fecha: d.fecha,
+        hora: d.hora,
+      };
+    })
+    .filter((x): x is ConfirmacionEvento => x !== null);
+}
+
 // Quién confirmó cada designación. RLS ya deja ver esto a cualquier árbitro
 // asignado a esa designación (no es sensible como el monto), así que es un
 // select directo, sin necesidad de una función SECURITY DEFINER.

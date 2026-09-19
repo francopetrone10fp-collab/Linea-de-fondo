@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
-import { fetchDesignaciones, fetchTarifas, fetchViaticos, fetchCompaneros, fetchConfirmaciones } from "./queries";
+import { fetchDesignaciones, fetchTarifas, fetchViaticos, fetchCompaneros, fetchConfirmaciones, fetchConfirmacionesRecientes } from "./queries";
 import { fetchDisponibilidad } from "../disponibilidad/queries";
 import DesignacionesView from "./DesignacionesView";
 
@@ -31,7 +31,17 @@ export default async function DesignacionesPage({
 
   const supabase = await createClient();
   const designaciones = await fetchDesignaciones(supabase, { desde, hasta });
-  const [tarifas, viaticos, companeros, confirmaciones, disponibilidadPorArbitro, { data: referees }, { data: teams }] = await Promise.all([
+  const [
+    tarifas,
+    viaticos,
+    companeros,
+    confirmaciones,
+    disponibilidadPorArbitro,
+    { data: referees },
+    { data: teams },
+    confirmacionesRecientes,
+    { data: profileRow },
+  ] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
     fetchCompaneros(
@@ -45,6 +55,10 @@ export default async function DesignacionesPage({
     fetchDisponibilidad(supabase, { desde, hasta }),
     supabase.from("referees").select("id, name").order("name"),
     supabase.from("teams").select("id, name, color, photo_url").order("name"),
+    canManage ? fetchConfirmacionesRecientes(supabase) : Promise.resolve([]),
+    canManage
+      ? supabase.from("profiles").select("designaciones_bell_seen_at").eq("id", profile.id).single()
+      : Promise.resolve({ data: null }),
   ]);
 
   return (
@@ -63,6 +77,8 @@ export default async function DesignacionesPage({
       desde={desde}
       hasta={hasta}
       customRange={customRange}
+      confirmacionesRecientes={confirmacionesRecientes}
+      bellSeenAt={profileRow?.designaciones_bell_seen_at ?? null}
     />
   );
 }

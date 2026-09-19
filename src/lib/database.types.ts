@@ -31,6 +31,7 @@ export interface Database {
           photo_url: string | null;
           referee_id: string | null;
           created_at: string;
+          designaciones_bell_seen_at: string | null;
         };
         Insert: {
           id: string;
@@ -40,6 +41,7 @@ export interface Database {
           photo_url?: string | null;
           referee_id?: string | null;
           created_at?: string;
+          designaciones_bell_seen_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
         Relationships: [];

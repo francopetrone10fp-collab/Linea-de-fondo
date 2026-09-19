@@ -9,6 +9,14 @@ import type { Database, DesignacionEstado, Rama, TarifaModo } from "@/lib/databa
 
 type DB = Awaited<ReturnType<typeof createClient>>;
 
+// Marca la campana de notificaciones (confirmaciones de árbitros) como
+// vista, para que no vuelvan a contar como nuevas la próxima vez.
+export async function marcarNotificacionesVistas() {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  await supabase.from("profiles").update({ designaciones_bell_seen_at: new Date().toISOString() }).eq("id", profile.id);
+}
+
 // ---------- Tarifas por competencia + categoría ----------
 
 export async function upsertTarifa(input: {

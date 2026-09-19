@@ -7,10 +7,11 @@ import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
+import NotificationBell from "./NotificationBell";
 import { downloadCsv } from "@/lib/csv";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
-import type { Companero, Confirmacion, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
+import type { Companero, Confirmacion, ConfirmacionEvento, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
 
 export default function DesignacionesView({
@@ -28,6 +29,8 @@ export default function DesignacionesView({
   desde,
   hasta,
   customRange,
+  confirmacionesRecientes,
+  bellSeenAt,
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
@@ -43,6 +46,8 @@ export default function DesignacionesView({
   desde: string;
   hasta: string;
   customRange: boolean;
+  confirmacionesRecientes: ConfirmacionEvento[];
+  bellSeenAt: string | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
@@ -266,20 +271,25 @@ export default function DesignacionesView({
           </div>
           <p className="text-text-dim text-[13px] m-0">Partidos designados a árbitros y lo que cobra cada uno.</p>
         </div>
-        {canManage && tab === "grilla" && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowImport(true)}
-              className="bg-transparent text-text-dim border border-line rounded-lg text-[13.5px] px-4 py-2.5"
-            >
-              Importar
-            </button>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
-            >
-              + Nueva designación
-            </button>
+        {canManage && (
+          <div className="flex gap-2 items-start">
+            <NotificationBell eventos={confirmacionesRecientes} seenAt={bellSeenAt} teams={teams} />
+            {tab === "grilla" && (
+              <>
+                <button
+                  onClick={() => setShowImport(true)}
+                  className="bg-transparent text-text-dim border border-line rounded-lg text-[13.5px] px-4 py-2.5"
+                >
+                  Importar
+                </button>
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[13.5px] px-4 py-2.5"
+                >
+                  + Nueva designación
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
