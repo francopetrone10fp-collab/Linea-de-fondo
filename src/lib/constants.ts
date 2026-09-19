@@ -212,13 +212,67 @@ export function allowedRoleForName(name: string): Role | null {
   return null;
 }
 
+// Abreviaturas típicas de nombres de club en las planillas de designaciones
+// ("Sp." por "Sportivo", etc.) — se prueban solo si el nombre exacto no
+// encontró equipo, y solo se aceptan si el resultado expandido matchea
+// exacto contra el directorio (si no, no se fuerza nada).
+const TEAM_NAME_ABBREVIATIONS: Record<string, string> = {
+  sp: "sportivo",
+  pto: "puerto",
+  prog: "progreso",
+  gral: "general",
+  at: "atletico",
+};
+
+// Nombres de Designaciones que no se resuelven ni por match exacto ni por
+// abreviatura (cambian de nombre entero respecto al directorio de Equipos,
+// o el directorio los tiene con una grafía muy distinta) — confirmados a
+// mano contra el listado real de designaciones. No se adivina acá: un
+// escudo equivocado es peor que ninguno, así que solo entran los casos
+// donde no hay otro club candidato que genere ambigüedad.
+const TEAM_NAME_ALIASES: Record<string, string> = {
+  maciel: "Club Atlético Maciel",
+  "alba-de-maciel": "Alba",
+  "c-c-y-recreativo-vgg": "Centro Recreativo VGG",
+  "nautico-sp": "Náutico Sportivo Avellaneda",
+  "nautico-sp-b": 'Náutico Sportivo Avellaneda "B"',
+  "r-central": "Rosario Central",
+  "r-central-b": 'Rosario Central "B"',
+  "regatas-sn": "Regatas San Nicolás",
+  "sp-unidos": "Sportsmen Unidos",
+  "talleres-as": "Talleres A.S",
+  "union-a-seco": "Unión de Arroyo Seco",
+  "union-a-s": "Unión de Arroyo Seco",
+};
+
 // Designaciones guarda el equipo como texto libre (no como referencia a la
 // tabla teams, son módulos independientes), así que para mostrarle el
 // escudo hay que buscarlo por nombre normalizado — mismo criterio de
-// comparación que ya se usa para roles/apodos (slugKey).
+// comparación que ya se usa para roles/apodos (slugKey), más abreviaturas
+// y alias conocidos para los casos que el nombre exacto no resuelve.
 export function matchTeamByName<T extends { name: string }>(teams: T[], name: string): T | undefined {
   const target = slugKey(name);
-  return teams.find((t) => slugKey(t.name) === target);
+
+  const alias = TEAM_NAME_ALIASES[target];
+  if (alias) {
+    const aliased = teams.find((t) => slugKey(t.name) === slugKey(alias));
+    if (aliased) return aliased;
+  }
+
+  const exact = teams.find((t) => slugKey(t.name) === target);
+  if (exact) return exact;
+
+  const expandedTarget = slugKey(
+    name
+      .trim()
+      .split(/\s+/)
+      .map((word) => TEAM_NAME_ABBREVIATIONS[slugKey(word)] ?? word)
+      .join(" ")
+  );
+  if (expandedTarget !== target) {
+    return teams.find((t) => slugKey(t.name) === expandedTarget);
+  }
+  return undefined;
 }
 
 export function colorForTeam(name: string): string {
