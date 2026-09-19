@@ -18,6 +18,7 @@ export interface ReportClipRow {
   clock: string | null;
   evaluation: Evaluation | null;
   whistleType: WhistleType | null;
+  videoUrl: string | null;
 }
 
 // Todas las jugadas de la app (sin acotar a un partido), con los datos de su
@@ -51,6 +52,7 @@ export async function fetchAllClipsFull(supabase: DB): Promise<ReportClipRow[]> 
       clock: c.clock,
       evaluation: c.evaluation,
       whistleType: c.whistle_type,
+      videoUrl: c.video_url,
     };
   });
 }

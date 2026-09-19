@@ -8,6 +8,7 @@ import { BarsChart } from "@/components/charts/BarsChart";
 import { StatCard } from "@/components/StatCard";
 import RotateHint from "@/components/RotateHint";
 import SectionIcon from "@/components/SectionIcon";
+import VideoModal from "@/components/VideoModal";
 import { SITUATIONS, WHISTLE_TYPES, EVAL_LEVELS, evalLabel, whistleTypeInfo } from "@/lib/constants";
 import { EMPTY_FILTERS, applyReportFilters, filtersToSearchParams, type ReportFilters } from "./filters";
 import { buildAggregateStats } from "./aggregate";
@@ -46,6 +47,7 @@ export default function ReportsView({
   seasons: string[];
 }) {
   const [filters, setFilters] = useState<ReportFilters>(EMPTY_FILTERS);
+  const [videoClip, setVideoClip] = useState<ReportClipRow | null>(null);
 
   function setFilter<K extends keyof ReportFilters>(key: K, value: string) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -274,7 +276,21 @@ export default function ReportsView({
                         <span>{matchupText(r)}</span>
                         {r.teamVisit && <ColorBadge name={r.teamVisit.name} color={r.teamVisit.color} photoUrl={r.teamVisit.photo_url} size={18} />}
                       </div>
-                      <span className="text-text-faint text-[11px]">{r.title}</span>
+                      <span className="text-text-faint text-[11px] inline-flex items-center gap-1.5">
+                        {r.title}
+                        {r.videoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setVideoClip(r)}
+                            title="Ver video"
+                            className="flex-none w-[18px] h-[18px] rounded-full bg-[#E8342A] hover:bg-[#C92920] text-white inline-flex items-center justify-center"
+                          >
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </button>
+                        )}
+                      </span>
                     </td>
                     <td className="py-2 px-2 border-b border-line align-top whitespace-nowrap">{fechaFmt(r.fecha)}</td>
                     <td className="py-2 px-2 border-b border-line align-top">{r.referee?.name ?? "—"}</td>
@@ -294,6 +310,10 @@ export default function ReportsView({
             </table>
           </div>
         </>
+      )}
+
+      {videoClip && videoClip.videoUrl && (
+        <VideoModal url={videoClip.videoUrl} title={videoClip.title} onClose={() => setVideoClip(null)} />
       )}
     </div>
   );
