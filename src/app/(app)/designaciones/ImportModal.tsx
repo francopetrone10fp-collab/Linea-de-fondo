@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import RefereeCombobox from "@/components/RefereeCombobox";
 import { bulkImportDesignaciones, type BulkImportRow } from "./actions";
 import { parsePastedText, type ParsedImportRow, type RefereeOption } from "./importParse";
+import { TeamBadge } from "./DesignacionesGrid";
 import type { DesignacionEstado } from "@/lib/database.types";
+
+interface TeamOption {
+  id: string;
+  name: string;
+  color: string;
+  photo_url: string | null;
+}
 
 interface WorkingRow extends ParsedImportRow {
   arbitro1Id: string;
@@ -21,7 +29,17 @@ const ESTADO_LABELS: Record<DesignacionEstado, string> = {
   jugado: "Jugado",
 };
 
-export default function ImportModal({ referees, competencias, onClose }: { referees: RefereeOption[]; competencias: string[]; onClose: () => void }) {
+export default function ImportModal({
+  referees,
+  teams,
+  competencias,
+  onClose,
+}: {
+  referees: RefereeOption[];
+  teams: TeamOption[];
+  competencias: string[];
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [competencia, setCompetencia] = useState(competencias[0] ?? "LFF");
@@ -182,7 +200,11 @@ export default function ImportModal({ referees, competencias, onClose }: { refer
                       </td>
                       <td className="px-2 py-1.5 whitespace-nowrap">{r.categoria}</td>
                       <td className="px-2 py-1.5 whitespace-nowrap">
-                        {r.equipoLocal} <span className="text-text-faint">vs</span> {r.equipoVisitante}
+                        <div className="flex items-center gap-1.5">
+                          <TeamBadge name={r.equipoLocal} teams={teams} />
+                          {r.equipoLocal} <span className="text-text-faint">vs</span> {r.equipoVisitante}
+                          <TeamBadge name={r.equipoVisitante} teams={teams} />
+                        </div>
                       </td>
                       <ArbitroCell
                         listId={`import-arb1-${idx}`}

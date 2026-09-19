@@ -21,6 +21,7 @@ export default function DesignacionesView({
   confirmaciones,
   disponibilidadPorArbitro,
   referees,
+  teams,
   canManage,
   myRefereeId,
   month,
@@ -35,6 +36,7 @@ export default function DesignacionesView({
   confirmaciones: Record<string, Confirmacion[]>;
   disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
   referees: { id: string; name: string }[];
+  teams: { id: string; name: string; color: string; photo_url: string | null }[];
   canManage: boolean;
   myRefereeId: string | null;
   month: string;
@@ -247,7 +249,7 @@ export default function DesignacionesView({
   }
 
   function exportDetallePdf() {
-    openHtmlForPrint(buildDesignacionesDetalleHtml(filtered, rangeLabel));
+    openHtmlForPrint(buildDesignacionesDetalleHtml(filtered, rangeLabel, teams));
   }
 
   function exportTotalesPdf() {
@@ -368,6 +370,7 @@ export default function DesignacionesView({
         <DesignacionesGrid
           designaciones={filtered}
           referees={referees}
+          teams={teams}
           onEdit={(d) => setEditing(d)}
           sortOrder={sortOrder}
           onToggleSort={() => setSortOrder((s) => (s === "asc" ? "desc" : "asc"))}
@@ -386,6 +389,7 @@ export default function DesignacionesView({
             viaticos={viaticos}
             companeros={companeros}
             confirmaciones={confirmaciones}
+            teams={teams}
           />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">
@@ -409,7 +413,7 @@ export default function DesignacionesView({
         />
       )}
 
-      {showImport && <ImportModal referees={referees} competencias={competencias} onClose={() => setShowImport(false)} />}
+      {showImport && <ImportModal referees={referees} teams={teams} competencias={competencias} onClose={() => setShowImport(false)} />}
     </div>
   );
 }

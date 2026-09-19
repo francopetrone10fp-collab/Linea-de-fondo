@@ -10,7 +10,8 @@ import {
   setDesignacionEstado,
   setDesignacionNotas,
 } from "./actions";
-import { disponibilidadBlockReason } from "@/lib/constants";
+import { disponibilidadBlockReason, matchTeamByName, colorForTeam } from "@/lib/constants";
+import { ColorBadge } from "@/components/Badge";
 import type { DesignacionEstado } from "@/lib/database.types";
 import type { Confirmacion, DesignacionFull } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
@@ -41,6 +42,7 @@ function formatDiaMes(fecha: string): string {
 export default function DesignacionesGrid({
   designaciones,
   referees,
+  teams,
   onEdit,
   sortOrder,
   onToggleSort,
@@ -51,6 +53,7 @@ export default function DesignacionesGrid({
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
+  teams: { id: string; name: string; color: string; photo_url: string | null }[];
   onEdit: (d: DesignacionFull) => void;
   sortOrder: "asc" | "desc";
   onToggleSort: () => void;
@@ -132,6 +135,7 @@ export default function DesignacionesGrid({
                 <DesignacionRow
                   d={d}
                   referees={referees}
+                  teams={teams}
                   onEdit={onEdit}
                   confirmados={confirmaciones[d.id] ?? []}
                   {...(() => {
@@ -191,9 +195,18 @@ function Th({ children }: { children?: React.ReactNode }) {
   return <th className="text-left font-semibold px-2.5 py-2 border-b border-line whitespace-nowrap">{children}</th>;
 }
 
+// Designaciones guarda el equipo como texto libre (no hay referencia a la
+// tabla teams), así que el escudo se busca por nombre normalizado; si no hay
+// match o no tiene logo cargado, cae al círculo con iniciales de siempre.
+export function TeamBadge({ name, teams }: { name: string; teams: { name: string; color: string; photo_url: string | null }[] }) {
+  const match = matchTeamByName(teams, name);
+  return <ColorBadge name={name} color={match?.color ?? colorForTeam(name)} photoUrl={match?.photo_url} size={18} />;
+}
+
 function DesignacionRow({
   d,
   referees,
+  teams,
   onEdit,
   confirmados,
   disabled,
@@ -201,6 +214,7 @@ function DesignacionRow({
 }: {
   d: DesignacionFull;
   referees: { id: string; name: string }[];
+  teams: { id: string; name: string; color: string; photo_url: string | null }[];
   onEdit: (d: DesignacionFull) => void;
   confirmados: Confirmacion[];
   disabled?: Map<string, string>;
@@ -264,7 +278,13 @@ function DesignacionRow({
         {[d.competencia, d.rama === "masculino" ? "Masc." : d.rama === "femenino" ? "Fem." : null].filter(Boolean).join(" · ") || "—"}
       </td>
       <td className="px-2.5 py-2 whitespace-nowrap font-medium">
-        {d.equipoLocal} <span className="text-text-faint font-normal">vs</span> {d.equipoVisitante}
+        <div className="flex items-center gap-1.5">
+          <TeamBadge name={d.equipoLocal} teams={teams} />
+          <span>{d.equipoLocal}</span>
+          <span className="text-text-faint font-normal">vs</span>
+          <TeamBadge name={d.equipoVisitante} teams={teams} />
+          <span>{d.equipoVisitante}</span>
+        </div>
       </td>
       <td className="px-2.5 py-2 whitespace-nowrap text-text-dim">{d.sede || "—"}</td>
       <td className="px-2.5 py-2 whitespace-nowrap">

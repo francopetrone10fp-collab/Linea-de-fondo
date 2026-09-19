@@ -1,4 +1,4 @@
-import { EVAL_COLORS, evalLabel, WHISTLE_TYPES, whistleTypeInfo } from "@/lib/constants";
+import { EVAL_COLORS, evalLabel, WHISTLE_TYPES, whistleTypeInfo, initials } from "@/lib/constants";
 import type { PartidoFull, ClipFull, CommentFull } from "./queries";
 import type { Evaluation } from "@/lib/database.types";
 
@@ -15,6 +15,8 @@ export interface ReportRow {
 
 export interface ReportData {
   matchup: string;
+  teamLocal: { name: string; color: string; photo_url?: string | null } | null;
+  teamVisit: { name: string; color: string; photo_url?: string | null } | null;
   fechaFmt: string;
   category: string | null;
   competition: string | null;
@@ -65,6 +67,8 @@ export function buildReportData(p: PartidoFull, clips: ClipFull[], comments: Com
 
   return {
     matchup,
+    teamLocal: p.teamLocal ? { name: p.teamLocal.name, color: p.teamLocal.color, photo_url: p.teamLocal.photo_url } : null,
+    teamVisit: p.teamVisit ? { name: p.teamVisit.name, color: p.teamVisit.color, photo_url: p.teamVisit.photo_url } : null,
     fechaFmt,
     category: p.category?.name ?? null,
     competition: p.competition?.name ?? null,
@@ -130,6 +134,17 @@ function esc(s: string) {
     .replace(/"/g, "&quot;");
 }
 
+function teamBadgeHtml(team: ReportData["teamLocal"]): string {
+  if (!team) return "";
+  const style =
+    "display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;" +
+    "vertical-align:middle;margin-right:5px;flex:none;overflow:hidden;";
+  if (team.photo_url) {
+    return `<img src="${esc(team.photo_url)}" alt="" style="${style}object-fit:cover;">`;
+  }
+  return `<span style="${style}background:${esc(team.color)};color:#fff;font-size:9px;font-weight:700;">${esc(initials(team.name))}</span>`;
+}
+
 export function buildStandaloneReportHtml(data: ReportData): string {
   const rows = data.rows
     .map(
@@ -164,7 +179,7 @@ export function buildStandaloneReportHtml(data: ReportData): string {
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de evaluación</title><style>${STANDALONE_CSS}</style></head><body>
   <div class="report-box">
     <p class="report-title">Informe de evaluación</p>
-    <p class="report-sub">${esc(data.matchup)} · ${esc(data.fechaFmt)}${data.category ? " · " + esc(data.category) : ""}${data.competition ? " · " + esc(data.competition) : ""}<br>Árbitros: ${esc(data.refereesText)}</p>
+    <p class="report-sub">${teamBadgeHtml(data.teamLocal)}${esc(data.matchup)}${data.teamVisit ? teamBadgeHtml(data.teamVisit) : ""} · ${esc(data.fechaFmt)}${data.category ? " · " + esc(data.category) : ""}${data.competition ? " · " + esc(data.competition) : ""}<br>Árbitros: ${esc(data.refereesText)}</p>
     <div class="report-stat-row">
       <div class="report-stat"><div class="n">${data.total}</div><div class="l">Jugadas</div></div>
       <div class="report-stat"><div class="n" style="color:#F09595">${data.counts.mala}</div><div class="l">No recomendable</div></div>

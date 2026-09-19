@@ -31,7 +31,7 @@ export default async function DesignacionesPage({
 
   const supabase = await createClient();
   const designaciones = await fetchDesignaciones(supabase, { desde, hasta });
-  const [tarifas, viaticos, companeros, confirmaciones, disponibilidadPorArbitro, { data: referees }] = await Promise.all([
+  const [tarifas, viaticos, companeros, confirmaciones, disponibilidadPorArbitro, { data: referees }, { data: teams }] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
     fetchCompaneros(
@@ -44,6 +44,7 @@ export default async function DesignacionesPage({
     ),
     fetchDisponibilidad(supabase, { desde, hasta }),
     supabase.from("referees").select("id, name").order("name"),
+    supabase.from("teams").select("id, name, color, photo_url").order("name"),
   ]);
 
   return (
@@ -55,6 +56,7 @@ export default async function DesignacionesPage({
       confirmaciones={confirmaciones}
       disponibilidadPorArbitro={disponibilidadPorArbitro}
       referees={referees ?? []}
+      teams={teams ?? []}
       canManage={canManage}
       myRefereeId={profile.referee_id}
       month={month}

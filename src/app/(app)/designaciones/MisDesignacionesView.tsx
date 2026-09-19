@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { confirmDesignacion } from "./actions";
-import { money } from "./DesignacionesGrid";
+import { money, TeamBadge } from "./DesignacionesGrid";
 import type { Companero, Confirmacion, DesignacionFull, ViaticoLocalidad } from "./queries";
 
 export default function MisDesignacionesView({
@@ -11,12 +11,14 @@ export default function MisDesignacionesView({
   viaticos,
   companeros,
   confirmaciones,
+  teams,
 }: {
   designaciones: DesignacionFull[];
   myRefereeId: string;
   viaticos: ViaticoLocalidad[];
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
+  teams: { id: string; name: string; color: string; photo_url: string | null }[];
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
   const mias = designaciones
@@ -68,6 +70,7 @@ export default function MisDesignacionesView({
               viaticoByLocalidad={viaticoByLocalidad}
               companeros={companeros[d.id] ?? []}
               confirmados={confirmaciones[d.id] ?? []}
+              teams={teams}
             />
           ))}
         </div>
@@ -83,6 +86,7 @@ function DesignacionCard({
   viaticoByLocalidad,
   companeros,
   confirmados,
+  teams,
 }: {
   d: DesignacionFull;
   miaMonto: number;
@@ -90,6 +94,7 @@ function DesignacionCard({
   viaticoByLocalidad: Map<string, number>;
   companeros: Companero[];
   confirmados: Confirmacion[];
+  teams: { id: string; name: string; color: string; photo_url: string | null }[];
 }) {
   const [isPending, startTransition] = useTransition();
   const yoConfirme = confirmados.some((c) => c.refereeId === myRefereeId);
@@ -106,8 +111,10 @@ function DesignacionCard({
   return (
     <div className="bg-surface border border-line rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 flex-wrap">
       <div>
-        <p className="text-[14px] font-semibold m-0">
+        <p className="text-[14px] font-semibold m-0 flex items-center gap-1.5">
+          <TeamBadge name={d.equipoLocal} teams={teams} />
           {d.equipoLocal} <span className="text-text-faint font-normal">vs</span> {d.equipoVisitante}
+          <TeamBadge name={d.equipoVisitante} teams={teams} />
         </p>
         <p className="text-[12px] text-text-dim m-0 mt-0.5">
           {d.fecha

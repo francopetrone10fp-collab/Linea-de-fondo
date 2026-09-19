@@ -2,6 +2,7 @@
 
 import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
+import { ColorBadge } from "@/components/Badge";
 import { evalLabel } from "@/lib/constants";
 import { buildReportData, pieSegments, buildStandaloneReportHtml } from "./reportData";
 import { slugKey } from "@/lib/constants";
@@ -48,7 +49,12 @@ export default function ReportModal({
       <div className="bg-surface border border-line rounded-2xl max-w-[720px] w-full p-8 mb-10">
         <p className="font-display text-[22px] font-semibold mt-0 mb-1">Informe de evaluación</p>
         <p className="text-[13px] text-text-dim mb-4">
-          {data.matchup} · {data.fechaFmt}
+          <span className="inline-flex items-center gap-1.5 align-middle">
+            {data.teamLocal && <ColorBadge name={data.teamLocal.name} color={data.teamLocal.color} photoUrl={data.teamLocal.photo_url} size={18} />}
+            {data.matchup}
+            {data.teamVisit && <ColorBadge name={data.teamVisit.name} color={data.teamVisit.color} photoUrl={data.teamVisit.photo_url} size={18} />}
+          </span>{" "}
+          · {data.fechaFmt}
           {data.category ? ` · ${data.category}` : ""}
           {data.competition ? ` · ${data.competition}` : ""}
           <br />

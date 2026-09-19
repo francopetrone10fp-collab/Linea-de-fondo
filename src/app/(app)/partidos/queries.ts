@@ -69,7 +69,7 @@ export async function fetchPartidosFull(supabase: DB): Promise<PartidoFull[]> {
       .select("*")
       .order("fecha", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }),
-    supabase.from("teams").select("id, name, color"),
+    supabase.from("teams").select("id, name, color, photo_url"),
     supabase.from("referees").select("id, name, color, photo_url"),
     supabase.from("categories").select("id, name, color"),
     supabase.from("competitions").select("id, name, color"),

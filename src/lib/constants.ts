@@ -212,6 +212,15 @@ export function allowedRoleForName(name: string): Role | null {
   return null;
 }
 
+// Designaciones guarda el equipo como texto libre (no como referencia a la
+// tabla teams, son módulos independientes), así que para mostrarle el
+// escudo hay que buscarlo por nombre normalizado — mismo criterio de
+// comparación que ya se usa para roles/apodos (slugKey).
+export function matchTeamByName<T extends { name: string }>(teams: T[], name: string): T | undefined {
+  const target = slugKey(name);
+  return teams.find((t) => slugKey(t.name) === target);
+}
+
 export function colorForTeam(name: string): string {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { FinalizedBadge, EvalSummary } from "@/app/(app)/partidos/PartidoCard";
 import { refereesText, competitionSlugFor } from "@/app/(app)/partidos/partidoHelpers";
+import { ColorBadge } from "@/components/Badge";
 import ClipCard from "@/app/(app)/partidos/ClipCard";
 import ClipFormModal from "@/app/(app)/partidos/ClipFormModal";
 import PartidoFormModal from "@/app/(app)/partidos/PartidoFormModal";
@@ -128,7 +129,15 @@ export default function PartidoDetailView({
 
       <div className="flex justify-between items-start gap-4 flex-wrap mb-1.5">
         <div>
-          <h1 className="font-display text-2xl font-semibold mb-1.5">{matchup}</h1>
+          <div className="flex items-center gap-2 mb-1.5">
+            {partido.teamLocal && (
+              <ColorBadge name={partido.teamLocal.name} color={partido.teamLocal.color} photoUrl={partido.teamLocal.photo_url} size={28} />
+            )}
+            <h1 className="font-display text-2xl font-semibold">{matchup}</h1>
+            {partido.teamVisit && (
+              <ColorBadge name={partido.teamVisit.name} color={partido.teamVisit.color} photoUrl={partido.teamVisit.photo_url} size={28} />
+            )}
+          </div>
           <p className="text-text-dim text-[13px] m-0 mb-0.5">
             {fechaFmt}
             {partido.category ? ` · ${partido.category.name}` : ""}

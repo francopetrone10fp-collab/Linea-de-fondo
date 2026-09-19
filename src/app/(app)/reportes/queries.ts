@@ -27,7 +27,7 @@ export async function fetchAllClipsFull(supabase: DB): Promise<ReportClipRow[]> 
   const [{ data: clips }, { data: partidos }, { data: teams }, { data: referees }] = await Promise.all([
     supabase.from("clips").select("*"),
     supabase.from("partidos").select("id, fecha, temporada, team_local_id, team_visit_id"),
-    supabase.from("teams").select("id, name, color"),
+    supabase.from("teams").select("id, name, color, photo_url"),
     supabase.from("referees").select("id, name, color, photo_url"),
   ]);
 

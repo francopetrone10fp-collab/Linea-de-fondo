@@ -1,4 +1,11 @@
 import type { DesignacionFull } from "./queries";
+import { matchTeamByName, colorForTeam, initials } from "@/lib/constants";
+
+export interface TeamLite {
+  name: string;
+  color: string;
+  photo_url: string | null;
+}
 
 // Reportes de designaciones para imprimir/guardar como PDF: son documentos
 // HTML standalone (mismo enfoque que src/app/(app)/partidos/reportData.ts)
@@ -86,7 +93,7 @@ function shell(opts: { orientation: "portrait" | "landscape"; title: string; sub
   </body></html>`;
 }
 
-export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabel: string): string {
+export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabel: string, teams: TeamLite[] = []): string {
   const fechaFmt = (fecha: string | null) =>
     fecha ? new Date(fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) : "—";
 
@@ -98,6 +105,21 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
     return a ? esc(a.refereeName) : "—";
   };
 
+  // Designaciones guarda el equipo como texto libre (no hay referencia a la
+  // tabla teams), así que el escudo se busca por nombre normalizado; si no
+  // hay match o no tiene logo cargado, cae a un círculo con iniciales.
+  const teamBadge = (name: string) => {
+    const match = matchTeamByName(teams, name);
+    const color = match?.color ?? colorForTeam(name);
+    const style =
+      "display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;" +
+      "vertical-align:middle;margin-right:4px;flex:none;overflow:hidden;";
+    if (match?.photo_url) {
+      return `<img src="${esc(match.photo_url)}" alt="" style="${style}object-fit:cover;">`;
+    }
+    return `<span style="${style}background:${esc(color)};color:#fff;font-size:8px;font-weight:700;">${esc(initials(name))}</span>`;
+  };
+
   const trs = rows
     .map(
       (d) => `
@@ -105,7 +127,7 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
         <td style="white-space:nowrap;">${fechaFmt(d.fecha)}${d.hora ? ` · ${esc(d.hora.slice(0, 5))}` : ""}</td>
         <td>${esc(d.categoria)}</td>
         <td style="color:#97A1AE;">${[d.competencia, d.rama === "masculino" ? "Masc." : d.rama === "femenino" ? "Fem." : null].filter(Boolean).map(esc).join(" · ") || "—"}</td>
-        <td><b>${esc(d.equipoLocal)}</b> <span style="color:#5C6672;">vs</span> <b>${esc(d.equipoVisitante)}</b></td>
+        <td style="white-space:nowrap;">${teamBadge(d.equipoLocal)}<b>${esc(d.equipoLocal)}</b> <span style="color:#5C6672;">vs</span> ${teamBadge(d.equipoVisitante)}<b>${esc(d.equipoVisitante)}</b></td>
         <td style="color:#97A1AE;">${esc(d.sede) || "—"}</td>
         <td><span class="pill ${d.estado}">${esc(ESTADO_LABELS[d.estado] ?? d.estado)}</span></td>
         <td>${arbitroCell(d, 1)}</td>

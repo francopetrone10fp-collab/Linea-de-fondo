@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Empty } from "@/app/(app)/teams/TeamsView";
+import { ColorBadge } from "@/components/Badge";
 import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
 import { StatCard } from "@/components/StatCard";
@@ -268,8 +269,11 @@ export default function ReportsView({
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-2 px-2 border-b border-line align-top">
-                      {matchupText(r)}
-                      <br />
+                      <div className="flex items-center gap-1.5">
+                        {r.teamLocal && <ColorBadge name={r.teamLocal.name} color={r.teamLocal.color} photoUrl={r.teamLocal.photo_url} size={18} />}
+                        <span>{matchupText(r)}</span>
+                        {r.teamVisit && <ColorBadge name={r.teamVisit.name} color={r.teamVisit.color} photoUrl={r.teamVisit.photo_url} size={18} />}
+                      </div>
                       <span className="text-text-faint text-[11px]">{r.title}</span>
                     </td>
                     <td className="py-2 px-2 border-b border-line align-top whitespace-nowrap">{fechaFmt(r.fecha)}</td>

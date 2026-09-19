@@ -23,14 +23,14 @@ export function Matchup({ p, size = 24, bold = true }: { p: PartidoFull; size?: 
     <div className={`flex items-center gap-1.5 flex-wrap ${bold ? "mb-2.5" : "mb-1.5"}`}>
       {p.teamLocal && (
         <>
-          <ColorBadge name={p.teamLocal.name} color={p.teamLocal.color} size={size} />
+          <ColorBadge name={p.teamLocal.name} color={p.teamLocal.color} photoUrl={p.teamLocal.photo_url} size={size} />
           <span className={nameCls}>{p.teamLocal.name}</span>
         </>
       )}
       <span className="text-text-faint text-[11px]">vs</span>
       {p.teamVisit && (
         <>
-          <ColorBadge name={p.teamVisit.name} color={p.teamVisit.color} size={size} />
+          <ColorBadge name={p.teamVisit.name} color={p.teamVisit.color} photoUrl={p.teamVisit.photo_url} size={size} />
           <span className={nameCls}>{p.teamVisit.name}</span>
         </>
       )}

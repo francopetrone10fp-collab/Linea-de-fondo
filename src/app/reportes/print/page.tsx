@@ -6,6 +6,7 @@ import { fetchAllClipsFull } from "@/app/(app)/reportes/queries";
 import { applyReportFilters, searchParamsToFilters } from "@/app/(app)/reportes/filters";
 import { buildAggregateStats } from "@/app/(app)/reportes/aggregate";
 import { StatCard } from "@/components/StatCard";
+import { ColorBadge } from "@/components/Badge";
 import { DonutChart, ChartLegend } from "@/components/charts/DonutChart";
 import { BarsChart } from "@/components/charts/BarsChart";
 import { evalLabel, whistleTypeInfo } from "@/lib/constants";
@@ -118,8 +119,13 @@ export default async function ReportPrintPage({
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td className="py-2 px-2 border-b border-line align-top">
-                      {r.teamLocal?.name ?? "?"} vs {r.teamVisit?.name ?? "?"}
-                      <br />
+                      <div className="flex items-center gap-1.5">
+                        {r.teamLocal && <ColorBadge name={r.teamLocal.name} color={r.teamLocal.color} photoUrl={r.teamLocal.photo_url} size={18} />}
+                        <span>
+                          {r.teamLocal?.name ?? "?"} vs {r.teamVisit?.name ?? "?"}
+                        </span>
+                        {r.teamVisit && <ColorBadge name={r.teamVisit.name} color={r.teamVisit.color} photoUrl={r.teamVisit.photo_url} size={18} />}
+                      </div>
                       <span className="text-text-faint text-[11px]">{r.title}</span>
                     </td>
                     <td className="py-2 px-2 border-b border-line align-top whitespace-nowrap">{fechaFmt(r.fecha)}</td>
