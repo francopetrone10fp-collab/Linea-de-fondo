@@ -74,7 +74,7 @@ export default function NotificationBell({
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-[340px] max-h-[420px] overflow-y-auto bg-surface border border-line rounded-xl shadow-lg z-50 py-1.5">
+        <div className="absolute left-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] max-h-[420px] overflow-y-auto bg-surface border border-line rounded-xl shadow-lg z-50 py-1.5">
           <div className="px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-faint">Confirmaciones de árbitros</div>
           {eventos.length === 0 ? (
             <p className="text-[12.5px] text-text-faint px-3.5 py-3 m-0">Todavía no hay confirmaciones.</p>
