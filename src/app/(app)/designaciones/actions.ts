@@ -352,6 +352,7 @@ export async function confirmarArbitro(designacionId: string, posicion: 1 | 2 | 
       title: "Te designaron a un partido",
       body: `${designacion.equipo_local} vs ${designacion.equipo_visitante}${cuando ? ` · ${cuando}` : ""}`,
       url: "/designaciones",
+      image: `/api/notificaciones/imagen?local=${encodeURIComponent(designacion.equipo_local)}&visitante=${encodeURIComponent(designacion.equipo_visitante)}`,
     }).catch(() => {});
   }
 

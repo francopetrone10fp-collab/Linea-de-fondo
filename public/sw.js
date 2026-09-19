@@ -26,6 +26,9 @@ self.addEventListener("push", (event) => {
     // solo, así que una imagen a color (como icon-192.png) se ve como un
     // bloque sólido sin forma.
     badge: "/badge-96.png",
+    // Banner grande con los escudos local/visitante (si el push viene de un
+    // partido/designación) — el navegador la pide aparte, no viaja en el push.
+    image: payload.image || undefined,
     data: { url: payload.url || "/" },
   };
 

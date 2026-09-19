@@ -18,7 +18,7 @@ function ensureVapid(): boolean {
 // lado del navegador (404/410), lo borramos de una para no reintentar
 // siempre en vano. Se usa tanto desde el cron semanal como desde acciones
 // puntuales (ej. al designar a un árbitro).
-export async function sendPushToProfiles(profileIds: string[], payload: { title: string; body: string; url?: string }) {
+export async function sendPushToProfiles(profileIds: string[], payload: { title: string; body: string; url?: string; image?: string }) {
   if (profileIds.length === 0 || !ensureVapid()) return { enviados: 0 };
 
   const supabase = createServiceRoleClient();

@@ -64,11 +64,18 @@ export async function GET(request: Request) {
         partidos.length === 1
           ? `${partidos[0].equipo_local} vs ${partidos[0].equipo_visitante}${partidos[0].hora ? ` · ${partidos[0].hora.slice(0, 5)}` : ""} · ${partidos[0].categoria}`
           : `Tenés ${partidos.length} partidos designados mañana. Revisalos en la app.`;
+      // Con varios partidos no hay un solo matchup que mostrar, así que la
+      // imagen con escudos solo va cuando el aviso es de un partido puntual.
+      const image =
+        partidos.length === 1
+          ? `/api/notificaciones/imagen?local=${encodeURIComponent(partidos[0].equipo_local)}&visitante=${encodeURIComponent(partidos[0].equipo_visitante)}`
+          : undefined;
 
       const { enviados: n } = await sendPushToProfiles([p.id], {
         title: "Tenés un partido mañana",
         body,
         url: "/designaciones",
+        image,
       });
       enviados += n;
     })

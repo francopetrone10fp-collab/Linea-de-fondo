@@ -38,6 +38,7 @@ async function notificarEvaluacionFinalizada(supabase: DB, partidoId: string) {
     title: "Tu evaluación está lista",
     body: `Se finalizó la evaluación de ${partidoLabel}.`,
     url,
+    image: local && visitante ? `/api/notificaciones/imagen?local=${encodeURIComponent(local)}&visitante=${encodeURIComponent(visitante)}` : undefined,
   }).catch(() => {});
 }
 
