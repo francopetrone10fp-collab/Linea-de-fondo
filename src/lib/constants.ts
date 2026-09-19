@@ -270,6 +270,12 @@ const TEAM_NAME_ALIASES: Record<string, string> = {
   "sp-unidos-b": "Sportsmen Unidos",
   "l-r-estudiantil": 'L.R. Estudiantil "B"',
   "san-martin": "Puerto San Martín",
+  // Atlantic Sp. y Fisherton "A": el directorio solo tiene cargado el logo
+  // en el equipo "B" de cada club, que es el mismo escudo.
+  "atlantic-sp": 'Atlantic Sp. "B"',
+  "fisherton-a": 'Fisherton "B"',
+  // "A.D.E.O (CdG)": misma grafía con puntuación que el directorio no tiene.
+  "a-d-e-o-cdg": "ADEO",
 };
 
 // Designaciones guarda el equipo como texto libre (no como referencia a la
