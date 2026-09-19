@@ -266,6 +266,10 @@ const TEAM_NAME_ALIASES: Record<string, string> = {
   // Regatas (Rosario) — distinto del Regatas San Nicolás. El directorio
   // solo tiene cargado el logo en el equipo "B" de este club.
   regatas: 'Regatas "B"',
+  "temperley-a": "Temperley",
+  "sp-unidos-b": "Sportsmen Unidos",
+  "l-r-estudiantil": 'L.R. Estudiantil "B"',
+  "san-martin": "Puerto San Martín",
 };
 
 // Designaciones guarda el equipo como texto libre (no como referencia a la
