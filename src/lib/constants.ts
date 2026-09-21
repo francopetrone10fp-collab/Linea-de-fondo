@@ -19,11 +19,25 @@ export const ROLE_LABELS: Record<Role, string> = {
   arbitro: "Árbitro",
 };
 
+// "Competencias" es la puerta de entrada a partidos/clips/evaluaciones — el
+// nombre no reflejaba eso, así que el label varía según cómo lo usa cada rol:
+// el árbitro navega ahí para ver SUS evaluaciones, el resto para evaluar en
+// general.
+export const COMPETITIONS_LABEL: Record<Role, string> = {
+  arbitro: "Mis evaluaciones",
+  instructor: "Evaluaciones",
+  coordinador: "Evaluaciones",
+};
+
+export function navLabel(item: { label: string | Record<Role, string> }, role: Role): string {
+  return typeof item.label === "string" ? item.label : item.label[role];
+}
+
 // Accesos del menú, compartidos entre el Sidebar y la pantalla de inicio
 // (ambos filtran por rol de la misma lista, para que no se puedan desincronizar).
 export const NAV_ITEMS = [
   { view: "inicio", href: "/", label: "Inicio", roles: ["coordinador", "instructor", "arbitro"] },
-  { view: "competitions", href: "/competitions", label: "Competencias", roles: ["coordinador", "instructor", "arbitro"] },
+  { view: "competitions", href: "/competitions", label: COMPETITIONS_LABEL, roles: ["coordinador", "instructor", "arbitro"] },
   { view: "stats", href: "/stats", label: "Estadísticas", roles: ["coordinador", "instructor"] },
   { view: "teams", href: "/teams", label: "Equipos", roles: ["coordinador", "instructor"] },
   { view: "referees", href: "/referees", label: "Árbitros", roles: ["coordinador", "instructor"] },

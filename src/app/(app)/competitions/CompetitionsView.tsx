@@ -7,6 +7,8 @@ import SectionIcon from "@/components/SectionIcon";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
 import { resizeImageToBlob } from "@/components/Sidebar";
 import { createClient } from "@/lib/supabase/client";
+import { COMPETITIONS_LABEL } from "@/lib/constants";
+import type { Role } from "@/lib/database.types";
 import { createCompetition, deleteCompetition, updateCompetitionPhotoUrl } from "./actions";
 
 interface Competition {
@@ -22,12 +24,14 @@ export default function CompetitionsView({
   sinCompetenciaCount,
   canDeleteCompetitions,
   canCreateCompetitions,
+  role,
 }: {
   competitions: Competition[];
   counts: Record<string, number>;
   sinCompetenciaCount: number;
   canDeleteCompetitions: boolean;
   canCreateCompetitions: boolean;
+  role: Role;
 }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +89,9 @@ export default function CompetitionsView({
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
         <div className="flex items-center gap-2.5">
           <SectionIcon view="competitions" />
-          <h1 className="font-display text-2xl font-semibold">Competencias ({competitions.length})</h1>
+          <h1 className="font-display text-2xl font-semibold">
+            {COMPETITIONS_LABEL[role]} ({competitions.length})
+          </h1>
         </div>
         {canCreateCompetitions && (
           <form onSubmit={onCreate} className="flex gap-2 items-center flex-wrap">

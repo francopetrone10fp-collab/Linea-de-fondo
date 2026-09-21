@@ -67,7 +67,7 @@ export default function DisponibilidadView({
 
       {(!canManage || tab === "mia") &&
         (myRefereeId ? (
-          <MiDisponibilidadView monday={monday} miDisponibilidad={disponibilidadPorArbitro[myRefereeId] ?? []} />
+          <MiDisponibilidadView monday={monday} miDisponibilidad={disponibilidadPorArbitro[myRefereeId] ?? []} isAdmin={canManage} />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">
             Tu perfil todavía no está vinculado a un árbitro, así que no podemos mostrarte tu disponibilidad.

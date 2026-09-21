@@ -8,7 +8,7 @@ import { updateMyPhotoUrl } from "@/app/(app)/profile-actions";
 import { createClient } from "@/lib/supabase/client";
 import NotificationToggle from "@/components/NotificationToggle";
 import SectionIcon from "@/components/SectionIcon";
-import { ROLE_LABELS, NAV_ITEMS, initials } from "@/lib/constants";
+import { ROLE_LABELS, NAV_ITEMS, initials, navLabel } from "@/lib/constants";
 import type { SessionProfile } from "@/lib/session";
 
 export default function Sidebar({
@@ -110,7 +110,7 @@ export default function Sidebar({
               }`}
             >
               <SectionIcon view={item.view} size="sm" />
-              {item.label}
+              {navLabel(item, profile.role)}
               {item.view === "requests" && pendingCount > 0 && (
                 <span className="bg-accent text-accent-ink text-[10px] font-bold rounded-[10px] px-1.5">
                   {pendingCount}

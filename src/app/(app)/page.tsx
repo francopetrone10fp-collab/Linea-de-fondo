@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireProfile, getNavBadges } from "@/lib/session";
-import { NAV_ITEMS, initials } from "@/lib/constants";
+import { NAV_ITEMS, initials, navLabel } from "@/lib/constants";
 import { RolePill } from "@/components/Sidebar";
 import SectionIcon, { TILE_COLOR, TILE_STYLES } from "@/components/SectionIcon";
 
@@ -42,7 +42,7 @@ export default async function InicioPage() {
               >
                 <SectionIcon view={item.view} />
                 <span className="font-display font-bold uppercase tracking-wide text-[14.5px] leading-snug text-accent-ink">
-                  {item.label}
+                  {navLabel(item, profile.role)}
                 </span>
               </Link>
             );
@@ -62,7 +62,7 @@ export default async function InicioPage() {
               <span className={`absolute top-0 left-0 right-0 h-[3px] ${style.bar}`} />
               <SectionIcon view={item.view} />
               <span className={`font-display font-bold uppercase tracking-wide text-[14.5px] leading-snug ${style.text}`}>
-                {item.label}
+                {navLabel(item, profile.role)}
               </span>
               {badgeCount != null && (
                 <span className="absolute top-3 right-3 bg-accent text-accent-ink text-[10px] font-bold rounded-[10px] px-1.5">

@@ -6,28 +6,45 @@ import { weekDates, isWeekend, isSunday, formatDayLabel, mondayOf } from "@/lib/
 import { CATEGORIAS_DISPONIBILIDAD, CATEGORIAS_DISPONIBILIDAD_SABADO, DIAS_SEMANA } from "@/lib/constants";
 import type { DisponibilidadDia } from "./queries";
 
-export default function MiDisponibilidadView({ monday, miDisponibilidad }: { monday: string; miDisponibilidad: DisponibilidadDia[] }) {
+export default function MiDisponibilidadView({
+  monday,
+  miDisponibilidad,
+  isAdmin,
+}: {
+  monday: string;
+  miDisponibilidad: DisponibilidadDia[];
+  isAdmin: boolean;
+}) {
   const porFecha = new Map(miDisponibilidad.map((d) => [d.fecha, d]));
   const dates = weekDates(monday);
 
   const esSemanaActual = monday === mondayOf(new Date().toISOString().slice(0, 10));
   const faltaFinDeSemana = esSemanaActual && (!porFecha.has(dates[5]) || !porFecha.has(dates[6]));
+  // Una semana ya pasada no se puede volver a tocar (salvo coordinador/
+  // instructor, que sí pueden corregir a pedido de un árbitro) — evita que se
+  // reescriba disponibilidad de partidos que ya se jugaron.
+  const readOnly = !isAdmin && monday < mondayOf(new Date().toISOString().slice(0, 10));
 
   return (
     <div className="flex flex-col gap-2.5">
+      {readOnly && (
+        <div className="bg-surface-2 border border-line rounded-xl px-4 py-3 text-[13px] text-text-dim mb-1">
+          Esta semana ya pasó, así que no se puede modificar.
+        </div>
+      )}
       {faltaFinDeSemana && (
         <div className="bg-amber-bg text-amber-text border border-amber rounded-xl px-4 py-3 text-[13px] font-medium mb-1">
           Todavía no cargaste tu disponibilidad para este sábado y/o domingo. Marcala abajo para que te puedan designar.
         </div>
       )}
       {dates.map((fecha, i) => (
-        <DayCard key={fecha} fecha={fecha} diaLabel={DIAS_SEMANA[i].label} row={porFecha.get(fecha) ?? null} />
+        <DayCard key={fecha} fecha={fecha} diaLabel={DIAS_SEMANA[i].label} row={porFecha.get(fecha) ?? null} readOnly={readOnly} />
       ))}
     </div>
   );
 }
 
-function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; row: DisponibilidadDia | null }) {
+function DayCard({ fecha, diaLabel, row, readOnly }: { fecha: string; diaLabel: string; row: DisponibilidadDia | null; readOnly: boolean }) {
   const weekend = isWeekend(fecha);
   // Entre semana se considera disponible por default, salvo que el árbitro
   // marque lo contrario. El fin de semana sí necesita una respuesta explícita
@@ -88,7 +105,8 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
         <div className="flex gap-2">
           <button
             onClick={() => guardar(true, [])}
-            className={`text-[12.5px] font-semibold rounded-lg px-3.5 py-2 border ${
+            disabled={readOnly}
+            className={`text-[12.5px] font-semibold rounded-lg px-3.5 py-2 border disabled:cursor-not-allowed disabled:opacity-60 ${
               disponible ? "bg-good-bg text-good-text border-good" : "bg-transparent text-text-dim border-line"
             }`}
           >
@@ -96,7 +114,8 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
           </button>
           <button
             onClick={() => guardar(false, [])}
-            className={`text-[12.5px] font-semibold rounded-lg px-3.5 py-2 border ${
+            disabled={readOnly}
+            className={`text-[12.5px] font-semibold rounded-lg px-3.5 py-2 border disabled:cursor-not-allowed disabled:opacity-60 ${
               !disponible ? "bg-bad-bg text-bad-text border-bad" : "bg-transparent text-text-dim border-line"
             }`}
           >
@@ -110,24 +129,24 @@ function DayCard({ fecha, diaLabel, row }: { fecha: string; diaLabel: string; ro
             return (
               <label
                 key={cat}
-                className={`flex items-center gap-1.5 text-[12px] font-medium rounded-full px-3 py-1.5 border cursor-pointer ${
-                  checked ? "bg-good-bg text-good-text border-good" : "bg-transparent text-text-dim border-line"
-                }`}
+                className={`flex items-center gap-1.5 text-[12px] font-medium rounded-full px-3 py-1.5 border ${
+                  readOnly ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                } ${checked ? "bg-good-bg text-good-text border-good" : "bg-transparent text-text-dim border-line"}`}
               >
-                <input type="checkbox" checked={checked} onChange={() => onToggleCategoria(cat)} className="hidden" />
+                <input type="checkbox" checked={checked} disabled={readOnly} onChange={() => onToggleCategoria(cat)} className="hidden" />
                 {cat}
               </label>
             );
           })}
           <label
-            className={`flex items-center gap-1.5 text-[12px] font-medium rounded-full px-3 py-1.5 border cursor-pointer ${
-              respondido && !disponible ? "bg-bad-bg text-bad-text border-bad" : "bg-transparent text-text-dim border-line"
-            }`}
+            className={`flex items-center gap-1.5 text-[12px] font-medium rounded-full px-3 py-1.5 border ${
+              readOnly ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+            } ${respondido && !disponible ? "bg-bad-bg text-bad-text border-bad" : "bg-transparent text-text-dim border-line"}`}
           >
-            <input type="checkbox" checked={respondido && !disponible} onChange={onNoDisponible} className="hidden" />
+            <input type="checkbox" checked={respondido && !disponible} disabled={readOnly} onChange={onNoDisponible} className="hidden" />
             NO DISPONIBLE
           </label>
-          {respondido && (
+          {respondido && !readOnly && (
             <button
               onClick={onDesmarcarTodo}
               className="text-[12px] text-text-faint hover:text-text underline px-1"
