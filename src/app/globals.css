@@ -77,6 +77,10 @@
 
 * {
   box-sizing: border-box;
+  /* Pedido explícito: toda la app en negrita, manteniendo el tamaño de
+     cada texto tal cual está — pisa cualquier font-weight puntual
+     (font-medium, font-semibold, etc.) de los componentes. */
+  font-weight: 700 !important;
 }
 
 html,

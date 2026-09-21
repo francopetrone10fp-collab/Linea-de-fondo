@@ -9,12 +9,12 @@ const barlowCondensed = Barlow_Condensed({
 });
 const barlow = Barlow({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-barlow",
 });
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "700"],
   variable: "--font-plex-mono",
 });
 
