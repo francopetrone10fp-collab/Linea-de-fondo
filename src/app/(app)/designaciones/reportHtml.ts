@@ -161,16 +161,29 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
   });
 }
 
-export function buildDesignacionesTotalesHtml(rows: { nombre: string; partidos: number; total: number }[], monthLabel: string): string {
+export interface TotalPorArbitro {
+  nombre: string;
+  partidos: number;
+  total: number;
+  categorias: { categoria: string; partidos: number; total: number }[];
+}
+
+export function buildDesignacionesTotalesHtml(rows: TotalPorArbitro[], monthLabel: string): string {
   const trs = rows
-    .map(
-      (t) => `
+    .map((t) => {
+      const categoriasLine = t.categorias
+        .map((c) => `${esc(c.categoria)}: ${c.partidos} · ${esc(money.format(c.total))}`)
+        .join(" &nbsp; · &nbsp; ");
+      return `
       <tr>
-        <td>${esc(t.nombre)}</td>
+        <td>
+          ${esc(t.nombre)}
+          ${categoriasLine ? `<div style="color:#5C6672;font-size:9.5px;margin-top:2px;font-weight:400;">${categoriasLine}</div>` : ""}
+        </td>
         <td style="text-align:right;font-family:monospace;">${t.partidos}</td>
         <td style="text-align:right;font-family:monospace;">${esc(money.format(t.total))}</td>
-      </tr>`
-    )
+      </tr>`;
+    })
     .join("");
 
   const totalPartidos = rows.reduce((sum, t) => sum + t.partidos, 0);

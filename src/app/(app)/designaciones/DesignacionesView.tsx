@@ -10,7 +10,7 @@ import ImportModal from "./ImportModal";
 import NotificationBell from "./NotificationBell";
 import { downloadCsv } from "@/lib/csv";
 import SectionIcon from "@/components/SectionIcon";
-import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
+import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint, type TotalPorArbitro } from "./reportHtml";
 import type { Companero, Confirmacion, ConfirmacionEvento, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
 
@@ -235,17 +235,30 @@ export default function DesignacionesView({
     downloadCsv(`designaciones_${rangeSlug}.csv`, headers, rows);
   }
 
-  function computeTotales() {
-    const totals = new Map<string, { nombre: string; partidos: number; total: number }>();
+  function computeTotales(): TotalPorArbitro[] {
+    const totals = new Map<string, { nombre: string; partidos: number; total: number; categorias: Map<string, { partidos: number; total: number }> }>();
     designaciones.forEach((d) => {
       d.arbitros.forEach((a) => {
-        const entry = totals.get(a.refereeId) ?? { nombre: a.refereeName, partidos: 0, total: 0 };
+        const entry = totals.get(a.refereeId) ?? { nombre: a.refereeName, partidos: 0, total: 0, categorias: new Map() };
         entry.partidos += 1;
         entry.total += a.monto;
+        const cat = entry.categorias.get(d.categoria) ?? { partidos: 0, total: 0 };
+        cat.partidos += 1;
+        cat.total += a.monto;
+        entry.categorias.set(d.categoria, cat);
         totals.set(a.refereeId, entry);
       });
     });
-    return Array.from(totals.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    return Array.from(totals.values())
+      .map((t) => ({
+        nombre: t.nombre,
+        partidos: t.partidos,
+        total: t.total,
+        categorias: Array.from(t.categorias.entries())
+          .map(([categoria, c]) => ({ categoria, partidos: c.partidos, total: c.total }))
+          .sort((a, b) => a.categoria.localeCompare(b.categoria, "es")),
+      }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
 
   function exportTotales() {
