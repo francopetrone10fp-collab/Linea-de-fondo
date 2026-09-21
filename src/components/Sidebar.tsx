@@ -7,6 +7,7 @@ import { logout } from "@/app/login/actions";
 import { updateMyPhotoUrl } from "@/app/(app)/profile-actions";
 import { createClient } from "@/lib/supabase/client";
 import NotificationToggle from "@/components/NotificationToggle";
+import SectionIcon from "@/components/SectionIcon";
 import { ROLE_LABELS, NAV_ITEMS, initials } from "@/lib/constants";
 import type { SessionProfile } from "@/lib/session";
 
@@ -102,12 +103,13 @@ export default function Sidebar({
               key={item.view}
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-2.5 border-l-[3px] text-[14px] font-medium px-2.5 py-2.5 rounded-r-md ${
+              className={`flex items-center gap-2.5 border-l-[3px] text-[14px] font-medium px-2.5 py-2 rounded-r-md ${
                 active
                   ? "border-accent text-text bg-surface-2"
                   : "border-transparent text-text-dim hover:bg-surface-2 hover:text-text"
               }`}
             >
+              <SectionIcon view={item.view} size="sm" />
               {item.label}
               {item.view === "requests" && pendingCount > 0 && (
                 <span className="bg-accent text-accent-ink text-[10px] font-bold rounded-[10px] px-1.5">

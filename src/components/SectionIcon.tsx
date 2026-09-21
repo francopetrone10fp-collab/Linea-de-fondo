@@ -55,6 +55,13 @@ export default function SectionIcon({ view, size = "md" }: { view: NavView; size
 export function NavIcon({ view, size = 20 }: { view: NavView; size?: number }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8 } as const;
   switch (view) {
+    case "inicio":
+      return (
+        <svg {...common}>
+          <path d="M4 11 12 4l8 7" />
+          <path d="M6 9.5V20h12V9.5" />
+        </svg>
+      );
     case "competitions":
       return (
         <svg {...common}>
