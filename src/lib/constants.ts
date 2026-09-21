@@ -269,7 +269,6 @@ const TEAM_NAME_ALIASES: Record<string, string> = {
   "temperley-a": "Temperley",
   "sp-unidos-b": "Sportsmen Unidos",
   "l-r-estudiantil": 'L.R. Estudiantil "B"',
-  "san-martin": "Puerto San Martín",
   // Atlantic Sp. y Fisherton "A": el directorio solo tiene cargado el logo
   // en el equipo "B" de cada club, que es el mismo escudo.
   "atlantic-sp": 'Atlantic Sp. "B"',

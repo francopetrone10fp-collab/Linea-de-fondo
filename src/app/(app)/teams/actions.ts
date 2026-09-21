@@ -26,6 +26,22 @@ export async function createTeam(name: string) {
   return { ok: true as const };
 }
 
+export async function updateTeamName(id: string, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false as const, error: "Poné un nombre para el equipo" };
+  const supabase = await createClient();
+  const { error } = await supabase.from("teams").update({ name: trimmed }).eq("id", id);
+  if (error) {
+    return {
+      ok: false as const,
+      error: error.code === "23505" ? "Ese equipo ya existe" : "No se pudo renombrar el equipo",
+    };
+  }
+  revalidatePath("/teams");
+  revalidatePath("/competitions", "layout");
+  return { ok: true as const };
+}
+
 export async function updateTeamPhotoUrl(id: string, url: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("teams").update({ photo_url: url }).eq("id", id);

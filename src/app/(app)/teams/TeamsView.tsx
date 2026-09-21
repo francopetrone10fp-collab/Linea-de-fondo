@@ -6,7 +6,7 @@ import { ColorBadge } from "@/components/Badge";
 import SectionIcon from "@/components/SectionIcon";
 import { resizeImageToBlob } from "@/components/Sidebar";
 import { createClient } from "@/lib/supabase/client";
-import { createTeam, deleteTeam, updateTeamPhotoUrl } from "./actions";
+import { createTeam, deleteTeam, updateTeamName, updateTeamPhotoUrl } from "./actions";
 
 interface Team {
   id: string;
@@ -31,6 +31,10 @@ export default function TeamsView({
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const cancelingRenameRef = useRef(false);
 
   function onPhotoChange(id: string, file: File | undefined) {
     if (!file) return;
@@ -73,6 +77,24 @@ export default function TeamsView({
     if (!confirm(`¿Eliminar el equipo "${teamName}"? Los clips que ya lo tienen cargado van a quedar sin insignia.`)) return;
     startTransition(async () => {
       await deleteTeam(id);
+    });
+  }
+
+  function startRename(id: string, currentName: string) {
+    setRenamingId(id);
+    setRenameValue(currentName);
+    setRenameError(null);
+  }
+
+  function saveRename(id: string) {
+    const trimmed = renameValue.trim();
+    startTransition(async () => {
+      const res = await updateTeamName(id, trimmed);
+      if (!res.ok) {
+        setRenameError(res.error);
+        return;
+      }
+      setRenamingId(null);
     });
   }
 
@@ -156,14 +178,50 @@ export default function TeamsView({
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
-                    {t.name}
-                  </div>
+                  {renamingId === t.id ? (
+                    <div className="relative z-10 flex flex-col gap-1">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                          if (e.key === "Escape") {
+                            cancelingRenameRef.current = true;
+                            setRenamingId(null);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (cancelingRenameRef.current) {
+                            cancelingRenameRef.current = false;
+                            return;
+                          }
+                          saveRename(t.id);
+                        }}
+                        className="text-[13px] px-1.5 py-1"
+                      />
+                      {renameError && <span className="text-bad-text text-[10.5px]">{renameError}</span>}
+                    </div>
+                  ) : (
+                    <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                      {t.name}
+                    </div>
+                  )}
                   <div className="text-[11px] text-text-faint">
                     {count} clip{count === 1 ? "" : "s"}
                   </div>
                 </div>
-                {canDeleteTeams && (
+                {canManage && renamingId !== t.id && (
+                  <button
+                    onClick={() => startRename(t.id, t.name)}
+                    title="Renombrar equipo"
+                    className="relative z-10 text-text-faint hover:text-text hover:bg-surface-3 p-1 rounded-md"
+                  >
+                    <PencilIcon />
+                  </button>
+                )}
+                {canDeleteTeams && renamingId !== t.id && (
                   <button
                     onClick={() => onDelete(t.id, t.name)}
                     title="Eliminar equipo"
@@ -195,6 +253,14 @@ export function TrashIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
     </svg>
   );
 }
