@@ -161,11 +161,7 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
   });
 }
 
-export function buildDesignacionesTotalesHtml(
-  rows: { nombre: string; partidos: number; total: number }[],
-  monthLabel: string,
-  categorias: { categoria: string; partidos: number }[] = []
-): string {
+export function buildDesignacionesTotalesHtml(rows: { nombre: string; partidos: number; total: number }[], monthLabel: string): string {
   const trs = rows
     .map(
       (t) => `
@@ -189,30 +185,12 @@ export function buildDesignacionesTotalesHtml(
           <td style="text-align:right;font-family:monospace;font-weight:700;padding-top:10px;">${totalPartidos}</td>
           <td style="text-align:right;font-family:monospace;font-weight:700;padding-top:10px;">${esc(money.format(totalMonto))}</td></tr></tfoot></table>`;
 
-  const categoriasTrs = categorias
-    .map(
-      (c) => `
-      <tr>
-        <td>${esc(c.categoria)}</td>
-        <td style="text-align:right;font-family:monospace;">${c.partidos}</td>
-      </tr>`
-    )
-    .join("");
-  const categoriasBody =
-    categorias.length === 0
-      ? ""
-      : `<div style="margin-top:26px;">
-          <p style="font-size:13.5px;font-weight:700;margin:0 0 10px;">Partidos por categoría</p>
-          <table><thead><tr><th>Categoría</th><th style="text-align:right;">Partidos</th></tr></thead>
-          <tbody>${categoriasTrs}</tbody></table>
-        </div>`;
-
   const generatedAt = new Date().toLocaleString("es-AR");
   return shell({
     orientation: "portrait",
     title: "Totales por árbitro",
     subtitle: monthLabel,
-    body: body + categoriasBody,
+    body,
     foot: `<span>Generado el ${esc(generatedAt)}</span>`,
   });
 }

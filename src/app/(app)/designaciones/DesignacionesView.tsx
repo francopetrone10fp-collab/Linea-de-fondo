@@ -248,18 +248,6 @@ export default function DesignacionesView({
     return Array.from(totals.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
 
-  // Partidos por categoría (independiente de quién dirigió): para el PDF de
-  // totales, además de cuánto cobró cada árbitro.
-  function computeCategorias() {
-    const counts = new Map<string, number>();
-    designaciones.forEach((d) => {
-      counts.set(d.categoria, (counts.get(d.categoria) ?? 0) + 1);
-    });
-    return Array.from(counts.entries())
-      .map(([categoria, partidos]) => ({ categoria, partidos }))
-      .sort((a, b) => b.partidos - a.partidos || a.categoria.localeCompare(b.categoria, "es"));
-  }
-
   function exportTotales() {
     const rows = computeTotales().map((t) => [t.nombre, t.partidos, t.total]);
     downloadCsv(`designaciones_totales_${rangeSlug}.csv`, ["Árbitro", "Partidos", "Total"], rows);
@@ -270,7 +258,7 @@ export default function DesignacionesView({
   }
 
   function exportTotalesPdf() {
-    openHtmlForPrint(buildDesignacionesTotalesHtml(computeTotales(), rangeLabel, computeCategorias()));
+    openHtmlForPrint(buildDesignacionesTotalesHtml(computeTotales(), rangeLabel));
   }
 
   return (
