@@ -3,7 +3,8 @@
 import { useTransition } from "react";
 import { confirmDesignacion } from "./actions";
 import { money, TeamBadge } from "./DesignacionesGrid";
-import type { Companero, Confirmacion, DesignacionFull, ViaticoLocalidad } from "./queries";
+import PartidosExternos from "./PartidosExternos";
+import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, ViaticoLocalidad } from "./queries";
 
 export default function MisDesignacionesView({
   designaciones,
@@ -12,6 +13,7 @@ export default function MisDesignacionesView({
   companeros,
   confirmaciones,
   teams,
+  partidosExternos,
 }: {
   designaciones: DesignacionFull[];
   myRefereeId: string;
@@ -19,6 +21,7 @@ export default function MisDesignacionesView({
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
+  partidosExternos: PartidoExterno[];
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
   const mias = designaciones
@@ -75,6 +78,8 @@ export default function MisDesignacionesView({
           ))}
         </div>
       )}
+
+      <PartidosExternos partidos={partidosExternos} />
     </div>
   );
 }

@@ -209,3 +209,29 @@ export async function fetchConfirmaciones(supabase: DB, designacionIds: string[]
   });
   return byDesignacion;
 }
+
+export interface PartidoExterno {
+  id: string;
+  fecha: string;
+  hora: string | null;
+  competencia: string | null;
+  categoria: string | null;
+  descripcion: string;
+  monto: number;
+  notas: string | null;
+}
+
+// Partidos que el árbitro dirige fuera del circuito de esta liga (otro
+// torneo/asociación) y carga él mismo para tener todo en un solo lugar.
+// RLS ya limita esto a las filas del propio árbitro, así que no hace falta
+// filtrar por referee_id acá.
+export async function fetchPartidosExternos(supabase: DB, range: { desde: string; hasta: string }): Promise<PartidoExterno[]> {
+  const { data } = await supabase
+    .from("designaciones_externas")
+    .select("id, fecha, hora, competencia, categoria, descripcion, monto, notas")
+    .gte("fecha", range.desde)
+    .lte("fecha", range.hasta)
+    .order("fecha", { ascending: true })
+    .order("hora", { ascending: true });
+  return data ?? [];
+}

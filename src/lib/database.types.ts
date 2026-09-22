@@ -483,6 +483,34 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["referee_club_exclusions"]["Insert"]>;
         Relationships: [];
       };
+      designaciones_externas: {
+        Row: {
+          id: string;
+          referee_id: string;
+          fecha: string;
+          hora: string | null;
+          competencia: string | null;
+          categoria: string | null;
+          descripcion: string;
+          monto: number;
+          notas: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referee_id: string;
+          fecha: string;
+          hora?: string | null;
+          competencia?: string | null;
+          categoria?: string | null;
+          descripcion: string;
+          monto?: number;
+          notas?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["designaciones_externas"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

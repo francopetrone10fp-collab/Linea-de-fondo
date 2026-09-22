@@ -11,7 +11,7 @@ import NotificationBell from "./NotificationBell";
 import { downloadCsv } from "@/lib/csv";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
-import type { Companero, Confirmacion, ConfirmacionEvento, DesignacionFull, TarifaCategoria, ViaticoLocalidad } from "./queries";
+import type { Companero, Confirmacion, ConfirmacionEvento, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
 
 export default function DesignacionesView({
@@ -32,6 +32,7 @@ export default function DesignacionesView({
   confirmacionesRecientes,
   bellSeenAt,
   exclusionesPorArbitro,
+  partidosExternos,
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
@@ -50,6 +51,7 @@ export default function DesignacionesView({
   confirmacionesRecientes: ConfirmacionEvento[];
   bellSeenAt: string | null;
   exclusionesPorArbitro: Record<string, string[]>;
+  partidosExternos: PartidoExterno[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
@@ -403,6 +405,7 @@ export default function DesignacionesView({
             companeros={companeros}
             confirmaciones={confirmaciones}
             teams={teams}
+            partidosExternos={partidosExternos}
           />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">

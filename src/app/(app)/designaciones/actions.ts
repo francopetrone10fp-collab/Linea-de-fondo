@@ -550,3 +550,54 @@ export async function bulkImportDesignaciones(rows: BulkImportRow[]) {
   revalidatePath("/designaciones");
   return { ok: true as const, inserted, updated, conflictos };
 }
+
+// ---------- Partidos externos (fuera del circuito de esta liga) ----------
+// Registro puramente personal del árbitro, para tener todo en un solo
+// lugar — no pasa por el coordinador ni afecta los totales oficiales.
+
+export interface PartidoExternoInput {
+  fecha: string;
+  hora: string | null;
+  competencia: string | null;
+  categoria: string | null;
+  descripcion: string;
+  monto: number;
+  notas: string | null;
+}
+
+export async function addPartidoExterno(input: PartidoExternoInput) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+  if (!input.fecha) return { ok: false as const, error: "Poné una fecha" };
+  if (!input.descripcion.trim()) return { ok: false as const, error: "Poné una descripción del partido" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("designaciones_externas").insert({ ...input, referee_id: profile.referee_id });
+  if (error) return { ok: false as const, error: "No se pudo guardar el partido" };
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
+export async function updatePartidoExterno(id: string, input: PartidoExternoInput) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+  if (!input.fecha) return { ok: false as const, error: "Poné una fecha" };
+  if (!input.descripcion.trim()) return { ok: false as const, error: "Poné una descripción del partido" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("designaciones_externas").update(input).eq("id", id).eq("referee_id", profile.referee_id);
+  if (error) return { ok: false as const, error: "No se pudo actualizar el partido" };
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
+export async function deletePartidoExterno(id: string) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("designaciones_externas").delete().eq("id", id).eq("referee_id", profile.referee_id);
+  if (error) return { ok: false as const, error: "No se pudo eliminar el partido" };
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}

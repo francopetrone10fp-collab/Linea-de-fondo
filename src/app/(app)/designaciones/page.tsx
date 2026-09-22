@@ -1,7 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
-import { fetchDesignaciones, fetchTarifas, fetchViaticos, fetchCompaneros, fetchConfirmaciones, fetchConfirmacionesRecientes } from "./queries";
+import {
+  fetchDesignaciones,
+  fetchTarifas,
+  fetchViaticos,
+  fetchCompaneros,
+  fetchConfirmaciones,
+  fetchConfirmacionesRecientes,
+  fetchPartidosExternos,
+} from "./queries";
 import { fetchDisponibilidad, fetchClubExclusiones } from "../disponibilidad/queries";
 import DesignacionesView from "./DesignacionesView";
 
@@ -42,6 +50,7 @@ export default async function DesignacionesPage({
     confirmacionesRecientes,
     { data: profileRow },
     exclusionesPorArbitro,
+    partidosExternos,
   ] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
@@ -61,6 +70,7 @@ export default async function DesignacionesPage({
       ? supabase.from("profiles").select("designaciones_bell_seen_at").eq("id", profile.id).single()
       : Promise.resolve({ data: null }),
     canManage ? fetchClubExclusiones(supabase) : Promise.resolve({}),
+    profile.referee_id ? fetchPartidosExternos(supabase, { desde, hasta }) : Promise.resolve([]),
   ]);
 
   return (
@@ -82,6 +92,7 @@ export default async function DesignacionesPage({
       confirmacionesRecientes={confirmacionesRecientes}
       bellSeenAt={profileRow?.designaciones_bell_seen_at ?? null}
       exclusionesPorArbitro={exclusionesPorArbitro}
+      partidosExternos={partidosExternos}
     />
   );
 }
