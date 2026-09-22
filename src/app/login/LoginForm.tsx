@@ -135,6 +135,14 @@ export default function LoginForm() {
       </p>
 
       <form onSubmit={handleSubmit}>
+        {knownUserExists === true && refereePhoto && (
+          <div className="flex justify-center mb-4">
+            <div className="rounded-full border-4 border-accent p-0.5">
+              <ColorBadge name={name.trim()} color={refereePhoto.color} photoUrl={refereePhoto.photoUrl} size={140} />
+            </div>
+          </div>
+        )}
+
         <Field label="Tu nombre">
           <input
             type="text"
@@ -145,12 +153,6 @@ export default function LoginForm() {
             className="w-full"
           />
         </Field>
-
-        {knownUserExists === true && refereePhoto && (
-          <div className="flex justify-center mb-3.5">
-            <ColorBadge name={name.trim()} color={refereePhoto.color} photoUrl={refereePhoto.photoUrl} size={76} />
-          </div>
-        )}
 
         <Field label="Clave">
           <input
