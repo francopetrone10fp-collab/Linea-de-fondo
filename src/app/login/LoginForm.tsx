@@ -136,10 +136,8 @@ export default function LoginForm() {
 
       <form onSubmit={handleSubmit}>
         {knownUserExists === true && refereePhoto && (
-          <div className="flex justify-center mb-4">
-            <div className="rounded-full border-4 border-accent p-0.5">
-              <ColorBadge name={name.trim()} color={refereePhoto.color} photoUrl={refereePhoto.photoUrl} size={140} />
-            </div>
+          <div className="w-fit mx-auto mb-4 rounded-full border-4 border-accent p-0.5">
+            <ColorBadge name={name.trim()} color={refereePhoto.color} photoUrl={refereePhoto.photoUrl} size={140} />
           </div>
         )}
 
