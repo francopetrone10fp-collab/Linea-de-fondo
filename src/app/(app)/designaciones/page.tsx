@@ -63,7 +63,7 @@ export default async function DesignacionesPage({
       designaciones.map((d) => d.id)
     ),
     fetchDisponibilidad(supabase, { desde, hasta }),
-    supabase.from("referees").select("id, name").order("name"),
+    supabase.from("referees").select("id, name, color, photo_url").order("name"),
     supabase.from("teams").select("id, name, color, photo_url").order("name"),
     canManage ? fetchConfirmacionesRecientes(supabase) : Promise.resolve([]),
     canManage

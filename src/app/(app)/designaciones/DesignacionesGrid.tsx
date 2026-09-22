@@ -53,7 +53,7 @@ export default function DesignacionesGrid({
   exclusionesPorArbitro,
 }: {
   designaciones: DesignacionFull[];
-  referees: { id: string; name: string }[];
+  referees: { id: string; name: string; color: string; photo_url: string | null }[];
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
   onEdit: (d: DesignacionFull) => void;
   sortOrder: "asc" | "desc";
@@ -219,6 +219,21 @@ export function TeamBadge({ name, teams }: { name: string; teams: { name: string
   return <ColorBadge name={name} color={match?.color ?? colorForTeam(name)} photoUrl={match?.photo_url} size={18} />;
 }
 
+// A diferencia de los equipos, designacion_arbitros sí tiene FK a referees,
+// así que acá el match es directo por id (sin necesidad de matchear nombre).
+export function RefereeBadge({
+  refereeId,
+  refereeName,
+  referees,
+}: {
+  refereeId: string;
+  refereeName: string;
+  referees: { id: string; color: string; photo_url: string | null }[];
+}) {
+  const match = referees.find((r) => r.id === refereeId);
+  return <ColorBadge name={refereeName} color={match?.color ?? colorForTeam(refereeName)} photoUrl={match?.photo_url} size={18} />;
+}
+
 function DesignacionRow({
   d,
   referees,
@@ -229,7 +244,7 @@ function DesignacionRow({
   info,
 }: {
   d: DesignacionFull;
-  referees: { id: string; name: string }[];
+  referees: { id: string; name: string; color: string; photo_url: string | null }[];
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
   onEdit: (d: DesignacionFull) => void;
   confirmados: Confirmacion[];
@@ -347,16 +362,21 @@ function DesignacionRow({
       </td>
       {[1, 2, 3].map((posicion) => (
         <td key={posicion} className="px-2.5 py-2 whitespace-nowrap">
-          <RefereeCombobox
-            key={arbitro(posicion)}
-            listId={`arb-${d.id}-${posicion}`}
-            referees={referees}
-            value={arbitro(posicion)}
-            onChange={(refereeId) => onArbitroChange(posicion as 1 | 2 | 3, refereeId)}
-            className="min-w-[130px]"
-            disabled={disabled}
-            info={info}
-          />
+          <div className="flex items-center gap-1.5">
+            {arbitroFull(posicion) && (
+              <RefereeBadge refereeId={arbitroFull(posicion)!.refereeId} refereeName={arbitroFull(posicion)!.refereeName} referees={referees} />
+            )}
+            <RefereeCombobox
+              key={arbitro(posicion)}
+              listId={`arb-${d.id}-${posicion}`}
+              referees={referees}
+              value={arbitro(posicion)}
+              onChange={(refereeId) => onArbitroChange(posicion as 1 | 2 | 3, refereeId)}
+              className="min-w-[130px]"
+              disabled={disabled}
+              info={info}
+            />
+          </div>
           {arbitroFull(posicion) && (
             <div className="text-[10.5px] text-text-faint mt-0.5">{money.format(arbitroFull(posicion)!.monto)}</div>
           )}

@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { confirmDesignacion } from "./actions";
-import { money, TeamBadge } from "./DesignacionesGrid";
+import { money, TeamBadge, RefereeBadge } from "./DesignacionesGrid";
 import PartidosExternos from "./PartidosExternos";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, ViaticoLocalidad } from "./queries";
 
@@ -13,6 +13,7 @@ export default function MisDesignacionesView({
   companeros,
   confirmaciones,
   teams,
+  referees,
   partidosExternos,
 }: {
   designaciones: DesignacionFull[];
@@ -21,6 +22,7 @@ export default function MisDesignacionesView({
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
+  referees: { id: string; color: string; photo_url: string | null }[];
   partidosExternos: PartidoExterno[];
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
@@ -74,6 +76,7 @@ export default function MisDesignacionesView({
               companeros={companeros[d.id] ?? []}
               confirmados={confirmaciones[d.id] ?? []}
               teams={teams}
+              referees={referees}
             />
           ))}
         </div>
@@ -92,6 +95,7 @@ function DesignacionCard({
   companeros,
   confirmados,
   teams,
+  referees,
 }: {
   d: DesignacionFull;
   miaMonto: number;
@@ -100,6 +104,7 @@ function DesignacionCard({
   companeros: Companero[];
   confirmados: Confirmacion[];
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
+  referees: { id: string; color: string; photo_url: string | null }[];
 }) {
   const [isPending, startTransition] = useTransition();
   const yoConfirme = confirmados.some((c) => c.refereeId === myRefereeId);
@@ -138,8 +143,17 @@ function DesignacionCard({
           </p>
         )}
         {companeros.filter((c) => c.refereeId !== myRefereeId).length > 0 && (
-          <p className="text-[12px] text-text-dim m-0 mt-1">
-            Con {companeros.filter((c) => c.refereeId !== myRefereeId).map((c) => c.refereeName).join(" y ")}
+          <p className="text-[12px] text-text-dim m-0 mt-1 flex items-center gap-1 flex-wrap">
+            Con
+            {companeros
+              .filter((c) => c.refereeId !== myRefereeId)
+              .map((c, i, arr) => (
+                <span key={c.refereeId} className="flex items-center gap-1">
+                  <RefereeBadge refereeId={c.refereeId} refereeName={c.refereeName} referees={referees} />
+                  {c.refereeName}
+                  {i < arr.length - 1 && <span>y</span>}
+                </span>
+              ))}
           </p>
         )}
         {puedeConfirmar && (
