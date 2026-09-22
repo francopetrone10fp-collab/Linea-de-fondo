@@ -477,6 +477,12 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["push_subscriptions"]["Insert"]>;
         Relationships: [];
       };
+      referee_club_exclusions: {
+        Row: { referee_id: string; team_id: string; created_at: string };
+        Insert: { referee_id: string; team_id: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["referee_club_exclusions"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

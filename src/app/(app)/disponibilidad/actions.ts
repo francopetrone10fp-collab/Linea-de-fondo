@@ -73,3 +73,34 @@ export async function clearDisponibilidadDiaArbitro(refereeId: string, fecha: st
   revalidatePath("/designaciones");
   return { ok: true as const };
 }
+
+// Clubes que el árbitro no puede dirigir: preferencia estable (no por
+// semana), que después bloquea su designación a ese club (ver
+// setDesignacionArbitro en designaciones/actions.ts).
+export async function addClubExclusion(teamId: string) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("referee_club_exclusions").insert({ referee_id: profile.referee_id, team_id: teamId });
+  if (error) return { ok: false as const, error: "No se pudo guardar" };
+  revalidatePath("/disponibilidad");
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
+export async function removeClubExclusion(teamId: string) {
+  const profile = await requireProfile();
+  if (!profile.referee_id) return { ok: false as const, error: "Tu perfil no está vinculado a un árbitro" };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("referee_club_exclusions")
+    .delete()
+    .eq("referee_id", profile.referee_id)
+    .eq("team_id", teamId);
+  if (error) return { ok: false as const, error: "No se pudo quitar" };
+  revalidatePath("/disponibilidad");
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}

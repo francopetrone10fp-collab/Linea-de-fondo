@@ -32,3 +32,16 @@ export async function fetchDisponibilidad(
   });
   return byReferee;
 }
+
+// Clubes que cada árbitro marcó que no puede dirigir (preferencia estable,
+// no atada a una fecha). RLS ya limita esto a "todas" para coordinador y
+// "las propias" para el resto, así que este mismo fetch sirve para la
+// grilla de designaciones y para "Mi disponibilidad".
+export async function fetchClubExclusiones(supabase: DB): Promise<Record<string, string[]>> {
+  const { data } = await supabase.from("referee_club_exclusions").select("referee_id, team_id");
+  const byReferee: Record<string, string[]> = {};
+  (data ?? []).forEach((row) => {
+    (byReferee[row.referee_id] ??= []).push(row.team_id);
+  });
+  return byReferee;
+}

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { sendPushToProfiles } from "@/lib/push/send";
-import { disponibilidadBlockReason } from "@/lib/constants";
+import { disponibilidadBlockReason, matchTeamByName } from "@/lib/constants";
 import type { Database, DesignacionEstado, Rama, TarifaModo } from "@/lib/database.types";
 
 type DB = Awaited<ReturnType<typeof createClient>>;
@@ -288,6 +288,16 @@ export async function setDesignacionArbitro(designacionId: string, posicion: 1 |
         .maybeSingle();
       const bloqueo = disponibilidadBlockReason(disponibilidad, designacion.fecha, designacion.categoria);
       if (bloqueo) return { ok: false as const, error: bloqueo };
+    }
+
+    const { data: exclusiones } = await supabase.from("referee_club_exclusions").select("team_id").eq("referee_id", refereeId);
+    if (exclusiones && exclusiones.length > 0) {
+      const excludedIds = new Set(exclusiones.map((e) => e.team_id));
+      const { data: teams } = await supabase.from("teams").select("id, name");
+      const clubProhibido = [designacion.equipo_local, designacion.equipo_visitante]
+        .map((nombre) => matchTeamByName(teams ?? [], nombre))
+        .find((t) => t && excludedIds.has(t.id));
+      if (clubProhibido) return { ok: false as const, error: `Este árbitro marcó que no puede dirigir a ${clubProhibido.name}.` };
     }
 
     // Se guarda sin publicar: todavía no le aparece al árbitro en su perfil

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
-import { fetchDisponibilidad } from "./queries";
+import { fetchDisponibilidad, fetchClubExclusiones } from "./queries";
 import { mondayOf } from "@/lib/weekUtils";
 import DisponibilidadView from "./DisponibilidadView";
 
@@ -26,9 +26,11 @@ export default async function DisponibilidadPage({
   const hasta = hastaDate.toISOString().slice(0, 10);
 
   const supabase = await createClient();
-  const [disponibilidadPorArbitro, { data: referees }] = await Promise.all([
+  const [disponibilidadPorArbitro, { data: referees }, { data: teams }, exclusionesPorArbitro] = await Promise.all([
     fetchDisponibilidad(supabase, { desde, hasta }),
     supabase.from("referees").select("id, name").order("name"),
+    supabase.from("teams").select("id, name, color, photo_url").order("name"),
+    fetchClubExclusiones(supabase),
   ]);
 
   return (
@@ -38,6 +40,8 @@ export default async function DisponibilidadPage({
       referees={referees ?? []}
       canManage={canManage}
       myRefereeId={profile.referee_id}
+      teams={teams ?? []}
+      exclusionesPorArbitro={exclusionesPorArbitro}
     />
   );
 }

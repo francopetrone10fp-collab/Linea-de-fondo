@@ -31,6 +31,7 @@ export default function DesignacionesView({
   customRange,
   confirmacionesRecientes,
   bellSeenAt,
+  exclusionesPorArbitro,
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
@@ -48,6 +49,7 @@ export default function DesignacionesView({
   customRange: boolean;
   confirmacionesRecientes: ConfirmacionEvento[];
   bellSeenAt: string | null;
+  exclusionesPorArbitro: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
@@ -388,6 +390,7 @@ export default function DesignacionesView({
           pendingIds={pendingIds}
           assignmentsByReferee={assignmentsByReferee}
           disponibilidadPorArbitro={disponibilidadPorArbitro}
+          exclusionesPorArbitro={exclusionesPorArbitro}
         />
       )}
 

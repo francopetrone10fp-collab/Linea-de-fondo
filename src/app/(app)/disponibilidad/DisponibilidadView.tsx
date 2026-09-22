@@ -8,18 +8,29 @@ import SectionIcon from "@/components/SectionIcon";
 import { addDays, formatWeekRange } from "@/lib/weekUtils";
 import type { DisponibilidadDia } from "./queries";
 
+interface TeamLite {
+  id: string;
+  name: string;
+  color: string;
+  photo_url: string | null;
+}
+
 export default function DisponibilidadView({
   monday,
   disponibilidadPorArbitro,
   referees,
   canManage,
   myRefereeId,
+  teams,
+  exclusionesPorArbitro,
 }: {
   monday: string;
   disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
   referees: { id: string; name: string }[];
   canManage: boolean;
   myRefereeId: string | null;
+  teams: TeamLite[];
+  exclusionesPorArbitro: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"matriz" | "mia">(canManage ? "matriz" : "mia");
@@ -67,7 +78,13 @@ export default function DisponibilidadView({
 
       {(!canManage || tab === "mia") &&
         (myRefereeId ? (
-          <MiDisponibilidadView monday={monday} miDisponibilidad={disponibilidadPorArbitro[myRefereeId] ?? []} isAdmin={canManage} />
+          <MiDisponibilidadView
+            monday={monday}
+            miDisponibilidad={disponibilidadPorArbitro[myRefereeId] ?? []}
+            isAdmin={canManage}
+            teams={teams}
+            misExclusiones={teams.filter((t) => (exclusionesPorArbitro[myRefereeId] ?? []).includes(t.id))}
+          />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">
             Tu perfil todavía no está vinculado a un árbitro, así que no podemos mostrarte tu disponibilidad.

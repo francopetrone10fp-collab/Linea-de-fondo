@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
 import { fetchDesignaciones, fetchTarifas, fetchViaticos, fetchCompaneros, fetchConfirmaciones, fetchConfirmacionesRecientes } from "./queries";
-import { fetchDisponibilidad } from "../disponibilidad/queries";
+import { fetchDisponibilidad, fetchClubExclusiones } from "../disponibilidad/queries";
 import DesignacionesView from "./DesignacionesView";
 
 function monthRange(month: string) {
@@ -41,6 +41,7 @@ export default async function DesignacionesPage({
     { data: teams },
     confirmacionesRecientes,
     { data: profileRow },
+    exclusionesPorArbitro,
   ] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
@@ -59,6 +60,7 @@ export default async function DesignacionesPage({
     canManage
       ? supabase.from("profiles").select("designaciones_bell_seen_at").eq("id", profile.id).single()
       : Promise.resolve({ data: null }),
+    canManage ? fetchClubExclusiones(supabase) : Promise.resolve({}),
   ]);
 
   return (
@@ -79,6 +81,7 @@ export default async function DesignacionesPage({
       customRange={customRange}
       confirmacionesRecientes={confirmacionesRecientes}
       bellSeenAt={profileRow?.designaciones_bell_seen_at ?? null}
+      exclusionesPorArbitro={exclusionesPorArbitro}
     />
   );
 }

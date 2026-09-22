@@ -50,6 +50,7 @@ export default function DesignacionesGrid({
   pendingIds,
   assignmentsByReferee,
   disponibilidadPorArbitro,
+  exclusionesPorArbitro,
 }: {
   designaciones: DesignacionFull[];
   referees: { id: string; name: string }[];
@@ -61,6 +62,7 @@ export default function DesignacionesGrid({
   pendingIds: Set<string>;
   assignmentsByReferee: Map<string, { fecha: string; hora: string | null; designacionId: string }[]>;
   disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
+  exclusionesPorArbitro: Record<string, string[]>;
 }) {
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableWrapRef = useRef<HTMLDivElement>(null);
@@ -141,10 +143,24 @@ export default function DesignacionesGrid({
                   {...(() => {
                     const disabledMap = new Map<string, string>();
                     const infoMap = new Map<string, string>();
+                    // Clubes que el árbitro marcó que no puede dirigir (ver
+                    // Disponibilidad → "Clubes que no dirijo"): se resuelve el
+                    // equipo local/visitante por nombre (Designaciones no tiene
+                    // FK a teams) y se compara contra su lista de exclusiones.
+                    const clubLocal = matchTeamByName(teams, d.equipoLocal);
+                    const clubVisitante = matchTeamByName(teams, d.equipoVisitante);
+                    if (clubLocal || clubVisitante) {
+                      for (const r of referees) {
+                        const excluidos = new Set(exclusionesPorArbitro[r.id] ?? []);
+                        const club = [clubLocal, clubVisitante].find((c) => c && excluidos.has(c.id));
+                        if (club) disabledMap.set(r.id, `No puede dirigir a ${club.name}.`);
+                      }
+                    }
                     // Disponibilidad: el árbitro marcó que no puede ese día, o
                     // (fin de semana) marcó otras categorías pero no esta.
                     if (d.fecha) {
                       for (const r of referees) {
+                        if (disabledMap.has(r.id)) continue;
                         const fila = (disponibilidadPorArbitro[r.id] ?? []).find((x) => x.fecha === d.fecha);
                         const motivo = disponibilidadBlockReason(fila ?? null, d.fecha, d.categoria);
                         if (motivo) disabledMap.set(r.id, motivo);
@@ -160,7 +176,7 @@ export default function DesignacionesGrid({
                         // aviso informativo, sin impedir la designación.
                         const mismaHora = d.hora && otros.some((r) => r.fecha === d.fecha && r.hora === d.hora);
                         if (mismaHora) {
-                          disabledMap.set(refereeId, "Ya está designado a esa hora en otro partido.");
+                          if (!disabledMap.has(refereeId)) disabledMap.set(refereeId, "Ya está designado a esa hora en otro partido.");
                           continue;
                         }
                         const mismoDiaOtraHora = otros.filter((r) => r.fecha === d.fecha);

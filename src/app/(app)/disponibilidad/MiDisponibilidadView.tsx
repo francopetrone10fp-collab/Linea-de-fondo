@@ -2,18 +2,30 @@
 
 import { useState, useTransition } from "react";
 import { setDisponibilidadDia, clearDisponibilidadDia } from "./actions";
+import ClubExclusiones from "./ClubExclusiones";
 import { weekDates, isWeekend, isSunday, formatDayLabel, mondayOf } from "@/lib/weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, CATEGORIAS_DISPONIBILIDAD_SABADO, DIAS_SEMANA } from "@/lib/constants";
 import type { DisponibilidadDia } from "./queries";
+
+interface TeamLite {
+  id: string;
+  name: string;
+  color: string;
+  photo_url: string | null;
+}
 
 export default function MiDisponibilidadView({
   monday,
   miDisponibilidad,
   isAdmin,
+  teams,
+  misExclusiones,
 }: {
   monday: string;
   miDisponibilidad: DisponibilidadDia[];
   isAdmin: boolean;
+  teams: TeamLite[];
+  misExclusiones: TeamLite[];
 }) {
   const porFecha = new Map(miDisponibilidad.map((d) => [d.fecha, d]));
   const dates = weekDates(monday);
@@ -27,6 +39,7 @@ export default function MiDisponibilidadView({
 
   return (
     <div className="flex flex-col gap-2.5">
+      <ClubExclusiones teams={teams} exclusions={misExclusiones} />
       {readOnly && (
         <div className="bg-surface-2 border border-line rounded-xl px-4 py-3 text-[13px] text-text-dim mb-1">
           Esta semana ya pasó, así que no se puede modificar.
