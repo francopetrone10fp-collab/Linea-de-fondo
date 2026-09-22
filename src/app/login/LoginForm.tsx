@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { checkNameStatus, signIn, signUp } from "./actions";
+import { ColorBadge } from "@/components/Badge";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { Role } from "@/lib/database.types";
 
@@ -30,6 +31,7 @@ export default function LoginForm() {
   const [knownUserExists, setKnownUserExists] = useState<boolean | null>(null);
   const [assignedRole, setAssignedRole] = useState<Role | null>(null);
   const [existingRoleLabel, setExistingRoleLabel] = useState<string | null>(null);
+  const [refereePhoto, setRefereePhoto] = useState<{ color: string; photoUrl: string | null } | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ name: string; roleLabel: string } | null>(null);
@@ -43,6 +45,7 @@ export default function LoginForm() {
       if (res.knownUserExists === true) {
         setKnownUserExists(true);
         setExistingRoleLabel(ROLE_LABELS[res.existingRole!]);
+        setRefereePhoto(res.refereePhoto ?? null);
       } else if (res.knownUserExists === false) {
         setKnownUserExists(false);
         setAssignedRole(res.assignedRole ?? null);
@@ -62,6 +65,7 @@ export default function LoginForm() {
       setAssignedRole(null);
       setExistingRoleLabel(null);
       setSelectedRole(null);
+      setRefereePhoto(null);
     }
   }
 
@@ -141,6 +145,12 @@ export default function LoginForm() {
             className="w-full"
           />
         </Field>
+
+        {knownUserExists === true && refereePhoto && (
+          <div className="flex justify-center mb-3.5">
+            <ColorBadge name={name.trim()} color={refereePhoto.color} photoUrl={refereePhoto.photoUrl} size={76} />
+          </div>
+        )}
 
         <Field label="Clave">
           <input

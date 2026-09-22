@@ -14,15 +14,25 @@ export async function checkNameStatus(name: string) {
   const admin = createServiceRoleClient();
   const { data: existing } = await admin
     .from("profiles")
-    .select("name, role")
+    .select("name, role, referee_id")
     .ilike("name", trimmed)
     .maybeSingle();
 
   if (existing) {
+    // Mismo criterio que en Árbitros/Equipos: la foto "oficial" de un
+    // árbitro vive en referees (la que carga el coordinador ahí), no la del
+    // perfil — así el login muestra la misma cara que ya se ve en toda la
+    // app, se haya logueado esa persona alguna vez o no.
+    let refereePhoto: { color: string; photoUrl: string | null } | null = null;
+    if (existing.role === "arbitro" && existing.referee_id) {
+      const { data: referee } = await admin.from("referees").select("color, photo_url").eq("id", existing.referee_id).maybeSingle();
+      if (referee) refereePhoto = { color: referee.color, photoUrl: referee.photo_url };
+    }
     return {
       knownUserExists: true as const,
       existingName: existing.name as string,
       existingRole: existing.role as Role,
+      refereePhoto,
     };
   }
 
