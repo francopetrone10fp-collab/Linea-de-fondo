@@ -4,8 +4,16 @@ import { useMemo, useState, useTransition } from "react";
 import { weekDates, isWeekend, isSunday, formatDayLabel } from "@/lib/weekUtils";
 import { CATEGORIAS_DISPONIBILIDAD, CATEGORIAS_DISPONIBILIDAD_SABADO, DIAS_SEMANA } from "@/lib/constants";
 import { downloadExcel, type ExcelCellStyle } from "@/lib/excel";
+import { ColorBadge } from "@/components/Badge";
 import { setDisponibilidadDiaArbitro, clearDisponibilidadDiaArbitro } from "./actions";
 import type { DisponibilidadDia } from "./queries";
+
+interface TeamLite {
+  id: string;
+  name: string;
+  color: string;
+  photo_url: string | null;
+}
 
 // Mismo criterio que <DayCell> pero como texto plano, para el export.
 function cellText(row: DisponibilidadDia | null, weekend: boolean): string {
@@ -30,11 +38,16 @@ export default function DisponibilidadMatrix({
   monday,
   referees,
   disponibilidadPorArbitro,
+  teams,
+  exclusionesPorArbitro,
 }: {
   monday: string;
   referees: { id: string; name: string }[];
   disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
+  teams: TeamLite[];
+  exclusionesPorArbitro: Record<string, string[]>;
 }) {
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const [search, setSearch] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [editando, setEditando] = useState<{ refereeId: string; refereeName: string; fecha: string } | null>(null);
@@ -65,12 +78,15 @@ export default function DisponibilidadMatrix({
   function exportExcel() {
     const columns = [
       { header: "Árbitro", widthPx: 200 },
+      { header: "Clubes excluidos", widthPx: 200 },
       ...DIAS_SEMANA.map((d, i) => ({ header: d.label, widthPx: i >= 5 ? 220 : 110 })),
     ];
     const rows = filtered.map((r) => {
       const porFecha = new Map((disponibilidadPorArbitro[r.id] ?? []).map((d) => [d.fecha, d]));
+      const excluidos = (exclusionesPorArbitro[r.id] ?? []).map((id) => teamsById.get(id)?.name).filter((n): n is string => !!n);
       return [
         { value: r.name, style: null },
+        { value: excluidos.join(", "), style: null },
         ...dates.map((fecha) => cellExcel(porFecha.get(fecha) ?? null, isWeekend(fecha))),
       ];
     });
@@ -116,6 +132,7 @@ export default function DisponibilidadMatrix({
               <th className="text-left font-semibold px-2.5 py-2 border-b border-line whitespace-nowrap sticky left-0 bg-surface-2">
                 Árbitro
               </th>
+              <th className="text-left font-semibold px-2.5 py-2 border-b border-line whitespace-nowrap">Clubes excluidos</th>
               {dates.map((fecha, i) => (
                 <th key={fecha} className="text-left font-semibold px-2.5 py-2 border-b border-line whitespace-nowrap">
                   {DIAS_SEMANA[i].label}
@@ -126,9 +143,27 @@ export default function DisponibilidadMatrix({
           <tbody>
             {filtered.map((r) => {
               const rows = new Map((disponibilidadPorArbitro[r.id] ?? []).map((d) => [d.fecha, d]));
+              const excluidos = (exclusionesPorArbitro[r.id] ?? []).map((id) => teamsById.get(id)).filter((t): t is TeamLite => !!t);
               return (
                 <tr key={r.id} className="border-b border-line last:border-b-0">
                   <td className="px-2.5 py-2 whitespace-nowrap font-medium sticky left-0 bg-surface">{r.name}</td>
+                  <td className="px-2.5 py-2 align-top">
+                    {excluidos.length === 0 ? (
+                      <span className="text-text-faint">—</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1 max-w-[220px]">
+                        {excluidos.map((t) => (
+                          <span
+                            key={t.id}
+                            className="flex items-center gap-1 bg-surface-2 border border-line rounded-full pl-1 pr-2 py-0.5 text-[10.5px] whitespace-nowrap"
+                          >
+                            <ColorBadge name={t.name} color={t.color} photoUrl={t.photo_url} size={14} />
+                            {t.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                   {dates.map((fecha) => (
                     <td key={fecha} className="px-2.5 py-2 whitespace-nowrap align-top">
                       <button
@@ -146,7 +181,7 @@ export default function DisponibilidadMatrix({
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-2.5 py-4 text-text-faint text-center">
+                <td colSpan={9} className="px-2.5 py-4 text-text-faint text-center">
                   No hay árbitros que coincidan con el filtro.
                 </td>
               </tr>

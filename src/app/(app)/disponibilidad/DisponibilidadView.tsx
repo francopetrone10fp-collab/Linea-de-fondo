@@ -92,7 +92,13 @@ export default function DisponibilidadView({
         ))}
 
       {canManage && tab === "matriz" && (
-        <DisponibilidadMatrix monday={monday} referees={referees} disponibilidadPorArbitro={disponibilidadPorArbitro} />
+        <DisponibilidadMatrix
+          monday={monday}
+          referees={referees}
+          disponibilidadPorArbitro={disponibilidadPorArbitro}
+          teams={teams}
+          exclusionesPorArbitro={exclusionesPorArbitro}
+        />
       )}
     </div>
   );
