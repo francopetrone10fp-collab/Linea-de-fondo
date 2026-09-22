@@ -19,12 +19,14 @@ export async function checkNameStatus(name: string) {
     .maybeSingle();
 
   if (existing) {
-    // Mismo criterio que en Árbitros/Equipos: la foto "oficial" de un
-    // árbitro vive en referees (la que carga el coordinador ahí), no la del
-    // perfil — así el login muestra la misma cara que ya se ve en toda la
-    // app, se haya logueado esa persona alguna vez o no.
+    // Mismo criterio que en Árbitros/Equipos: la foto "oficial" vive en
+    // referees (la que carga el coordinador ahí), no la del perfil — así el
+    // login muestra la misma cara que ya se ve en toda la app, se haya
+    // logueado esa persona alguna vez o no. No se restringe por rol: un
+    // coordinador/instructor que también dirige tiene referee_id igual que
+    // cualquier árbitro.
     let refereePhoto: { color: string; photoUrl: string | null } | null = null;
-    if (existing.role === "arbitro" && existing.referee_id) {
+    if (existing.referee_id) {
       const { data: referee } = await admin.from("referees").select("color, photo_url").eq("id", existing.referee_id).maybeSingle();
       if (referee) refereePhoto = { color: referee.color, photoUrl: referee.photo_url };
     }
