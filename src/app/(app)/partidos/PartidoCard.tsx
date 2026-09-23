@@ -156,7 +156,18 @@ export function PartidoCard({
             </span>
           )}
         </div>
-        <p className="text-[12.5px] text-text-dim mt-2">{refereesText(p)}</p>
+        {p.referees.length > 0 ? (
+          <div className="flex items-center gap-x-2.5 gap-y-1 flex-wrap mt-2">
+            {p.referees.map((r) => (
+              <span key={r.id} className="flex items-center gap-1 text-[12.5px] text-text-dim">
+                <ColorBadge name={r.name} color={r.color} photoUrl={r.photo_url} size={16} />
+                {r.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[12.5px] text-text-dim mt-2">{refereesText(p)}</p>
+        )}
         {p.notes && <p className="text-[12.5px] text-text-faint mt-1">{truncateText(p.notes, 90)}</p>}
         <div className="mt-2">
           <EvalSummary counts={evalCounts} pendingCount={pendingCount} />

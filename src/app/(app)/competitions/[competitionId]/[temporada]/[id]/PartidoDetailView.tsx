@@ -143,7 +143,19 @@ export default function PartidoDetailView({
             {partido.category ? ` · ${partido.category.name}` : ""}
             {partido.competition ? ` · ${partido.competition.name}` : ""}
           </p>
-          <p className="text-text-dim text-[13px] m-0">Árbitros: {refereesText(partido)}</p>
+          {partido.referees.length > 0 ? (
+            <div className="flex items-center gap-x-2.5 gap-y-1 flex-wrap">
+              <span className="text-text-dim text-[13px]">Árbitros:</span>
+              {partido.referees.map((r) => (
+                <span key={r.id} className="flex items-center gap-1 text-text-dim text-[13px]">
+                  <ColorBadge name={r.name} color={r.color} photoUrl={r.photo_url} size={18} />
+                  {r.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-text-dim text-[13px] m-0">Árbitros: {refereesText(partido)}</p>
+          )}
         </div>
         {canEvaluate && (
           <div className="flex gap-2">
