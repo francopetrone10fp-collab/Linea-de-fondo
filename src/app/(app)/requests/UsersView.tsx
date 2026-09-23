@@ -3,8 +3,10 @@
 import { useMemo, useState, useTransition } from "react";
 import { Empty } from "@/app/(app)/teams/TeamsView";
 import { ROLE_LABELS } from "@/lib/constants";
-import { linkProfileReferee, resetProfilePassword } from "./actions";
+import { linkProfileReferee, resetProfilePassword, updateProfileRole } from "./actions";
 import type { Role } from "@/lib/database.types";
+
+const ROLES: Role[] = ["coordinador", "instructor", "arbitro"];
 
 interface UserProfile {
   id: string;
@@ -76,9 +78,13 @@ function UserRow({
 }) {
   const [refereeId, setRefereeId] = useState(user.referee_id ?? "");
   const [saved, setSaved] = useState(false);
+  const [role, setRole] = useState<Role>(user.role);
+  const [roleSaved, setRoleSaved] = useState(false);
+  const [roleError, setRoleError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const dirty = refereeId !== (user.referee_id ?? "");
+  const roleDirty = role !== user.role;
 
   function onSaveReferee() {
     setSaved(false);
@@ -88,11 +94,49 @@ function UserRow({
     });
   }
 
+  function onSaveRole() {
+    setRoleSaved(false);
+    setRoleError(null);
+    startTransition(async () => {
+      const res = await updateProfileRole(user.id, role);
+      if (res.ok) setRoleSaved(true);
+      else setRoleError(res.error);
+    });
+  }
+
   return (
     <div className="bg-surface border border-line rounded-[11px] px-4 py-3.5 flex items-center gap-3.5 flex-wrap">
       <div className="min-w-[140px]">
         <div className="font-semibold text-[14px]">{user.name}</div>
         <div className="text-[11.5px] text-text-faint">{ROLE_LABELS[user.role]}</div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-[11.5px] text-text-faint">Rol:</label>
+        <select
+          value={role}
+          onChange={(e) => {
+            setRole(e.target.value as Role);
+            setRoleSaved(false);
+            setRoleError(null);
+          }}
+          className="min-w-[150px]"
+        >
+          {ROLES.map((r) => (
+            <option key={r} value={r}>
+              {ROLE_LABELS[r]}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={onSaveRole}
+          disabled={!roleDirty || isPending}
+          className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[12.5px] px-3 py-2"
+        >
+          Guardar
+        </button>
+        {roleSaved && <span className="text-[11.5px] text-relevant-text">Guardado ✓</span>}
+        {roleError && <span className="text-[11.5px] text-bad-text">{roleError}</span>}
       </div>
 
       <div className="flex items-center gap-2 ml-auto">

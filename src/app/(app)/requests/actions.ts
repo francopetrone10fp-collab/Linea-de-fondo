@@ -51,6 +51,44 @@ export async function rejectRequest(profileId: string) {
   return { ok: true as const };
 }
 
+// Cambia el rol de un perfil ya aprobado (ej: ascender un árbitro a
+// Coordinador General). Si pasa a árbitro y todavía no tiene ficha
+// vinculada, se la crea/vincula igual que al aprobar una solicitud nueva.
+export async function updateProfileRole(profileId: string, role: Role) {
+  const me = await requireProfile();
+  if (!isCoordinador(me)) return { ok: false as const, error: "No autorizado" };
+  if (profileId === me.id && role !== "coordinador") {
+    return { ok: false as const, error: "No podés sacarte tu propio rol de coordinador." };
+  }
+
+  const admin = createServiceRoleClient();
+  const { data: target } = await admin.from("profiles").select("id, name, referee_id").eq("id", profileId).single();
+  if (!target) return { ok: false as const, error: "Ese perfil ya no existe" };
+
+  const { error } = await admin.from("profiles").update({ role }).eq("id", profileId);
+  if (error) return { ok: false as const, error: "No se pudo cambiar el rol" };
+
+  if (role === "arbitro" && !target.referee_id) {
+    const slug = slugKey(target.name);
+    const { data: existingReferees } = await admin.from("referees").select("id, name");
+    const existing = (existingReferees ?? []).find((r: { id: string; name: string }) => slugKey(r.name) === slug);
+    let refereeId = existing?.id as string | undefined;
+    if (!refereeId) {
+      const { data: created } = await admin
+        .from("referees")
+        .insert({ name: target.name, color: colorForTeam(target.name), created_by: profileId })
+        .select("id")
+        .single();
+      refereeId = created?.id;
+    }
+    if (refereeId) await admin.from("profiles").update({ referee_id: refereeId }).eq("id", profileId);
+  }
+
+  revalidatePath("/requests");
+  revalidatePath("/referees");
+  return { ok: true as const };
+}
+
 // Vincula (o desvincula) el perfil de un Coordinador/Instructor con una
 // ficha de árbitro ya existente. Hace falta para cuando alguien con esos
 // roles también arbitra partidos: sin este vínculo no puede ver "sus"
