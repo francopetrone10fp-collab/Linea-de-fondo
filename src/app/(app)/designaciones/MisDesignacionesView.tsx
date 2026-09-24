@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { confirmDesignacion } from "./actions";
 import { money, TeamBadge, RefereeBadge } from "./DesignacionesGrid";
 import PartidosExternos from "./PartidosExternos";
+import { matchCtReferee } from "@/lib/constants";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, ViaticoLocalidad } from "./queries";
 
 export default function MisDesignacionesView({
@@ -22,7 +23,7 @@ export default function MisDesignacionesView({
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
-  referees: { id: string; color: string; photo_url: string | null }[];
+  referees: { id: string; name: string; color: string; photo_url: string | null }[];
   partidosExternos: PartidoExterno[];
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
@@ -30,7 +31,13 @@ export default function MisDesignacionesView({
     .map((d) => ({ d, mia: d.arbitros.find((a) => a.refereeId === myRefereeId) }))
     .filter((x): x is { d: DesignacionFull; mia: NonNullable<(typeof x)["mia"]> } => !!x.mia);
 
-  const total = mias.reduce((sum, x) => sum + x.mia.monto, 0);
+  // Partidos donde además (o en cambio) ofició de comisionado técnico —
+  // solo cuenta si el nombre cargado como CT matchea con este árbitro (ver
+  // matchCtReferee: por ahora, el único caso real es Zucchio).
+  const comoCt = designaciones.filter((d) => d.ctNombre && d.ctMonto && matchCtReferee(referees, d.ctNombre)?.id === myRefereeId);
+  const totalCt = comoCt.reduce((sum, d) => sum + (d.ctMonto ?? 0), 0);
+
+  const total = mias.reduce((sum, x) => sum + x.mia.monto, 0) + totalCt;
   // Mismo criterio que puedeConfirmar más abajo: un partido ya jugado o
   // suspendido no tiene botón de confirmar, así que tampoco puede contar acá
   // como "pendiente" (si no, el cartel de arriba promete algo que la tarjeta
@@ -48,7 +55,10 @@ export default function MisDesignacionesView({
   return (
     <div>
       <div className="bg-surface-2 border border-line rounded-xl px-4 py-3 mb-4 flex items-center justify-between flex-wrap gap-2">
-        <span className="text-[13px] text-text-dim">Total del mes ({mias.length} partido{mias.length === 1 ? "" : "s"})</span>
+        <span className="text-[13px] text-text-dim">
+          Total del mes ({mias.length} partido{mias.length === 1 ? "" : "s"}
+          {totalCt > 0 && ` + ${money.format(totalCt)} como comisionado técnico en ${comoCt.length}`})
+        </span>
         {pendientes > 0 && (
           <span className="text-[12px] font-semibold text-amber-text bg-amber-bg rounded-full px-2.5 py-1">
             {pendientes} partido{pendientes === 1 ? "" : "s"} esperando tu confirmación

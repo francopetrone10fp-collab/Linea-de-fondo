@@ -321,6 +321,26 @@ export function matchTeamByName<T extends { name: string }>(teams: T[], name: st
   return undefined;
 }
 
+// El comisionado técnico de una designación es texto libre (igual que
+// equipo local/visitante), así que casi nunca matchea el nombre completo de
+// un árbitro. Por ahora el único caso real es Olga Silvia Zucchio, que
+// además de comisionar también dirige — confirmado a mano, no se adivina.
+const CT_REFEREE_ALIASES: Record<string, string> = {
+  zucchio: "Olga Silvia Zucchio",
+};
+
+// Para saber si el monto que cobró un comisionado técnico tiene que sumarse
+// al total de algún árbitro (porque esa persona también dirige).
+export function matchCtReferee<T extends { name: string }>(referees: T[], ctNombre: string): T | undefined {
+  const target = slugKey(ctNombre);
+  const alias = CT_REFEREE_ALIASES[target];
+  if (alias) {
+    const aliased = referees.find((r) => slugKey(r.name) === slugKey(alias));
+    if (aliased) return aliased;
+  }
+  return referees.find((r) => slugKey(r.name) === target);
+}
+
 export function colorForTeam(name: string): string {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;

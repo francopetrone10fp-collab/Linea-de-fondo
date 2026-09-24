@@ -9,6 +9,7 @@ import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import NotificationBell from "./NotificationBell";
 import { downloadCsv } from "@/lib/csv";
+import { matchCtReferee } from "@/lib/constants";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, ConfirmacionEvento, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
@@ -248,6 +249,17 @@ export default function DesignacionesView({
         entry.total += a.monto;
         totals.set(a.refereeId, entry);
       });
+      // Comisionado técnico: si la persona designada también dirige (ver
+      // matchCtReferee), lo que cobró como CT suma a su mismo total — no
+      // cuenta como un partido dirigido más, solo el monto.
+      if (d.ctNombre && d.ctMonto) {
+        const ctReferee = matchCtReferee(referees, d.ctNombre);
+        if (ctReferee) {
+          const entry = totals.get(ctReferee.id) ?? { nombre: ctReferee.name, partidos: 0, total: 0 };
+          entry.total += d.ctMonto;
+          totals.set(ctReferee.id, entry);
+        }
+      }
     });
     return Array.from(totals.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
