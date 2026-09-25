@@ -26,6 +26,7 @@ const EVAL_BTN_ACTIVE: Record<Evaluation, string> = {
 
 export default function ClipCard({
   clip,
+  clipNumber,
   canEvaluate,
   canDelete,
   locked,
@@ -37,6 +38,7 @@ export default function ClipCard({
   comments = [],
 }: {
   clip: ClipFull;
+  clipNumber?: number;
   canEvaluate: boolean;
   canDelete: boolean;
   locked: boolean;
@@ -107,6 +109,7 @@ export default function ClipCard({
             )}
           </div>
           <span className="font-mono text-[12px] text-text-dim whitespace-nowrap">
+            {clipNumber != null && `#${clipNumber} · `}
             {clip.quarter} · {clip.clock || "--:--"}
           </span>
         </div>

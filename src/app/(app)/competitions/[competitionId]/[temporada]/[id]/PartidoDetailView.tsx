@@ -249,10 +249,11 @@ export default function PartidoDetailView({
           </p>
         ) : (
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-            {clips.map((c) => (
+            {clips.map((c, i) => (
               <ClipCard
                 key={c.id}
                 clip={c}
+                clipNumber={i + 1}
                 canEvaluate={canEvaluate}
                 canDelete={canDelete}
                 locked={!!partido.finalizedAt}
