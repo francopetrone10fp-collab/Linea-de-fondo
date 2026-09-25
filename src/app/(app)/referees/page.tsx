@@ -7,7 +7,7 @@ export default async function RefereesPage() {
   const supabase = await createClient();
 
   const [{ data: referees }, { data: clips }] = await Promise.all([
-    supabase.from("referees").select("id, name, color, photo_url").order("name"),
+    supabase.from("referees").select("id, name, color, photo_url, telefono").order("name"),
     supabase.from("clips").select("referee_id"),
   ]);
 

@@ -41,7 +41,7 @@ export default function DesignacionesView({
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
   disponibilidadPorArbitro: Record<string, DisponibilidadDia[]>;
-  referees: { id: string; name: string; color: string; photo_url: string | null }[];
+  referees: { id: string; name: string; color: string; photo_url: string | null; telefono: string | null }[];
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
   canManage: boolean;
   myRefereeId: string | null;

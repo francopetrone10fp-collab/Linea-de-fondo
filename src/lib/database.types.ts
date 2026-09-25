@@ -52,6 +52,7 @@ export interface Database {
           name: string;
           color: string;
           photo_url: string | null;
+          telefono: string | null;
           starter: boolean;
           created_by: string | null;
           created_at: string;
@@ -61,6 +62,7 @@ export interface Database {
           name: string;
           color: string;
           photo_url?: string | null;
+          telefono?: string | null;
           starter?: boolean;
           created_by?: string | null;
           created_at?: string;

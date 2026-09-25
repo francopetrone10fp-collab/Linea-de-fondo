@@ -62,6 +62,18 @@ export async function updateRefereePhotoUrl(id: string, url: string) {
   return { ok: true as const };
 }
 
+// Se guarda como dígitos locales (código de área + número, sin 0/15/9), para
+// que armar los links de WhatsApp/llamada en Designaciones sea directo.
+export async function updateRefereeTelefono(id: string, telefono: string) {
+  const digits = telefono.replace(/[^0-9]/g, "");
+  const supabase = await createClient();
+  const { error } = await supabase.from("referees").update({ telefono: digits || null }).eq("id", id);
+  if (error) return { ok: false as const, error: "No se pudo actualizar el teléfono" };
+  revalidatePath("/referees");
+  revalidatePath("/designaciones");
+  return { ok: true as const };
+}
+
 // Fusiona `sourceId` en `targetId`: reasigna todo lo que tenga cargado
 // (clips, partidos de video, designaciones, confirmaciones y
 // disponibilidad) al árbitro correcto, y borra el duplicado.

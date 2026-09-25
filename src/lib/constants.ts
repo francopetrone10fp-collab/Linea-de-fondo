@@ -341,6 +341,17 @@ export function matchCtReferee<T extends { name: string }>(referees: T[], ctNomb
   return referees.find((r) => slugKey(r.name) === target);
 }
 
+// Teléfono guardado como 10 dígitos locales (código de área + número, sin el
+// "9" de WhatsApp ni el "54" de Argentina) — estas dos funciones arman el
+// link completo a partir de eso.
+export function waLink(telefono: string): string {
+  return `https://wa.me/549${telefono.replace(/[^0-9]/g, "")}`;
+}
+
+export function telLink(telefono: string): string {
+  return `tel:+549${telefono.replace(/[^0-9]/g, "")}`;
+}
+
 export function colorForTeam(name: string): string {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import SectionIcon from "@/components/SectionIcon";
 import { Empty, TrashIcon } from "@/app/(app)/teams/TeamsView";
-import { createReferee, deleteReferee, mergeReferees, updateRefereePhotoUrl } from "./actions";
+import { createReferee, deleteReferee, mergeReferees, updateRefereePhotoUrl, updateRefereeTelefono } from "./actions";
 import { createClient } from "@/lib/supabase/client";
 import { resizeImageToBlob } from "@/components/Sidebar";
 
@@ -14,6 +14,7 @@ interface Referee {
   name: string;
   color: string;
   photo_url: string | null;
+  telefono: string | null;
 }
 
 export default function RefereesView({
@@ -35,6 +36,7 @@ export default function RefereesView({
   const [mergeSource, setMergeSource] = useState<Referee | null>(null);
   const [mergeTarget, setMergeTarget] = useState("");
   const [search, setSearch] = useState("");
+  const [editingTelefonoId, setEditingTelefonoId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -80,6 +82,13 @@ export default function RefereesView({
       } catch {
         // ignoramos archivos inválidos
       }
+    });
+  }
+
+  function onSaveTelefono(id: string, value: string) {
+    setEditingTelefonoId(null);
+    startTransition(async () => {
+      await updateRefereeTelefono(id, value);
     });
   }
 
@@ -190,6 +199,29 @@ export default function RefereesView({
                   <div className="text-[11px] text-text-faint">
                     {count} clip{count === 1 ? "" : "s"}
                   </div>
+                  {canChangePhoto &&
+                    (editingTelefonoId === r.id ? (
+                      <input
+                        type="text"
+                        autoFocus
+                        defaultValue={r.telefono ?? ""}
+                        onBlur={(e) => onSaveTelefono(r.id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                          if (e.key === "Escape") setEditingTelefonoId(null);
+                        }}
+                        placeholder="Ej: 3411234567"
+                        className="relative z-10 text-[11px] mt-0.5 px-1 py-0.5 w-full"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditingTelefonoId(r.id)}
+                        className="relative z-10 text-[11px] text-text-faint hover:text-text underline decoration-dotted"
+                      >
+                        {r.telefono || "+ Agregar teléfono"}
+                      </button>
+                    ))}
                 </div>
                 {canDeleteReferees && (
                   <>

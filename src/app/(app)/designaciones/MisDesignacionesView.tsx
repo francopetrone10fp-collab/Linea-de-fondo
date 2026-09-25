@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { confirmDesignacion } from "./actions";
 import { money, TeamBadge, RefereeBadge } from "./DesignacionesGrid";
 import PartidosExternos from "./PartidosExternos";
-import { matchCtReferee } from "@/lib/constants";
+import { matchCtReferee, waLink, telLink } from "@/lib/constants";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, ViaticoLocalidad } from "./queries";
 
 export default function MisDesignacionesView({
@@ -23,7 +23,7 @@ export default function MisDesignacionesView({
   companeros: Record<string, Companero[]>;
   confirmaciones: Record<string, Confirmacion[]>;
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
-  referees: { id: string; name: string; color: string; photo_url: string | null }[];
+  referees: { id: string; name: string; color: string; photo_url: string | null; telefono: string | null }[];
   partidosExternos: PartidoExterno[];
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
@@ -114,7 +114,7 @@ function DesignacionCard({
   companeros: Companero[];
   confirmados: Confirmacion[];
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
-  referees: { id: string; color: string; photo_url: string | null }[];
+  referees: { id: string; color: string; photo_url: string | null; telefono: string | null }[];
 }) {
   const [isPending, startTransition] = useTransition();
   const yoConfirme = confirmados.some((c) => c.refereeId === myRefereeId);
@@ -157,13 +157,36 @@ function DesignacionCard({
             Con
             {companeros
               .filter((c) => c.refereeId !== myRefereeId)
-              .map((c, i, arr) => (
-                <span key={c.refereeId} className="flex items-center gap-1">
-                  <RefereeBadge refereeId={c.refereeId} refereeName={c.refereeName} referees={referees} />
-                  {c.refereeName}
-                  {i < arr.length - 1 && <span>y</span>}
-                </span>
-              ))}
+              .map((c, i, arr) => {
+                const telefono = referees.find((r) => r.id === c.refereeId)?.telefono;
+                return (
+                  <span key={c.refereeId} className="flex items-center gap-1">
+                    <RefereeBadge refereeId={c.refereeId} refereeName={c.refereeName} referees={referees} />
+                    {c.refereeName}
+                    {telefono && (
+                      <>
+                        <a
+                          href={waLink(telefono)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Escribirle a ${c.refereeName} por WhatsApp`}
+                          className="flex-none w-[18px] h-[18px] rounded-full bg-[#25D366] text-white inline-flex items-center justify-center"
+                        >
+                          <WhatsAppIcon />
+                        </a>
+                        <a
+                          href={telLink(telefono)}
+                          title={`Llamar a ${c.refereeName}`}
+                          className="flex-none w-[18px] h-[18px] rounded-full bg-surface-3 text-text-dim inline-flex items-center justify-center"
+                        >
+                          <PhoneIcon />
+                        </a>
+                      </>
+                    )}
+                    {i < arr.length - 1 && <span>y</span>}
+                  </span>
+                );
+              })}
           </p>
         )}
         {puedeConfirmar && (
@@ -190,6 +213,22 @@ function DesignacionCard({
         {d.estado === "suspendido" && <span className="text-[10.5px] text-bad-text">Pendiente de cobro</span>}
       </div>
     </div>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.03c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.13 1.02-2.42.27-.29.58-.36.78-.36.19 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.04.93 1.92 1.22 2.2 1.36.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.18-.28.37-.23.62-.14.25.09 1.6.75 1.87.89.27.14.45.21.52.32.07.12.07.65-.17 1.33z" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
   );
 }
 
