@@ -86,21 +86,13 @@ export async function fetchCompaneros(supabase: DB, designacionIds: string[]): P
   return byDesignacion;
 }
 
-// Trae las designaciones de un rango de fechas, con sus árbitros asignados.
-// Ojo: para un perfil árbitro, RLS ya filtra designacion_arbitros a sus
-// propias filas (no ve el monto de sus colegas), así que este mismo fetch
-// sirve tanto para la grilla del coordinador (ve todo) como para "Mis
-// designaciones" de un árbitro (solo le vuelven sus propias filas).
-export async function fetchDesignaciones(supabase: DB, range: { desde: string; hasta: string }): Promise<DesignacionFull[]> {
-  const { data: rows } = await supabase
-    .from("designaciones")
-    .select("*")
-    .gte("fecha", range.desde)
-    .lte("fecha", range.hasta)
-    .order("fecha", { ascending: true })
-    .order("hora", { ascending: true });
+type DesignacionRow = Database["public"]["Tables"]["designaciones"]["Row"];
 
-  const ids = (rows ?? []).map((r) => r.id);
+// Completa filas crudas de `designaciones` con sus árbitros asignados (o []
+// si ninguno). Compartido por fetchDesignaciones y
+// fetchDesignacionesSinArbitrosFuturas para no duplicar el join.
+async function hydrateDesignaciones(supabase: DB, rows: DesignacionRow[]): Promise<DesignacionFull[]> {
+  const ids = rows.map((r) => r.id);
   const [{ data: arbRows }, { data: referees }] = await Promise.all([
     ids.length > 0
       ? supabase.from("designacion_arbitros").select("*").in("designacion_id", ids)
@@ -121,7 +113,7 @@ export async function fetchDesignaciones(supabase: DB, range: { desde: string; h
     arbByDesignacion.set(a.designacion_id, list);
   });
 
-  return (rows ?? []).map((r) => ({
+  return rows.map((r) => ({
     id: r.id,
     jornada: r.jornada,
     fecha: r.fecha,
@@ -140,6 +132,37 @@ export async function fetchDesignaciones(supabase: DB, range: { desde: string; h
     requiereConfirmacion: r.requiere_confirmacion,
     arbitros: (arbByDesignacion.get(r.id) ?? []).sort((a, b) => a.posicion - b.posicion),
   }));
+}
+
+// Trae las designaciones de un rango de fechas, con sus árbitros asignados.
+// Ojo: para un perfil árbitro, RLS ya filtra designacion_arbitros a sus
+// propias filas (no ve el monto de sus colegas), así que este mismo fetch
+// sirve tanto para la grilla del coordinador (ve todo) como para "Mis
+// designaciones" de un árbitro (solo le vuelven sus propias filas).
+export async function fetchDesignaciones(supabase: DB, range: { desde: string; hasta: string }): Promise<DesignacionFull[]> {
+  const { data: rows } = await supabase
+    .from("designaciones")
+    .select("*")
+    .gte("fecha", range.desde)
+    .lte("fecha", range.hasta)
+    .order("fecha", { ascending: true })
+    .order("hora", { ascending: true });
+  return hydrateDesignaciones(supabase, rows ?? []);
+}
+
+// Partidos futuros (fecha posterior a hoy) que todavía no tienen ningún
+// árbitro asignado — para que el coordinador los vea siempre, sin importar
+// qué mes esté mirando en la grilla (si no, un partido sin designar en un
+// mes que no se está navegando pasa desapercibido).
+export async function fetchDesignacionesSinArbitrosFuturas(supabase: DB, hoy: string): Promise<DesignacionFull[]> {
+  const { data: rows } = await supabase
+    .from("designaciones")
+    .select("*")
+    .gt("fecha", hoy)
+    .order("fecha", { ascending: true })
+    .order("hora", { ascending: true });
+  const full = await hydrateDesignaciones(supabase, rows ?? []);
+  return full.filter((d) => d.arbitros.length === 0);
 }
 
 export interface Confirmacion {

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isCoordinador } from "@/lib/session";
 import {
   fetchDesignaciones,
+  fetchDesignacionesSinArbitrosFuturas,
   fetchTarifas,
   fetchViaticos,
   fetchCompaneros,
@@ -51,6 +52,7 @@ export default async function DesignacionesPage({
     { data: profileRow },
     exclusionesPorArbitro,
     partidosExternos,
+    designacionesSinArbitros,
   ] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
@@ -71,6 +73,7 @@ export default async function DesignacionesPage({
       : Promise.resolve({ data: null }),
     canManage ? fetchClubExclusiones(supabase) : Promise.resolve({}),
     profile.referee_id ? fetchPartidosExternos(supabase, { desde, hasta }) : Promise.resolve([]),
+    canManage ? fetchDesignacionesSinArbitrosFuturas(supabase, new Date().toISOString().slice(0, 10)) : Promise.resolve([]),
   ]);
 
   return (
@@ -93,6 +96,7 @@ export default async function DesignacionesPage({
       bellSeenAt={profileRow?.designaciones_bell_seen_at ?? null}
       exclusionesPorArbitro={exclusionesPorArbitro}
       partidosExternos={partidosExternos}
+      designacionesSinArbitros={designacionesSinArbitros}
     />
   );
 }

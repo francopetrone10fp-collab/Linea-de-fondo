@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import DesignacionesGrid from "./DesignacionesGrid";
+import DesignacionesGrid, { TeamBadge } from "./DesignacionesGrid";
 import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
@@ -34,6 +34,7 @@ export default function DesignacionesView({
   bellSeenAt,
   exclusionesPorArbitro,
   partidosExternos,
+  designacionesSinArbitros,
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
@@ -53,6 +54,7 @@ export default function DesignacionesView({
   bellSeenAt: string | null;
   exclusionesPorArbitro: Record<string, string[]>;
   partidosExternos: PartidoExterno[];
+  designacionesSinArbitros: DesignacionFull[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
@@ -324,6 +326,10 @@ export default function DesignacionesView({
         </div>
       )}
 
+      {tab === "grilla" && canManage && designacionesSinArbitros.length > 0 && (
+        <SinArbitrosAlert designaciones={designacionesSinArbitros} teams={teams} onVerMes={(mes) => router.push(`/designaciones?month=${mes}`)} />
+      )}
+
       {tab !== "aranceles" && (
         <div className="flex items-center gap-2.5 mb-4 flex-wrap">
           <div className="flex items-center gap-1.5 bg-surface-2 border border-line rounded-lg px-1 py-1">
@@ -495,6 +501,64 @@ function RangeFilter({
         <button onClick={onClear} title="Volver a la vista mensual" className="text-text-faint hover:text-text px-1 text-[13px]">
           ×
         </button>
+      )}
+    </div>
+  );
+}
+
+// Aviso siempre visible (no depende del mes/rango que se esté navegando) de
+// partidos futuros sin ningún árbitro asignado todavía, para que no se
+// pierdan de vista si el coordinador está mirando otro mes.
+function SinArbitrosAlert({
+  designaciones,
+  teams,
+  onVerMes,
+}: {
+  designaciones: DesignacionFull[];
+  teams: { name: string; color: string; photo_url: string | null }[];
+  onVerMes: (mes: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
+
+  function formatFecha(iso: string) {
+    const [, m, d] = iso.split("-");
+    return `${d}/${m}`;
+  }
+
+  return (
+    <div className="bg-bad-bg border border-bad rounded-xl mb-4 overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-[13px] font-semibold text-bad-text"
+      >
+        <span>
+          {designaciones.length} partido{designaciones.length === 1 ? "" : "s"} próximo{designaciones.length === 1 ? "" : "s"} sin árbitro
+          asignado
+        </span>
+        <span className="text-[11px] font-normal">{open ? "Ocultar ▲" : "Ver ▼"}</span>
+      </button>
+      {open && (
+        <div className="border-t border-bad divide-y divide-bad">
+          {designaciones.map((d) => (
+            <div key={d.id} className="px-3.5 py-2 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[12.5px] m-0 flex items-center gap-1.5">
+                <span className="text-text-faint">{d.fecha ? formatFecha(d.fecha) : "Sin fecha"}</span>
+                <TeamBadge name={d.equipoLocal} teams={teams} />
+                {d.equipoLocal} <span className="text-text-faint">vs</span> {d.equipoVisitante}
+                <TeamBadge name={d.equipoVisitante} teams={teams} />
+                <span className="text-text-faint">· {d.categoria}</span>
+              </p>
+              {d.fecha && (
+                <button
+                  onClick={() => onVerMes(d.fecha!.slice(0, 7))}
+                  className="text-[12px] font-semibold text-bad-text underline decoration-dotted"
+                >
+                  Ver en la grilla
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
