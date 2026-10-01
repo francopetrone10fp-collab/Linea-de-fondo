@@ -8,7 +8,6 @@ import {
   fetchViaticos,
   fetchCompaneros,
   fetchConfirmaciones,
-  fetchConfirmacionesRecientes,
   fetchPartidosExternos,
 } from "./queries";
 import { fetchDisponibilidad, fetchClubExclusiones } from "../disponibilidad/queries";
@@ -48,8 +47,6 @@ export default async function DesignacionesPage({
     disponibilidadPorArbitro,
     { data: referees },
     { data: teams },
-    confirmacionesRecientes,
-    { data: profileRow },
     exclusionesPorArbitro,
     partidosExternos,
     designacionesSinArbitros,
@@ -67,10 +64,6 @@ export default async function DesignacionesPage({
     fetchDisponibilidad(supabase, { desde, hasta }),
     supabase.from("referees").select("id, name, color, photo_url, telefono").order("name"),
     supabase.from("teams").select("id, name, color, photo_url").order("name"),
-    canManage ? fetchConfirmacionesRecientes(supabase) : Promise.resolve([]),
-    canManage
-      ? supabase.from("profiles").select("designaciones_bell_seen_at").eq("id", profile.id).single()
-      : Promise.resolve({ data: null }),
     canManage ? fetchClubExclusiones(supabase) : Promise.resolve({}),
     profile.referee_id ? fetchPartidosExternos(supabase, { desde, hasta }) : Promise.resolve([]),
     canManage ? fetchDesignacionesSinArbitrosFuturas(supabase, new Date().toISOString().slice(0, 10)) : Promise.resolve([]),
@@ -92,8 +85,6 @@ export default async function DesignacionesPage({
       desde={desde}
       hasta={hasta}
       customRange={customRange}
-      confirmacionesRecientes={confirmacionesRecientes}
-      bellSeenAt={profileRow?.designaciones_bell_seen_at ?? null}
       exclusionesPorArbitro={exclusionesPorArbitro}
       partidosExternos={partidosExternos}
       designacionesSinArbitros={designacionesSinArbitros}

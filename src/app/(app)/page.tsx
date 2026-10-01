@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { requireProfile, getNavBadges } from "@/lib/session";
+import { requireProfile, getNavBadges, canEvaluate } from "@/lib/session";
+import { createClient } from "@/lib/supabase/server";
 import { NAV_ITEMS, initials, navLabel } from "@/lib/constants";
 import { RolePill } from "@/components/Sidebar";
 import SectionIcon, { TILE_COLOR, TILE_STYLES } from "@/components/SectionIcon";
+import { fetchConfirmacionesRecientes } from "./designaciones/queries";
+import { fetchComentariosRecientesDeArbitros } from "./partidos/queries";
+import NotificacionesFeed from "./NotificacionesFeed";
 
 // Pantalla de inicio: antes había que abrir el menú (el hamburger de
 // "☰ Menú" en mobile) para ver a qué secciones tenés acceso. Ahora el menú
@@ -13,6 +17,24 @@ export default async function InicioPage() {
   const profile = await requireProfile();
   const { pendingCount, disponibilidadPendiente } = await getNavBadges(profile);
   const items = NAV_ITEMS.filter((item) => item.view !== "inicio" && (item.roles as readonly string[]).includes(profile.role));
+
+  const puedeVerNotificaciones = canEvaluate(profile);
+  let notificaciones: {
+    confirmaciones: Awaited<ReturnType<typeof fetchConfirmacionesRecientes>>;
+    comentarios: Awaited<ReturnType<typeof fetchComentariosRecientesDeArbitros>>;
+    teams: { name: string; color: string; photo_url: string | null }[];
+    seenAt: string | null;
+  } | null = null;
+  if (puedeVerNotificaciones) {
+    const supabase = await createClient();
+    const [confirmaciones, comentarios, { data: teams }, { data: profileRow }] = await Promise.all([
+      fetchConfirmacionesRecientes(supabase),
+      fetchComentariosRecientesDeArbitros(supabase),
+      supabase.from("teams").select("name, color, photo_url"),
+      supabase.from("profiles").select("notificaciones_home_seen_at").eq("id", profile.id).single(),
+    ]);
+    notificaciones = { confirmaciones, comentarios, teams: teams ?? [], seenAt: profileRow?.notificaciones_home_seen_at ?? null };
+  }
 
   return (
     <div>
@@ -30,6 +52,15 @@ export default async function InicioPage() {
           <RolePill role={profile.role} />
         </div>
       </div>
+
+      {notificaciones && (
+        <NotificacionesFeed
+          confirmaciones={notificaciones.confirmaciones}
+          comentarios={notificaciones.comentarios}
+          teams={notificaciones.teams}
+          seenAt={notificaciones.seenAt}
+        />
+      )}
 
       <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
         {items.map((item) => {

@@ -10,3 +10,11 @@ export async function updateMyPhotoUrl(url: string) {
   await supabase.from("profiles").update({ photo_url: url }).eq("id", profile.id);
   revalidatePath("/", "layout");
 }
+
+// Marca el feed de notificaciones de Inicio (confirmaciones + comentarios de
+// árbitros) como visto, para que no vuelvan a contar como nuevo.
+export async function marcarNotificacionesHomeVistas() {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  await supabase.from("profiles").update({ notificaciones_home_seen_at: new Date().toISOString() }).eq("id", profile.id);
+}

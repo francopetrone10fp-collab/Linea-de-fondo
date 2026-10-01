@@ -7,12 +7,11 @@ import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
-import NotificationBell from "./NotificationBell";
 import { downloadCsv } from "@/lib/csv";
 import { matchCtReferee } from "@/lib/constants";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
-import type { Companero, Confirmacion, ConfirmacionEvento, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
+import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
 
 export default function DesignacionesView({
@@ -30,8 +29,6 @@ export default function DesignacionesView({
   desde,
   hasta,
   customRange,
-  confirmacionesRecientes,
-  bellSeenAt,
   exclusionesPorArbitro,
   partidosExternos,
   designacionesSinArbitros,
@@ -50,8 +47,6 @@ export default function DesignacionesView({
   desde: string;
   hasta: string;
   customRange: boolean;
-  confirmacionesRecientes: ConfirmacionEvento[];
-  bellSeenAt: string | null;
   exclusionesPorArbitro: Record<string, string[]>;
   partidosExternos: PartidoExterno[];
   designacionesSinArbitros: DesignacionFull[];
@@ -291,7 +286,6 @@ export default function DesignacionesView({
         </div>
         {canManage && (
           <div className="flex gap-2 items-start">
-            <NotificationBell eventos={confirmacionesRecientes} seenAt={bellSeenAt} teams={teams} />
             {tab === "grilla" && (
               <>
                 <button

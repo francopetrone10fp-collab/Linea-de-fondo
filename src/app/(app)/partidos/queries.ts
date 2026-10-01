@@ -178,6 +178,92 @@ export async function fetchCommentsForClips(supabase: DB, clipIds: string[]): Pr
   }));
 }
 
+export interface ComentarioEvento {
+  id: string;
+  entityType: "partido" | "clip";
+  authorName: string;
+  text: string;
+  createdAt: string;
+  partidoId: string;
+  competitionSlug: string;
+  temporada: string;
+  equipoLocal: string;
+  equipoVisitante: string;
+  clipTitle: string | null;
+}
+
+// Comentarios recientes de árbitros en partidos/clips, para el feed de
+// notificaciones de Inicio (coordinador/instructor) — a diferencia de
+// fetchComments/fetchCommentsForClips, que traen los comentarios de UN
+// partido o UN set de clips puntual, esto barre todos los recientes y los
+// enriquece con partido/equipos/temporada para armar el link y el texto.
+export async function fetchComentariosRecientesDeArbitros(supabase: DB, limit = 20): Promise<ComentarioEvento[]> {
+  const { data: comments } = await supabase
+    .from("comments")
+    .select("id, entity_type, entity_id, author_name, text, created_at")
+    .eq("author_role", "arbitro")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (!comments || comments.length === 0) return [];
+
+  const clipIds = comments.filter((c) => c.entity_type === "clip").map((c) => c.entity_id);
+  const { data: clips } =
+    clipIds.length > 0
+      ? await supabase.from("clips").select("id, partido_id, title").in("id", clipIds)
+      : { data: [] as { id: string; partido_id: string; title: string }[] };
+  const clipById = new Map((clips ?? []).map((c) => [c.id, c]));
+
+  const partidoIds = Array.from(
+    new Set(
+      comments
+        .map((c) => (c.entity_type === "clip" ? clipById.get(c.entity_id)?.partido_id : c.entity_id))
+        .filter((id): id is string => !!id)
+    )
+  );
+  const { data: partidos } =
+    partidoIds.length > 0
+      ? await supabase
+          .from("partidos")
+          .select("id, temporada, season_id, competition_id, team_local_id, team_visit_id")
+          .in("id", partidoIds)
+      : { data: [] as Database["public"]["Tables"]["partidos"]["Row"][] };
+  const partidoById = new Map((partidos ?? []).map((p) => [p.id, p]));
+
+  const teamIds = Array.from(
+    new Set((partidos ?? []).flatMap((p) => [p.team_local_id, p.team_visit_id]).filter((id): id is string => !!id))
+  );
+  const seasonIds = Array.from(new Set((partidos ?? []).map((p) => p.season_id).filter((id): id is string => !!id)));
+  const [{ data: teams }, { data: seasons }] = await Promise.all([
+    teamIds.length > 0 ? supabase.from("teams").select("id, name") : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    seasonIds.length > 0 ? supabase.from("seasons").select("id, name") : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ]);
+  const teamNameById = new Map((teams ?? []).map((t) => [t.id, t.name]));
+  const seasonNameById = new Map((seasons ?? []).map((s) => [s.id, s.name]));
+
+  return comments
+    .map((c) => {
+      const clip = c.entity_type === "clip" ? clipById.get(c.entity_id) : null;
+      const partidoId = c.entity_type === "clip" ? clip?.partido_id : c.entity_id;
+      if (!partidoId) return null;
+      const partido = partidoById.get(partidoId);
+      if (!partido) return null;
+      return {
+        id: c.id,
+        entityType: c.entity_type,
+        authorName: c.author_name,
+        text: c.text,
+        createdAt: c.created_at,
+        partidoId,
+        competitionSlug: partido.competition_id ?? "sin-competencia",
+        temporada: (partido.season_id ? seasonNameById.get(partido.season_id) : undefined) ?? partido.temporada,
+        equipoLocal: partido.team_local_id ? (teamNameById.get(partido.team_local_id) ?? "—") : "—",
+        equipoVisitante: partido.team_visit_id ? (teamNameById.get(partido.team_visit_id) ?? "—") : "—",
+        clipTitle: clip?.title ?? null,
+      };
+    })
+    .filter((x): x is ComentarioEvento => x !== null);
+}
+
 export async function fetchAllClipsMinimal(supabase: DB) {
   const { data } = await supabase
     .from("clips")
