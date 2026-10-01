@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import SectionIcon from "@/components/SectionIcon";
@@ -38,7 +38,6 @@ export default function RefereesView({
   const [search, setSearch] = useState("");
   const [editingTelefonoId, setEditingTelefonoId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const filteredReferees = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -64,8 +63,7 @@ export default function RefereesView({
     });
   }
 
-  function onPhotoChange(id: string, file: File | undefined) {
-    if (!file) return;
+  function onPhotoChange(id: string, file: File) {
     startTransition(async () => {
       try {
         const blob = await resizeImageToBlob(file, 240);
@@ -172,26 +170,16 @@ export default function RefereesView({
                     className="absolute inset-0 rounded-[11px] hover:border-text-faint"
                   />
                 )}
-                <button
-                  type="button"
-                  disabled={!canChangePhoto}
-                  onClick={() => fileRefs.current[r.id]?.click()}
-                  title={canChangePhoto ? "Cambiar foto" : undefined}
-                  className={`relative z-10 ${canChangePhoto ? "cursor-pointer" : "cursor-default"}`}
-                >
-                  <ColorBadge name={r.name} color={r.color} photoUrl={r.photo_url} size={34} />
-                </button>
-                {canChangePhoto && (
-                  <input
-                    ref={(el) => {
-                      fileRefs.current[r.id] = el;
-                    }}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => onPhotoChange(r.id, e.target.files?.[0])}
+                <div className="relative z-10">
+                  <ColorBadge
+                    name={r.name}
+                    color={r.color}
+                    photoUrl={r.photo_url}
+                    size={34}
+                    editable={canChangePhoto}
+                    onUpload={(file) => onPhotoChange(r.id, file)}
                   />
-                )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {r.name}

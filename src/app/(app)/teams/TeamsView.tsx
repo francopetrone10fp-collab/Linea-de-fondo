@@ -30,14 +30,12 @@ export default function TeamsView({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
   const cancelingRenameRef = useRef(false);
 
-  function onPhotoChange(id: string, file: File | undefined) {
-    if (!file) return;
+  function onPhotoChange(id: string, file: File) {
     startTransition(async () => {
       try {
         const blob = await resizeImageToBlob(file, 240);
@@ -157,26 +155,16 @@ export default function TeamsView({
                     className="absolute inset-0 rounded-[11px] hover:border-text-faint"
                   />
                 )}
-                <button
-                  type="button"
-                  disabled={!canManage}
-                  onClick={() => fileRefs.current[t.id]?.click()}
-                  title={canManage ? "Cambiar logo" : undefined}
-                  className={`relative z-10 flex-none ${canManage ? "cursor-pointer" : "cursor-default"}`}
-                >
-                  <ColorBadge name={t.name} color={t.color} photoUrl={t.photo_url} size={34} />
-                </button>
-                {canManage && (
-                  <input
-                    ref={(el) => {
-                      fileRefs.current[t.id] = el;
-                    }}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => onPhotoChange(t.id, e.target.files?.[0])}
+                <div className="relative z-10 flex-none">
+                  <ColorBadge
+                    name={t.name}
+                    color={t.color}
+                    photoUrl={t.photo_url}
+                    size={34}
+                    editable={canManage}
+                    onUpload={(file) => onPhotoChange(t.id, file)}
                   />
-                )}
+                </div>
                 <div className="min-w-0 flex-1">
                   {renamingId === t.id ? (
                     <div className="relative z-10 flex flex-col gap-1">

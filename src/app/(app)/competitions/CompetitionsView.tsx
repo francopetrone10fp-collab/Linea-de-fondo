@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ColorBadge } from "@/components/Badge";
 import SectionIcon from "@/components/SectionIcon";
@@ -37,10 +37,8 @@ export default function CompetitionsView({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  function onPhotoChange(id: string, file: File | undefined) {
-    if (!file) return;
+  function onPhotoChange(id: string, file: File) {
     startTransition(async () => {
       try {
         const blob = await resizeImageToBlob(file, 240);
@@ -144,26 +142,16 @@ export default function CompetitionsView({
             return (
               <div key={c.id} className="relative bg-surface border border-line rounded-[11px] p-3.5 flex items-center gap-2.5 hover:border-text-faint">
                 <Link href={`/competitions/${c.id}`} aria-label={`Ver partidos de ${c.name}`} className="absolute inset-0 rounded-[11px]" />
-                <button
-                  type="button"
-                  disabled={!canCreateCompetitions}
-                  onClick={() => fileRefs.current[c.id]?.click()}
-                  title={canCreateCompetitions ? "Cambiar logo" : undefined}
-                  className={`relative z-10 flex-none ${canCreateCompetitions ? "cursor-pointer" : "cursor-default"}`}
-                >
-                  <ColorBadge name={c.name} color={c.color} photoUrl={c.photo_url} size={34} />
-                </button>
-                {canCreateCompetitions && (
-                  <input
-                    ref={(el) => {
-                      fileRefs.current[c.id] = el;
-                    }}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => onPhotoChange(c.id, e.target.files?.[0])}
+                <div className="relative z-10 flex-none">
+                  <ColorBadge
+                    name={c.name}
+                    color={c.color}
+                    photoUrl={c.photo_url}
+                    size={34}
+                    editable={canCreateCompetitions}
+                    onUpload={(file) => onPhotoChange(c.id, file)}
                   />
-                )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[13.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {c.name}

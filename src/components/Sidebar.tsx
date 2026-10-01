@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef, useTransition } from "react";
 import { logout } from "@/app/login/actions";
 import { updateMyPhotoUrl } from "@/app/(app)/profile-actions";
+import { updateRefereePhotoUrl } from "@/app/(app)/referees/actions";
 import { createClient } from "@/lib/supabase/client";
 import NotificationToggle from "@/components/NotificationToggle";
 import SectionIcon from "@/components/SectionIcon";
@@ -41,7 +42,12 @@ export default function Sidebar({
         const {
           data: { publicUrl },
         } = supabase.storage.from("avatars").getPublicUrl(path);
-        await updateMyPhotoUrl(`${publicUrl}?v=${Date.now()}`);
+        const url = `${publicUrl}?v=${Date.now()}`;
+        await updateMyPhotoUrl(url);
+        // Si el usuario también es árbitro, la misma foto actualiza de una
+        // vez su foto "oficial" (la que se ve en designaciones, evaluaciones,
+        // etc.) sin que tenga que ir a buscarse en el directorio.
+        if (profile.referee_id) await updateRefereePhotoUrl(profile.referee_id, url);
       } catch {
         // imagen inválida, no hacemos nada
       }
