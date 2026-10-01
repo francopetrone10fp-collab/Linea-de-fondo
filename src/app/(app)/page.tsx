@@ -38,29 +38,31 @@ export default async function InicioPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <span className="w-12 h-12 rounded-full bg-accent text-accent-ink flex items-center justify-center font-semibold text-[15px] font-display flex-none overflow-hidden">
-          {profile.photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.photo_url} alt={profile.name} className="w-full h-full object-cover rounded-full" />
-          ) : (
-            initials(profile.name)
-          )}
-        </span>
-        <div>
-          <h1 className="font-display text-2xl font-semibold leading-tight">Hola, {profile.name.split(" ")[0]}</h1>
-          <RolePill role={profile.role} />
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="w-12 h-12 rounded-full bg-accent text-accent-ink flex items-center justify-center font-semibold text-[15px] font-display flex-none overflow-hidden">
+            {profile.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.photo_url} alt={profile.name} className="w-full h-full object-cover rounded-full" />
+            ) : (
+              initials(profile.name)
+            )}
+          </span>
+          <div>
+            <h1 className="font-display text-2xl font-semibold leading-tight">Hola, {profile.name.split(" ")[0]}</h1>
+            <RolePill role={profile.role} />
+          </div>
         </div>
-      </div>
 
-      {notificaciones && (
-        <NotificacionesFeed
-          confirmaciones={notificaciones.confirmaciones}
-          comentarios={notificaciones.comentarios}
-          teams={notificaciones.teams}
-          seenAt={notificaciones.seenAt}
-        />
-      )}
+        {notificaciones && (
+          <NotificacionesFeed
+            confirmaciones={notificaciones.confirmaciones}
+            comentarios={notificaciones.comentarios}
+            teams={notificaciones.teams}
+            seenAt={notificaciones.seenAt}
+          />
+        )}
+      </div>
 
       <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
         {items.map((item) => {
