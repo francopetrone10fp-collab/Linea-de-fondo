@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { confirmDesignacion } from "./actions";
 import { money, TeamBadge, RefereeBadge } from "./DesignacionesGrid";
 import PartidosExternos from "./PartidosExternos";
@@ -117,6 +118,7 @@ function DesignacionCard({
   referees: { id: string; color: string; photo_url: string | null; telefono: string | null }[];
 }) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const yoConfirme = confirmados.some((c) => c.refereeId === myRefereeId);
   const todosConfirmaron = d.arbitros.length > 0 && d.arbitros.every((a) => confirmados.some((c) => c.refereeId === a.refereeId));
   const puedeConfirmar = d.requiereConfirmacion && d.estado !== "suspendido" && d.estado !== "jugado";
@@ -124,7 +126,15 @@ function DesignacionCard({
   function onConfirmar() {
     startTransition(async () => {
       const res = await confirmDesignacion(d.id);
-      if (!res.ok) alert(res.error);
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      // Forzamos el refresh del lado del cliente: en mobile vimos casos donde
+      // la tarjeta se quedaba mostrando "Confirmar partido" después de un
+      // toque exitoso (la confirmación había quedado guardada en la base,
+      // pero la pantalla no se actualizaba sola) hasta recargar a mano.
+      router.refresh();
     });
   }
 
