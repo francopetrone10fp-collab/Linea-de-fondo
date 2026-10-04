@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import DesignacionesGrid, { TeamBadge } from "./DesignacionesGrid";
 import DesignacionFormModal from "./DesignacionFormModal";
 import TarifasView from "./TarifasView";
@@ -51,7 +50,6 @@ export default function DesignacionesView({
   partidosExternos: PartidoExterno[];
   designacionesSinArbitros: DesignacionFull[];
 }) {
-  const router = useRouter();
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -59,30 +57,31 @@ export default function DesignacionesView({
   const [editing, setEditing] = useState<DesignacionFull | null>(null);
   const [selectedDay, setSelectedDay] = useState("");
 
+  // Navegación de mes/rango/día con recarga completa de página (en vez del
+  // router de Next): vimos casos en producción donde el router del cliente
+  // se quedaba mostrando datos de un período anterior después de cambiar el
+  // filtro, sin importar el dispositivo. Forzar una navegación real
+  // descarta cualquier caché intermedia.
   function changeMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
     const d = new Date(y, m - 1 + delta, 1);
-    router.push(`/designaciones?month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    router.refresh();
+    window.location.href = `/designaciones?month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
 
   function applyRange(nextDesde: string, nextHasta: string) {
     if (nextDesde && nextHasta && nextDesde <= nextHasta) {
-      router.push(`/designaciones?desde=${nextDesde}&hasta=${nextHasta}`);
-      router.refresh();
+      window.location.href = `/designaciones?desde=${nextDesde}&hasta=${nextHasta}`;
     }
   }
 
   function clearRange() {
-    router.push("/designaciones");
-    router.refresh();
+    window.location.href = "/designaciones";
   }
 
   function onDayChange(day: string) {
     setSelectedDay(day);
     if (day && day.slice(0, 7) !== month) {
-      router.push(`/designaciones?month=${day.slice(0, 7)}`);
-      router.refresh();
+      window.location.href = `/designaciones?month=${day.slice(0, 7)}`;
     }
   }
 
@@ -325,7 +324,7 @@ export default function DesignacionesView({
       )}
 
       {tab === "grilla" && canManage && designacionesSinArbitros.length > 0 && (
-        <SinArbitrosAlert designaciones={designacionesSinArbitros} teams={teams} onVerMes={(mes) => router.push(`/designaciones?month=${mes}`)} />
+        <SinArbitrosAlert designaciones={designacionesSinArbitros} teams={teams} onVerMes={(mes) => { window.location.href = `/designaciones?month=${mes}`; }} />
       )}
 
       {tab !== "aranceles" && (

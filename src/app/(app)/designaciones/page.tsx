@@ -13,6 +13,11 @@ import {
 import { fetchDisponibilidad, fetchClubExclusiones } from "../disponibilidad/queries";
 import DesignacionesView from "./DesignacionesView";
 
+// Nunca cachear esta página: el filtro de mes/rango depende enteramente de
+// los searchParams, y vimos casos donde quedaba mostrando datos de un
+// período anterior si algo intermedio la cacheaba.
+export const dynamic = "force-dynamic";
+
 function monthRange(month: string) {
   const [y, m] = month.split("-").map(Number);
   const desde = `${month}-01`;
