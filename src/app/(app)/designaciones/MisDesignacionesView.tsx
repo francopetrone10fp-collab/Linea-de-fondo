@@ -74,7 +74,7 @@ export default function MisDesignacionesView({
       </div>
 
       {mias.length === 0 ? (
-        <p className="text-[12.5px] text-text-faint m-0">Todavía no tenés designaciones cargadas para este mes.</p>
+        <p className="text-[12.5px] text-text-faint m-0">Todavía no tenés designaciones cargadas para este período.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {mias.map(({ d, mia }) => (

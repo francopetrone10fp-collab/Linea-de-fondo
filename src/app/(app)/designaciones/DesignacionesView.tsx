@@ -63,22 +63,26 @@ export default function DesignacionesView({
     const [y, m] = month.split("-").map(Number);
     const d = new Date(y, m - 1 + delta, 1);
     router.push(`/designaciones?month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    router.refresh();
   }
 
   function applyRange(nextDesde: string, nextHasta: string) {
     if (nextDesde && nextHasta && nextDesde <= nextHasta) {
       router.push(`/designaciones?desde=${nextDesde}&hasta=${nextHasta}`);
+      router.refresh();
     }
   }
 
   function clearRange() {
     router.push("/designaciones");
+    router.refresh();
   }
 
   function onDayChange(day: string) {
     setSelectedDay(day);
     if (day && day.slice(0, 7) !== month) {
       router.push(`/designaciones?month=${day.slice(0, 7)}`);
+      router.refresh();
     }
   }
 
