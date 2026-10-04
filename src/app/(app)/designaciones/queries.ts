@@ -87,16 +87,30 @@ export async function fetchCompaneros(supabase: DB, designacionIds: string[]): P
 }
 
 type DesignacionRow = Database["public"]["Tables"]["designaciones"]["Row"];
+type DesignacionArbitroRow = Database["public"]["Tables"]["designacion_arbitros"]["Row"];
+
+// Supabase arma el filtro .in(designacion_id, ids) como una lista larga en
+// la URL del pedido — con un rango de fechas amplio (toda la liga, varias
+// semanas) esa lista puede tener cientos de ids y superar el límite de
+// tamaño de URL, haciendo que el pedido falle en silencio (quedan todas las
+// designaciones sin árbitros asignados en la vista, como si nadie dirigiera
+// nada). Partirlo en tandas chicas evita ese límite.
+async function fetchArbitrosByDesignacionIds(supabase: DB, ids: string[]): Promise<DesignacionArbitroRow[]> {
+  if (ids.length === 0) return [];
+  const CHUNK_SIZE = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += CHUNK_SIZE) chunks.push(ids.slice(i, i + CHUNK_SIZE));
+  const results = await Promise.all(chunks.map((chunk) => supabase.from("designacion_arbitros").select("*").in("designacion_id", chunk)));
+  return results.flatMap((r) => r.data ?? []);
+}
 
 // Completa filas crudas de `designaciones` con sus árbitros asignados (o []
 // si ninguno). Compartido por fetchDesignaciones y
 // fetchDesignacionesSinArbitrosFuturas para no duplicar el join.
 async function hydrateDesignaciones(supabase: DB, rows: DesignacionRow[]): Promise<DesignacionFull[]> {
   const ids = rows.map((r) => r.id);
-  const [{ data: arbRows }, { data: referees }] = await Promise.all([
-    ids.length > 0
-      ? supabase.from("designacion_arbitros").select("*").in("designacion_id", ids)
-      : Promise.resolve({ data: [] as Database["public"]["Tables"]["designacion_arbitros"]["Row"][] }),
+  const [arbRows, { data: referees }] = await Promise.all([
+    fetchArbitrosByDesignacionIds(supabase, ids),
     supabase.from("referees").select("id, name"),
   ]);
   const refereeNameById = new Map((referees ?? []).map((r) => [r.id, r.name]));
@@ -225,10 +239,20 @@ export async function fetchConfirmacionesRecientes(supabase: DB, limit = 20): Pr
 // select directo, sin necesidad de una función SECURITY DEFINER.
 export async function fetchConfirmaciones(supabase: DB, designacionIds: string[]): Promise<Record<string, Confirmacion[]>> {
   if (designacionIds.length === 0) return {};
-  const { data } = await supabase.from("designacion_confirmaciones").select("*").in("designacion_id", designacionIds);
+  // Mismo problema que en hydrateDesignaciones: con un rango amplio, el
+  // .in(designacion_id, ids) puede tener cientos de ids y romper por
+  // tamaño de URL — se pide en tandas chicas.
+  const CHUNK_SIZE = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < designacionIds.length; i += CHUNK_SIZE) chunks.push(designacionIds.slice(i, i + CHUNK_SIZE));
+  const results = await Promise.all(
+    chunks.map((chunk) => supabase.from("designacion_confirmaciones").select("*").in("designacion_id", chunk))
+  );
   const byDesignacion: Record<string, Confirmacion[]> = {};
-  (data ?? []).forEach((c) => {
-    (byDesignacion[c.designacion_id] ??= []).push({ refereeId: c.referee_id, confirmedAt: c.confirmed_at });
+  results.forEach(({ data }) => {
+    (data ?? []).forEach((c) => {
+      (byDesignacion[c.designacion_id] ??= []).push({ refereeId: c.referee_id, confirmedAt: c.confirmed_at });
+    });
   });
   return byDesignacion;
 }
