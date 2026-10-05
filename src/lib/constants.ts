@@ -354,15 +354,15 @@ export function telLink(telefono: string): string {
 
 // Para ordenar listados por apellido (en vez de por nombre de pila), que es
 // como se suele imprimir/archivar una planilla. Los nombres se cargan como
-// texto libre sin campos separados, así que asumimos que la última palabra
-// es el apellido — funciona para el caso más común ("Nombre Apellido"); con
-// apellidos compuestos o cargados al revés no es perfecto, pero alcanza
-// para ordenar un export.
+// texto libre sin campos separados, así que asumimos que la primera palabra
+// es el apellido (el formato más común en el directorio es "Apellido
+// Nombre"); el que esté cargado al revés queda como excepción, no hay forma
+// de distinguirlo automáticamente.
 export function apellidoNombreKey(fullName: string): string {
   const words = fullName.trim().split(/\s+/);
   if (words.length < 2) return fullName.toLowerCase();
-  const apellido = words[words.length - 1];
-  const nombre = words.slice(0, -1).join(" ");
+  const apellido = words[0];
+  const nombre = words.slice(1).join(" ");
   return `${apellido} ${nombre}`.toLowerCase();
 }
 
