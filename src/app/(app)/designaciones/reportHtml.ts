@@ -1,5 +1,5 @@
 import type { DesignacionFull } from "./queries";
-import { matchTeamByName, colorForTeam, initials } from "@/lib/constants";
+import { matchTeamByName, colorForTeam, initials, apellidoNombreDisplay } from "@/lib/constants";
 
 export interface TeamLite {
   name: string;
@@ -102,7 +102,7 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
   // un documento interno.
   const arbitroCell = (d: DesignacionFull, pos: number) => {
     const a = d.arbitros.find((x) => x.posicion === pos);
-    return a ? esc(a.refereeName) : "—";
+    return a ? esc(apellidoNombreDisplay(a.refereeName)) : "—";
   };
 
   // Designaciones guarda el equipo como texto libre (no hay referencia a la
@@ -133,7 +133,7 @@ export function buildDesignacionesDetalleHtml(rows: DesignacionFull[], monthLabe
         <td>${arbitroCell(d, 1)}</td>
         <td>${arbitroCell(d, 2)}</td>
         <td>${arbitroCell(d, 3)}</td>
-        <td>${d.ctNombre ? esc(d.ctNombre) : "—"}</td>
+        <td>${d.ctNombre ? esc(apellidoNombreDisplay(d.ctNombre)) : "—"}</td>
         <td style="color:#97A1AE;max-width:160px;">${esc(d.notas) || "—"}</td>
       </tr>`
     )

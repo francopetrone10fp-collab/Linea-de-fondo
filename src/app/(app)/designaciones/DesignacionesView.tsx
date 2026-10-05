@@ -7,7 +7,7 @@ import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
-import { matchCtReferee, apellidoNombreKey } from "@/lib/constants";
+import { matchCtReferee, apellidoNombreKey, apellidoNombreDisplay } from "@/lib/constants";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
@@ -226,13 +226,13 @@ export default function DesignacionesView({
         d.sede,
         d.localidad,
         d.estado,
-        a(1)?.refereeName,
+        a(1) ? apellidoNombreDisplay(a(1)!.refereeName) : undefined,
         a(1)?.monto,
-        a(2)?.refereeName,
+        a(2) ? apellidoNombreDisplay(a(2)!.refereeName) : undefined,
         a(2)?.monto,
-        a(3)?.refereeName,
+        a(3) ? apellidoNombreDisplay(a(3)!.refereeName) : undefined,
         a(3)?.monto,
-        d.ctNombre,
+        d.ctNombre ? apellidoNombreDisplay(d.ctNombre) : undefined,
         d.ctMonto,
         d.notas,
       ];
@@ -261,9 +261,11 @@ export default function DesignacionesView({
         }
       }
     });
-    // Ordenado por apellido (no por nombre de pila) para que el CSV/PDF
-    // salga prolijo para archivar.
-    return Array.from(totals.values()).sort((a, b) => apellidoNombreKey(a.nombre).localeCompare(apellidoNombreKey(b.nombre), "es"));
+    // Ordenado y mostrado por apellido (no por nombre de pila) para que el
+    // CSV/PDF salga prolijo para archivar.
+    return Array.from(totals.values())
+      .sort((a, b) => apellidoNombreKey(a.nombre).localeCompare(apellidoNombreKey(b.nombre), "es"))
+      .map((t) => ({ ...t, nombre: apellidoNombreDisplay(t.nombre) }));
   }
 
   function exportTotales() {
