@@ -356,12 +356,17 @@ export function telLink(telefono: string): string {
 // apellido en vez de por nombre de pila, como se suele archivar una
 // planilla. Los nombres se cargan como texto libre sin campos separados;
 // revisando el directorio real, el formato más común es "Nombre Apellido"
-// (el apellido queda al final), así que tomamos la última palabra. El que
-// esté cargado al revés (apellido primero) queda como excepción, no hay
-// forma de distinguirlo automático.
+// (el apellido queda al final), así que tomamos la última palabra por
+// defecto. Estos pocos están cargados al revés (apellido primero) y se
+// confirmaron a mano como excepción — si aparece otro caso así, sumarlo acá.
+const APELLIDO_PRIMERO = new Set(["pelotti", "petrone", "baez", "guarnieri", "bianchini"]);
+
 function splitApellidoNombre(fullName: string): { apellido: string; nombre: string } | null {
   const words = fullName.trim().split(/\s+/);
   if (words.length < 2) return null;
+  if (APELLIDO_PRIMERO.has(words[0].toLowerCase())) {
+    return { apellido: words[0], nombre: words.slice(1).join(" ") };
+  }
   return { apellido: words[words.length - 1], nombre: words.slice(0, -1).join(" ") };
 }
 
