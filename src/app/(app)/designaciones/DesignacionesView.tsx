@@ -7,7 +7,7 @@ import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
-import { matchCtReferee } from "@/lib/constants";
+import { matchCtReferee, apellidoNombreKey } from "@/lib/constants";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
@@ -261,7 +261,9 @@ export default function DesignacionesView({
         }
       }
     });
-    return Array.from(totals.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    // Ordenado por apellido (no por nombre de pila) para que el CSV/PDF
+    // salga prolijo para archivar.
+    return Array.from(totals.values()).sort((a, b) => apellidoNombreKey(a.nombre).localeCompare(apellidoNombreKey(b.nombre), "es"));
   }
 
   function exportTotales() {
