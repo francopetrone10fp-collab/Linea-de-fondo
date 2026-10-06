@@ -7,7 +7,7 @@ import TarifasView from "./TarifasView";
 import MisDesignacionesView from "./MisDesignacionesView";
 import ImportModal from "./ImportModal";
 import { downloadCsv } from "@/lib/csv";
-import { matchCtReferee, apellidoNombreKey, apellidoNombreDisplay } from "@/lib/constants";
+import { computeTotalesPorArbitro, apellidoNombreDisplay } from "@/lib/constants";
 import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
@@ -241,31 +241,7 @@ export default function DesignacionesView({
   }
 
   function computeTotales() {
-    const totals = new Map<string, { nombre: string; partidos: number; total: number }>();
-    designaciones.forEach((d) => {
-      d.arbitros.forEach((a) => {
-        const entry = totals.get(a.refereeId) ?? { nombre: a.refereeName, partidos: 0, total: 0 };
-        entry.partidos += 1;
-        entry.total += a.monto;
-        totals.set(a.refereeId, entry);
-      });
-      // Comisionado técnico: si la persona designada también dirige (ver
-      // matchCtReferee), lo que cobró como CT suma a su mismo total — no
-      // cuenta como un partido dirigido más, solo el monto.
-      if (d.ctNombre && d.ctMonto) {
-        const ctReferee = matchCtReferee(referees, d.ctNombre);
-        if (ctReferee) {
-          const entry = totals.get(ctReferee.id) ?? { nombre: ctReferee.name, partidos: 0, total: 0 };
-          entry.total += d.ctMonto;
-          totals.set(ctReferee.id, entry);
-        }
-      }
-    });
-    // Ordenado y mostrado por apellido (no por nombre de pila) para que el
-    // CSV/PDF salga prolijo para archivar.
-    return Array.from(totals.values())
-      .sort((a, b) => apellidoNombreKey(a.nombre).localeCompare(apellidoNombreKey(b.nombre), "es"))
-      .map((t) => ({ ...t, nombre: apellidoNombreDisplay(t.nombre) }));
+    return computeTotalesPorArbitro(designaciones, referees);
   }
 
   function exportTotales() {

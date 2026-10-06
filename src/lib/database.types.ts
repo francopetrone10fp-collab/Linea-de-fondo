@@ -515,6 +515,28 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["designaciones_externas"]["Insert"]>;
         Relationships: [];
       };
+      liquidaciones_manuales: {
+        Row: {
+          id: string;
+          referee_id: string;
+          fecha: string;
+          concepto: string;
+          monto: number;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referee_id: string;
+          fecha?: string;
+          concepto: string;
+          monto: number;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["liquidaciones_manuales"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

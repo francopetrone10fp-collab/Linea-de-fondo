@@ -44,6 +44,7 @@ export const NAV_ITEMS = [
   { view: "reportes", href: "/reportes", label: "Reportes", roles: ["coordinador", "instructor"] },
   { view: "designaciones", href: "/designaciones", label: "Designaciones", roles: ["coordinador", "instructor", "arbitro"] },
   { view: "disponibilidad", href: "/disponibilidad", label: "Disponibilidad", roles: ["coordinador", "arbitro"] },
+  { view: "liquidaciones", href: "/liquidaciones", label: "Liquidaciones", roles: ["coordinador"] },
   { view: "requests", href: "/requests", label: "Solicitudes", roles: ["coordinador"] },
   { view: "material", href: "/material", label: "Material didáctico", roles: ["coordinador", "instructor", "arbitro"] },
   { view: "clases", href: "/clases", label: "Clases", roles: ["coordinador", "instructor", "arbitro"] },
@@ -380,6 +381,58 @@ export function apellidoNombreKey(fullName: string): string {
 export function apellidoNombreDisplay(fullName: string): string {
   const split = splitApellidoNombre(fullName);
   return split ? `${split.apellido} ${split.nombre}` : fullName;
+}
+
+export interface TotalArbitro {
+  refereeId: string;
+  nombre: string;
+  partidos: number;
+  total: number;
+}
+
+// Totales por árbitro (lo que dirigió + lo que cobró como comisionado
+// técnico cuando corresponde + ajustes manuales), ya ordenados y mostrados
+// por apellido. Compartido entre el export de Designaciones y la pantalla
+// de Liquidaciones, para que ambos salgan siempre consistentes.
+export function computeTotalesPorArbitro(
+  designaciones: {
+    arbitros: { refereeId: string; refereeName: string; monto: number }[];
+    ctNombre: string | null;
+    ctMonto: number | null;
+  }[],
+  referees: { id: string; name: string }[],
+  ajustesManuales: { refereeId: string; monto: number }[] = []
+): TotalArbitro[] {
+  const totals = new Map<string, TotalArbitro>();
+  designaciones.forEach((d) => {
+    d.arbitros.forEach((a) => {
+      const entry = totals.get(a.refereeId) ?? { refereeId: a.refereeId, nombre: a.refereeName, partidos: 0, total: 0 };
+      entry.partidos += 1;
+      entry.total += a.monto;
+      totals.set(a.refereeId, entry);
+    });
+    // Comisionado técnico: si la persona designada también dirige (ver
+    // matchCtReferee), lo que cobró como CT suma a su mismo total — no
+    // cuenta como un partido dirigido más, solo el monto.
+    if (d.ctNombre && d.ctMonto) {
+      const ctReferee = matchCtReferee(referees, d.ctNombre);
+      if (ctReferee) {
+        const entry = totals.get(ctReferee.id) ?? { refereeId: ctReferee.id, nombre: ctReferee.name, partidos: 0, total: 0 };
+        entry.total += d.ctMonto;
+        totals.set(ctReferee.id, entry);
+      }
+    }
+  });
+  ajustesManuales.forEach((m) => {
+    const ref = referees.find((r) => r.id === m.refereeId);
+    if (!ref) return;
+    const entry = totals.get(ref.id) ?? { refereeId: ref.id, nombre: ref.name, partidos: 0, total: 0 };
+    entry.total += m.monto;
+    totals.set(ref.id, entry);
+  });
+  return Array.from(totals.values())
+    .sort((a, b) => apellidoNombreKey(a.nombre).localeCompare(apellidoNombreKey(b.nombre), "es"))
+    .map((t) => ({ ...t, nombre: apellidoNombreDisplay(t.nombre) }));
 }
 
 export function colorForTeam(name: string): string {

@@ -15,6 +15,7 @@ export const TILE_COLOR: Partial<Record<NavView, TileColor>> = {
   reportes: "good",
   designaciones: "blue",
   disponibilidad: "amber",
+  liquidaciones: "good",
   requests: "bad",
   material: "violet",
   clases: "relevant",
@@ -112,6 +113,14 @@ export function NavIcon({ view, size = 20 }: { view: NavView; size?: number }) {
         <svg {...common}>
           <rect x="3" y="5" width="18" height="16" rx="2" />
           <path d="M3 10h18M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" />
+        </svg>
+      );
+    case "liquidaciones":
+      return (
+        <svg {...common}>
+          <rect x="2" y="6" width="20" height="13" rx="2" />
+          <circle cx="12" cy="12.5" r="3.2" />
+          <path d="M6 6V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />
         </svg>
       );
     case "requests":
