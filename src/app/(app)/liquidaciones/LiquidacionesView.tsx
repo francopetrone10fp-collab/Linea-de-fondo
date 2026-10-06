@@ -6,7 +6,7 @@ import SectionIcon from "@/components/SectionIcon";
 import { downloadCsv } from "@/lib/csv";
 import { money } from "../designaciones/DesignacionesGrid";
 import { buildDesignacionesTotalesHtml, openHtmlForPrint } from "../designaciones/reportHtml";
-import { addLiquidacionManual, deleteLiquidacionManual } from "./actions";
+import { addLiquidacionManual, updateLiquidacionManual, deleteLiquidacionManual } from "./actions";
 import type { DesignacionFull } from "../designaciones/queries";
 import type { LiquidacionManual } from "./queries";
 
@@ -28,6 +28,7 @@ export default function LiquidacionesView({
   customRange: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<LiquidacionManual | null>(null);
 
   function changeMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
@@ -141,10 +142,17 @@ export default function LiquidacionesView({
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="font-display text-[16px] font-semibold uppercase tracking-wide text-text-dim m-0">Montos manuales</h2>
         <button
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => {
+            if (showForm || editing) {
+              setShowForm(false);
+              setEditing(null);
+            } else {
+              setShowForm(true);
+            }
+          }}
           className="bg-accent hover:bg-accent-dim text-accent-ink rounded-lg font-semibold text-[12.5px] px-3.5 py-2"
         >
-          {showForm ? "Cancelar" : "+ Agregar monto"}
+          {showForm || editing ? "Cancelar" : "+ Agregar monto"}
         </button>
       </div>
       <p className="text-text-dim text-[12.5px] m-0 mb-3">
@@ -152,11 +160,25 @@ export default function LiquidacionesView({
         a un árbitro — no afecta la grilla de Designaciones, solo el total que se ve acá.
       </p>
 
-      {showForm && (
-        <ManualForm referees={referees} defaultFecha={hasta < new Date().toISOString().slice(0, 10) ? hasta : new Date().toISOString().slice(0, 10)} onDone={() => setShowForm(false)} />
+      {(showForm || editing) && (
+        <ManualForm
+          referees={referees}
+          editing={editing}
+          defaultFecha={hasta < new Date().toISOString().slice(0, 10) ? hasta : new Date().toISOString().slice(0, 10)}
+          onDone={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
+        />
       )}
 
-      <ManualList items={manuales} />
+      <ManualList
+        items={manuales}
+        onEdit={(m) => {
+          setEditing(m);
+          setShowForm(false);
+        }}
+      />
     </div>
   );
 }
@@ -213,16 +235,18 @@ function RangeFilter({
 function ManualForm({
   referees,
   defaultFecha,
+  editing,
   onDone,
 }: {
   referees: { id: string; name: string }[];
   defaultFecha: string;
+  editing: LiquidacionManual | null;
   onDone: () => void;
 }) {
-  const [refereeId, setRefereeId] = useState("");
-  const [fecha, setFecha] = useState(defaultFecha);
-  const [concepto, setConcepto] = useState("");
-  const [monto, setMonto] = useState("");
+  const [refereeId, setRefereeId] = useState(editing?.refereeId ?? "");
+  const [fecha, setFecha] = useState(editing?.fecha ?? defaultFecha);
+  const [concepto, setConcepto] = useState(editing?.concepto ?? "");
+  const [monto, setMonto] = useState(editing ? String(editing.monto) : "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -230,7 +254,8 @@ function ManualForm({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await addLiquidacionManual({ refereeId, fecha, concepto, monto: Number(monto) });
+      const input = { refereeId, fecha, concepto, monto: Number(monto) };
+      const res = editing ? await updateLiquidacionManual(editing.id, input) : await addLiquidacionManual(input);
       if (!res.ok) {
         setError(res.error);
         return;
@@ -240,42 +265,45 @@ function ManualForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="bg-surface-2 border border-line rounded-xl p-3.5 mb-4 flex flex-col gap-2.5">
+    <form onSubmit={onSubmit} className="bg-surface-2 border border-line rounded-xl p-3.5 mb-4 flex flex-col gap-3">
       <div className="flex gap-2.5 flex-wrap">
-        <select value={refereeId} onChange={(e) => setRefereeId(e.target.value)} required className="flex-1 min-w-[180px]">
-          <option value="">Elegí un árbitro...</option>
-          {referees.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-        <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required className="min-w-[150px]" />
+        <label className="flex-1 min-w-[180px] flex flex-col gap-1">
+          <span className="text-[11px] text-text-faint uppercase tracking-wide">Árbitro</span>
+          <select value={refereeId} onChange={(e) => setRefereeId(e.target.value)} required>
+            <option value="">Elegí un árbitro...</option>
+            {referees.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="min-w-[150px] flex flex-col gap-1">
+          <span className="text-[11px] text-text-faint uppercase tracking-wide">Fecha en que se dirigió</span>
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required />
+        </label>
       </div>
-      <input
-        type="text"
-        value={concepto}
-        onChange={(e) => setConcepto(e.target.value)}
-        placeholder="Concepto — ej: Amistoso vs Rosario Central, Bono diciembre..."
-        required
-        className="w-full"
-      />
-      <div className="flex gap-2.5 items-center flex-wrap">
+      <label className="flex flex-col gap-1">
+        <span className="text-[11px] text-text-faint uppercase tracking-wide">Concepto</span>
         <input
-          type="number"
-          value={monto}
-          onChange={(e) => setMonto(e.target.value)}
-          placeholder="Monto"
-          min="0"
-          step="1"
+          type="text"
+          value={concepto}
+          onChange={(e) => setConcepto(e.target.value)}
+          placeholder="Ej: Amistoso vs Rosario Central, Bono diciembre..."
           required
-          className="min-w-[150px]"
+          className="w-full"
         />
+      </label>
+      <div className="flex gap-2.5 items-end flex-wrap">
+        <label className="min-w-[150px] flex flex-col gap-1">
+          <span className="text-[11px] text-text-faint uppercase tracking-wide">Monto</span>
+          <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} min="0" step="1" required />
+        </label>
         <button
           disabled={isPending}
           className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-accent-ink rounded-lg font-semibold text-[13px] px-4 py-2"
         >
-          Guardar
+          {editing ? "Guardar cambios" : "Guardar"}
         </button>
       </div>
       {error && <p className="text-bad-text text-[12.5px] m-0">{error}</p>}
@@ -283,7 +311,7 @@ function ManualForm({
   );
 }
 
-function ManualList({ items }: { items: LiquidacionManual[] }) {
+function ManualList({ items, onEdit }: { items: LiquidacionManual[]; onEdit: (item: LiquidacionManual) => void }) {
   const [isPending, startTransition] = useTransition();
 
   function onDelete(id: string) {
@@ -310,6 +338,15 @@ function ManualList({ items }: { items: LiquidacionManual[] }) {
           </div>
           <div className="flex items-center gap-3">
             <span className="font-display text-[14px] font-semibold">{money.format(m.monto)}</span>
+            <button
+              onClick={() => onEdit(m)}
+              title="Editar"
+              className="text-text-faint hover:text-text hover:bg-surface-2 p-1 rounded-md"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </button>
             <button
               onClick={() => onDelete(m.id)}
               disabled={isPending}
