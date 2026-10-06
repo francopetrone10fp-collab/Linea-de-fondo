@@ -12,6 +12,7 @@ import SectionIcon from "@/components/SectionIcon";
 import { buildDesignacionesDetalleHtml, buildDesignacionesTotalesHtml, openHtmlForPrint } from "./reportHtml";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, TarifaCategoria, ViaticoLocalidad } from "./queries";
 import type { DisponibilidadDia } from "../disponibilidad/queries";
+import type { LiquidacionManual } from "../liquidaciones/queries";
 
 export default function DesignacionesView({
   designaciones,
@@ -31,6 +32,7 @@ export default function DesignacionesView({
   exclusionesPorArbitro,
   partidosExternos,
   designacionesSinArbitros,
+  misManuales,
 }: {
   designaciones: DesignacionFull[];
   tarifas: TarifaCategoria[];
@@ -49,6 +51,7 @@ export default function DesignacionesView({
   exclusionesPorArbitro: Record<string, string[]>;
   partidosExternos: PartidoExterno[];
   designacionesSinArbitros: DesignacionFull[];
+  misManuales: LiquidacionManual[];
 }) {
   const [tab, setTab] = useState<"grilla" | "mias" | "aranceles">(canManage ? "grilla" : "mias");
   const [search, setSearch] = useState("");
@@ -402,6 +405,7 @@ export default function DesignacionesView({
             teams={teams}
             referees={referees}
             partidosExternos={partidosExternos}
+            manuales={misManuales}
           />
         ) : (
           <p className="text-[12.5px] text-text-faint m-0">

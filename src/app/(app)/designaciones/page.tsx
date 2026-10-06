@@ -11,6 +11,7 @@ import {
   fetchPartidosExternos,
 } from "./queries";
 import { fetchDisponibilidad, fetchClubExclusiones } from "../disponibilidad/queries";
+import { fetchLiquidacionesManuales } from "../liquidaciones/queries";
 import DesignacionesView from "./DesignacionesView";
 
 // Nunca cachear esta página: el filtro de mes/rango depende enteramente de
@@ -55,6 +56,7 @@ export default async function DesignacionesPage({
     exclusionesPorArbitro,
     partidosExternos,
     designacionesSinArbitros,
+    misManuales,
   ] = await Promise.all([
     fetchTarifas(supabase),
     fetchViaticos(supabase),
@@ -72,6 +74,9 @@ export default async function DesignacionesPage({
     canManage ? fetchClubExclusiones(supabase) : Promise.resolve({}),
     profile.referee_id ? fetchPartidosExternos(supabase, { desde, hasta }) : Promise.resolve([]),
     canManage ? fetchDesignacionesSinArbitrosFuturas(supabase, new Date().toISOString().slice(0, 10)) : Promise.resolve([]),
+    // Montos manuales que el coordinador le cargó a este árbitro en
+    // Liquidaciones — RLS ya limita esto a sus propias filas.
+    profile.referee_id ? fetchLiquidacionesManuales(supabase, { desde, hasta }) : Promise.resolve([]),
   ]);
 
   return (
@@ -93,6 +98,7 @@ export default async function DesignacionesPage({
       exclusionesPorArbitro={exclusionesPorArbitro}
       partidosExternos={partidosExternos}
       designacionesSinArbitros={designacionesSinArbitros}
+      misManuales={misManuales}
     />
   );
 }

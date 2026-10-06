@@ -7,6 +7,7 @@ import { money, TeamBadge, RefereeBadge } from "./DesignacionesGrid";
 import PartidosExternos from "./PartidosExternos";
 import { matchCtReferee, waLink, telLink } from "@/lib/constants";
 import type { Companero, Confirmacion, DesignacionFull, PartidoExterno, ViaticoLocalidad } from "./queries";
+import type { LiquidacionManual } from "../liquidaciones/queries";
 
 export default function MisDesignacionesView({
   designaciones,
@@ -17,6 +18,7 @@ export default function MisDesignacionesView({
   teams,
   referees,
   partidosExternos,
+  manuales,
 }: {
   designaciones: DesignacionFull[];
   myRefereeId: string;
@@ -26,6 +28,7 @@ export default function MisDesignacionesView({
   teams: { id: string; name: string; color: string; photo_url: string | null }[];
   referees: { id: string; name: string; color: string; photo_url: string | null; telefono: string | null }[];
   partidosExternos: PartidoExterno[];
+  manuales: LiquidacionManual[];
 }) {
   const viaticoByLocalidad = new Map(viaticos.map((v) => [v.localidad, v.monto]));
   const mias = designaciones
@@ -38,7 +41,14 @@ export default function MisDesignacionesView({
   const comoCt = designaciones.filter((d) => d.ctNombre && d.ctMonto && matchCtReferee(referees, d.ctNombre)?.id === myRefereeId);
   const totalCt = comoCt.reduce((sum, d) => sum + (d.ctMonto ?? 0), 0);
 
-  const total = mias.reduce((sum, x) => sum + x.mia.monto, 0) + totalCt;
+  // Montos manuales que el coordinador le cargó desde Liquidaciones (un
+  // amistoso, un bono, etc.) — se filtra por las dudas, en caso de que quien
+  // los haya traído sea un coordinador que también es árbitro y tenga
+  // visibilidad de los montos de todos.
+  const misManuales = manuales.filter((m) => m.refereeId === myRefereeId);
+  const totalManual = misManuales.reduce((sum, m) => sum + m.monto, 0);
+
+  const total = mias.reduce((sum, x) => sum + x.mia.monto, 0) + totalCt + totalManual;
   // Mismo criterio que puedeConfirmar más abajo: un partido ya jugado o
   // suspendido no tiene botón de confirmar, así que tampoco puede contar acá
   // como "pendiente" (si no, el cartel de arriba promete algo que la tarjeta
@@ -58,7 +68,8 @@ export default function MisDesignacionesView({
       <div className="bg-surface-2 border border-line rounded-xl px-4 py-3 mb-4 flex items-center justify-between flex-wrap gap-2">
         <span className="text-[13px] text-text-dim">
           Total del mes ({mias.length} partido{mias.length === 1 ? "" : "s"}
-          {totalCt > 0 && ` + ${money.format(totalCt)} como comisionado técnico en ${comoCt.length}`})
+          {totalCt > 0 && ` + ${money.format(totalCt)} como comisionado técnico en ${comoCt.length}`}
+          {totalManual > 0 && ` + ${money.format(totalManual)} adicional`})
         </span>
         {pendientes > 0 && (
           <span className="text-[12px] font-semibold text-amber-text bg-amber-bg rounded-full px-2.5 py-1">
@@ -90,6 +101,28 @@ export default function MisDesignacionesView({
               referees={referees}
             />
           ))}
+        </div>
+      )}
+
+      {misManuales.length > 0 && (
+        <div className="mt-6">
+          <h3 className="font-display text-[16px] font-semibold m-0 mb-0.5">Montos adicionales</h3>
+          <p className="text-[11.5px] text-text-faint m-0 mb-3">
+            Cargados por el coordinador — ya están sumados al total de arriba.
+          </p>
+          <div className="flex flex-col gap-2">
+            {misManuales.map((m) => (
+              <div key={m.id} className="bg-surface border border-line rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="text-[14px] font-semibold m-0">{m.concepto}</p>
+                  <p className="text-[12px] text-text-dim m-0 mt-0.5">
+                    {new Date(m.fecha + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                  </p>
+                </div>
+                <span className="font-display text-[15px] font-semibold">{money.format(m.monto)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
