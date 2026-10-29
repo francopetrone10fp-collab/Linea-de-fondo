@@ -383,33 +383,94 @@ export function apellidoNombreDisplay(fullName: string): string {
   return split ? `${split.apellido} ${split.nombre}` : fullName;
 }
 
+// Posición en designacion_arbitros (1/2/3) no tiene un label en la base —
+// este es el único lugar donde se decide cómo se le llama a cada rol.
+export const ROL_POR_POSICION: Record<number, string> = {
+  1: "Principal",
+  2: "Auxiliar 1",
+  3: "Auxiliar 2",
+};
+
+export type ItemLiquidacion =
+  | {
+      id: string;
+      tipo: "partido";
+      fecha: string | null;
+      equipoLocal: string;
+      equipoVisitante: string;
+      competencia: string | null;
+      categoria: string;
+      rol: string;
+      monto: number;
+    }
+  | {
+      id: string;
+      tipo: "ct";
+      fecha: string | null;
+      equipoLocal: string;
+      equipoVisitante: string;
+      monto: number;
+    }
+  | {
+      id: string;
+      tipo: "manual";
+      fecha: string;
+      concepto: string;
+      nota: string | null;
+      monto: number;
+    };
+
 export interface TotalArbitro {
   refereeId: string;
   nombre: string;
   partidos: number;
   total: number;
+  items: ItemLiquidacion[];
 }
 
 // Totales por árbitro (lo que dirigió + lo que cobró como comisionado
 // técnico cuando corresponde + ajustes manuales), ya ordenados y mostrados
 // por apellido. Compartido entre el export de Designaciones y la pantalla
-// de Liquidaciones, para que ambos salgan siempre consistentes.
+// de Liquidaciones, para que ambos salgan siempre consistentes. "total" y
+// "partidos" se derivan de la lista de items (no se acumulan aparte), así
+// el desglose nunca puede dar un número distinto al total.
 export function computeTotalesPorArbitro(
   designaciones: {
-    arbitros: { refereeId: string; refereeName: string; monto: number }[];
+    id: string;
+    fecha: string | null;
+    equipoLocal: string;
+    equipoVisitante: string;
+    competencia: string | null;
+    categoria: string;
+    arbitros: { posicion: number; refereeId: string; refereeName: string; monto: number }[];
     ctNombre: string | null;
     ctMonto: number | null;
   }[],
   referees: { id: string; name: string }[],
-  ajustesManuales: { refereeId: string; monto: number }[] = []
+  ajustesManuales: { id: string; refereeId: string; fecha: string; concepto: string; nota?: string | null; monto: number }[] = []
 ): TotalArbitro[] {
   const totals = new Map<string, TotalArbitro>();
+  const entry = (refereeId: string, nombre: string): TotalArbitro => {
+    const existing = totals.get(refereeId);
+    if (existing) return existing;
+    const created: TotalArbitro = { refereeId, nombre, partidos: 0, total: 0, items: [] };
+    totals.set(refereeId, created);
+    return created;
+  };
+
   designaciones.forEach((d) => {
     d.arbitros.forEach((a) => {
-      const entry = totals.get(a.refereeId) ?? { refereeId: a.refereeId, nombre: a.refereeName, partidos: 0, total: 0 };
-      entry.partidos += 1;
-      entry.total += a.monto;
-      totals.set(a.refereeId, entry);
+      entry(a.refereeId, a.refereeName).items.push({
+        id: `${d.id}-arb-${a.posicion}`,
+        tipo: "partido",
+        fecha: d.fecha,
+        equipoLocal: d.equipoLocal,
+        equipoVisitante: d.equipoVisitante,
+        competencia: d.competencia,
+        categoria: d.categoria,
+        rol: ROL_POR_POSICION[a.posicion] ?? `Posición ${a.posicion}`,
+        monto: a.monto,
+      });
     });
     // Comisionado técnico: si la persona designada también dirige (ver
     // matchCtReferee), lo que cobró como CT suma a su mismo total — no
@@ -417,19 +478,36 @@ export function computeTotalesPorArbitro(
     if (d.ctNombre && d.ctMonto) {
       const ctReferee = matchCtReferee(referees, d.ctNombre);
       if (ctReferee) {
-        const entry = totals.get(ctReferee.id) ?? { refereeId: ctReferee.id, nombre: ctReferee.name, partidos: 0, total: 0 };
-        entry.total += d.ctMonto;
-        totals.set(ctReferee.id, entry);
+        entry(ctReferee.id, ctReferee.name).items.push({
+          id: `${d.id}-ct`,
+          tipo: "ct",
+          fecha: d.fecha,
+          equipoLocal: d.equipoLocal,
+          equipoVisitante: d.equipoVisitante,
+          monto: d.ctMonto,
+        });
       }
     }
   });
+
   ajustesManuales.forEach((m) => {
     const ref = referees.find((r) => r.id === m.refereeId);
     if (!ref) return;
-    const entry = totals.get(ref.id) ?? { refereeId: ref.id, nombre: ref.name, partidos: 0, total: 0 };
-    entry.total += m.monto;
-    totals.set(ref.id, entry);
+    entry(ref.id, ref.name).items.push({
+      id: `manual-${m.id}`,
+      tipo: "manual",
+      fecha: m.fecha,
+      concepto: m.concepto,
+      nota: m.nota ?? null,
+      monto: m.monto,
+    });
   });
+
+  totals.forEach((e) => {
+    e.partidos = e.items.filter((i) => i.tipo === "partido").length;
+    e.total = e.items.reduce((sum, i) => sum + i.monto, 0);
+  });
+
   return Array.from(totals.values())
     .sort((a, b) => apellidoNombreKey(a.nombre).localeCompare(apellidoNombreKey(b.nombre), "es"))
     .map((t) => ({ ...t, nombre: apellidoNombreDisplay(t.nombre) }));

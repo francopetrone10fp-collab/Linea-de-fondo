@@ -1,4 +1,5 @@
 import type { DesignacionFull } from "./queries";
+import type { ItemLiquidacion, TotalArbitro } from "@/lib/constants";
 import { matchTeamByName, colorForTeam, initials, apellidoNombreDisplay } from "@/lib/constants";
 
 export interface TeamLite {
@@ -192,6 +193,97 @@ export function buildDesignacionesTotalesHtml(rows: { nombre: string; partidos: 
     subtitle: monthLabel,
     body,
     foot: `<span>Generado el ${esc(generatedAt)}</span>`,
+  });
+}
+
+const fechaCorta = (fecha: string | null) => {
+  if (!fecha) return "—";
+  const [y, m, d] = fecha.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+// Liquidaciones, versión con detalle: una sección por árbitro con su total,
+// y debajo una tabla por tipo de ítem (partidos / comisionado técnico /
+// montos manuales) solo si tiene ítems. Usa los mismos "items" que ya
+// calculó computeTotalesPorArbitro, así el PDF nunca puede desviarse del
+// total que se ve en pantalla.
+export function buildLiquidacionesDetalladoHtml(totales: TotalArbitro[], periodoLabel: string): string {
+  const seccionArbitro = (t: TotalArbitro) => {
+    const partidos = t.items.filter((i): i is Extract<ItemLiquidacion, { tipo: "partido" }> => i.tipo === "partido");
+    const ct = t.items.filter((i): i is Extract<ItemLiquidacion, { tipo: "ct" }> => i.tipo === "ct");
+    const manuales = t.items.filter((i): i is Extract<ItemLiquidacion, { tipo: "manual" }> => i.tipo === "manual");
+
+    const tablaPartidos =
+      partidos.length === 0
+        ? ""
+        : `<table style="margin-bottom:10px;"><thead><tr>
+            <th>Fecha</th><th>Partido</th><th>Competencia / Categoría</th><th>Rol</th><th style="text-align:right;">Importe</th>
+          </tr></thead><tbody>${partidos
+            .map(
+              (p) => `<tr>
+              <td style="white-space:nowrap;">${esc(fechaCorta(p.fecha))}</td>
+              <td>${esc(p.equipoLocal)} <span style="color:#5C6672;">vs</span> ${esc(p.equipoVisitante)}</td>
+              <td style="color:#97A1AE;">${esc([p.competencia, p.categoria].filter(Boolean).join(" · "))}</td>
+              <td style="color:#97A1AE;">${esc(p.rol)}</td>
+              <td style="text-align:right;font-family:monospace;${p.monto < 0 ? "color:#F09595;" : ""}">${esc(money.format(p.monto))}</td>
+            </tr>`
+            )
+            .join("")}</tbody></table>`;
+
+    const tablaCt =
+      ct.length === 0
+        ? ""
+        : `<table style="margin-bottom:10px;"><thead><tr><th>Fecha</th><th>Partido</th><th style="text-align:right;">Importe</th></tr></thead>
+          <tbody>${ct
+            .map(
+              (c) => `<tr>
+              <td style="white-space:nowrap;">${esc(fechaCorta(c.fecha))}</td>
+              <td>${esc(c.equipoLocal)} <span style="color:#5C6672;">vs</span> ${esc(c.equipoVisitante)}</td>
+              <td style="text-align:right;font-family:monospace;${c.monto < 0 ? "color:#F09595;" : ""}">${esc(money.format(c.monto))}</td>
+            </tr>`
+            )
+            .join("")}</tbody></table>`;
+
+    const tablaManuales =
+      manuales.length === 0
+        ? ""
+        : `<table style="margin-bottom:10px;"><thead><tr><th>Fecha</th><th>Concepto</th><th>Nota</th><th style="text-align:right;">Importe</th></tr></thead>
+          <tbody>${manuales
+            .map(
+              (m) => `<tr>
+              <td style="white-space:nowrap;">${esc(fechaCorta(m.fecha))}</td>
+              <td>${esc(m.concepto)}</td>
+              <td style="color:#97A1AE;">${esc(m.nota) || "—"}</td>
+              <td style="text-align:right;font-family:monospace;${m.monto < 0 ? "color:#F09595;" : ""}">${esc(money.format(m.monto))}</td>
+            </tr>`
+            )
+            .join("")}</tbody></table>`;
+
+    return `
+      <div style="margin-bottom:22px;padding-bottom:16px;border-bottom:1px dashed #2C3644;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:700;">${esc(t.nombre)}</span>
+          <span style="font-size:14px;font-weight:700;font-family:monospace;">${esc(money.format(t.total))}</span>
+        </div>
+        ${tablaPartidos}${tablaCt}${tablaManuales}
+        ${t.items.length === 0 ? `<p style="font-size:11.5px;color:#5C6672;margin:0;">Sin ítems para este período.</p>` : ""}
+      </div>`;
+  };
+
+  const totalGeneral = totales.reduce((sum, t) => sum + t.total, 0);
+
+  const body =
+    totales.length === 0
+      ? `<p style="font-size:13px;color:#5C6672;">No hay datos para este período.</p>`
+      : totales.map(seccionArbitro).join("");
+
+  const generatedAt = new Date().toLocaleString("es-AR");
+  return shell({
+    orientation: "portrait",
+    title: "Liquidaciones — detalle por árbitro",
+    subtitle: periodoLabel,
+    body,
+    foot: `<span>Generado el ${esc(generatedAt)}</span><span>Total general: <b>${esc(money.format(totalGeneral))}</b></span>`,
   });
 }
 

@@ -521,6 +521,7 @@ export interface Database {
           referee_id: string;
           fecha: string;
           concepto: string;
+          nota: string | null;
           monto: number;
           created_by: string | null;
           created_at: string;
@@ -530,6 +531,7 @@ export interface Database {
           referee_id: string;
           fecha?: string;
           concepto: string;
+          nota?: string | null;
           monto: number;
           created_by?: string | null;
           created_at?: string;

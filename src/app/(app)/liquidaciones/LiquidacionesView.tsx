@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { Fragment, useMemo, useState, useTransition } from "react";
 import { computeTotalesPorArbitro } from "@/lib/constants";
 import SectionIcon from "@/components/SectionIcon";
 import { downloadCsv } from "@/lib/csv";
 import { money } from "../designaciones/DesignacionesGrid";
-import { buildDesignacionesTotalesHtml, openHtmlForPrint } from "../designaciones/reportHtml";
+import { buildLiquidacionesDetalladoHtml, openHtmlForPrint } from "../designaciones/reportHtml";
 import { addLiquidacionManual, updateLiquidacionManual, deleteLiquidacionManual } from "./actions";
+import Desglose from "./Desglose";
 import type { DesignacionFull } from "../designaciones/queries";
 import type { LiquidacionManual } from "./queries";
 
@@ -29,6 +30,7 @@ export default function LiquidacionesView({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<LiquidacionManual | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function changeMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
@@ -61,17 +63,36 @@ export default function LiquidacionesView({
   const rangeSlug = customRange ? `${desde}_a_${hasta}` : month;
 
   const totales = useMemo(
-    () => computeTotalesPorArbitro(designaciones, referees, manuales.map((m) => ({ refereeId: m.refereeId, monto: m.monto }))),
+    () =>
+      computeTotalesPorArbitro(
+        designaciones,
+        referees,
+        manuales.map((m) => ({ id: m.id, refereeId: m.refereeId, fecha: m.fecha, concepto: m.concepto, nota: m.nota, monto: m.monto }))
+      ),
     [designaciones, referees, manuales]
   );
 
   function exportCsv() {
-    const rows = totales.map((t) => [t.nombre, t.partidos, t.total]);
-    downloadCsv(`liquidaciones_${rangeSlug}.csv`, ["Árbitro", "Partidos", "Total"], rows);
+    const headers = ["Árbitro", "Tipo", "Fecha", "Detalle", "Rol / Nota", "Importe"];
+    const rows: (string | number)[][] = [];
+    totales.forEach((t) => {
+      t.items.forEach((i) => {
+        if (i.tipo === "partido") {
+          rows.push([t.nombre, "Partido", i.fecha ?? "", `${i.equipoLocal} vs ${i.equipoVisitante}`, i.rol, i.monto]);
+        } else if (i.tipo === "ct") {
+          rows.push([t.nombre, "Comisionado técnico", i.fecha ?? "", `${i.equipoLocal} vs ${i.equipoVisitante}`, "", i.monto]);
+        } else {
+          rows.push([t.nombre, "Monto manual", i.fecha, i.concepto, i.nota ?? "", i.monto]);
+        }
+      });
+      rows.push([t.nombre, "", "", "", "TOTAL LIQUIDADO", t.total]);
+      rows.push(["", "", "", "", "", ""]);
+    });
+    downloadCsv(`liquidaciones_${rangeSlug}.csv`, headers, rows);
   }
 
   function exportPdf() {
-    openHtmlForPrint(buildDesignacionesTotalesHtml(totales, rangeLabel));
+    openHtmlForPrint(buildLiquidacionesDetalladoHtml(totales, rangeLabel));
   }
 
   return (
@@ -127,13 +148,43 @@ export default function LiquidacionesView({
                 </td>
               </tr>
             ) : (
-              totales.map((t) => (
-                <tr key={t.refereeId} className="border-b border-line last:border-b-0">
-                  <td className="px-3.5 py-2">{t.nombre}</td>
-                  <td className="px-3.5 py-2 text-right font-mono">{t.partidos}</td>
-                  <td className="px-3.5 py-2 text-right font-mono font-semibold">{money.format(t.total)}</td>
-                </tr>
-              ))
+              totales.map((t) => {
+                const open = expandedId === t.refereeId;
+                return (
+                  <Fragment key={t.refereeId}>
+                    <tr
+                      onClick={() => setExpandedId(open ? null : t.refereeId)}
+                      className="border-b border-line last:border-b-0 cursor-pointer hover:bg-surface-2"
+                    >
+                      <td className="px-3.5 py-2">
+                        <span className="inline-flex items-center gap-1.5">
+                          <svg
+                            width="11"
+                            height="11"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            className={`text-text-faint transition-transform ${open ? "rotate-90" : ""}`}
+                          >
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                          {t.nombre}
+                        </span>
+                      </td>
+                      <td className="px-3.5 py-2 text-right font-mono">{t.partidos}</td>
+                      <td className="px-3.5 py-2 text-right font-mono font-semibold">{money.format(t.total)}</td>
+                    </tr>
+                    {open && (
+                      <tr className="border-b border-line last:border-b-0">
+                        <td colSpan={3} className="p-0">
+                          <Desglose arbitro={t} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -246,6 +297,7 @@ function ManualForm({
   const [refereeId, setRefereeId] = useState(editing?.refereeId ?? "");
   const [fecha, setFecha] = useState(editing?.fecha ?? defaultFecha);
   const [concepto, setConcepto] = useState(editing?.concepto ?? "");
+  const [nota, setNota] = useState(editing?.nota ?? "");
   const [monto, setMonto] = useState(editing ? String(editing.monto) : "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -254,7 +306,7 @@ function ManualForm({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const input = { refereeId, fecha, concepto, monto: Number(monto) };
+      const input = { refereeId, fecha, concepto, nota, monto: Number(monto) };
       const res = editing ? await updateLiquidacionManual(editing.id, input) : await addLiquidacionManual(input);
       if (!res.ok) {
         setError(res.error);
@@ -294,10 +346,20 @@ function ManualForm({
           className="w-full"
         />
       </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-[11px] text-text-faint uppercase tracking-wide">Nota (opcional)</span>
+        <input
+          type="text"
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+          placeholder="Aclaración adicional, si hace falta..."
+          className="w-full"
+        />
+      </label>
       <div className="flex gap-2.5 items-end flex-wrap">
         <label className="min-w-[150px] flex flex-col gap-1">
-          <span className="text-[11px] text-text-faint uppercase tracking-wide">Monto</span>
-          <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} min="0" step="1" required />
+          <span className="text-[11px] text-text-faint uppercase tracking-wide">Monto (negativo para un descuento)</span>
+          <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} step="1" required />
         </label>
         <button
           disabled={isPending}
@@ -337,7 +399,7 @@ function ManualList({ items, onEdit }: { items: LiquidacionManual[]; onEdit: (it
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="font-display text-[14px] font-semibold">{money.format(m.monto)}</span>
+            <span className={`font-display text-[14px] font-semibold ${m.monto < 0 ? "text-bad-text" : ""}`}>{money.format(m.monto)}</span>
             <button
               onClick={() => onEdit(m)}
               title="Editar"

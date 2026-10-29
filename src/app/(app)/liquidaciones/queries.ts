@@ -9,6 +9,7 @@ export interface LiquidacionManual {
   refereeName: string;
   fecha: string;
   concepto: string;
+  nota: string | null;
   monto: number;
   createdAt: string;
 }
@@ -33,6 +34,7 @@ export async function fetchLiquidacionesManuales(
     refereeName: refereeNameById.get(r.referee_id) ?? "—",
     fecha: r.fecha,
     concepto: r.concepto,
+    nota: r.nota,
     monto: r.monto,
     createdAt: r.created_at,
   }));
