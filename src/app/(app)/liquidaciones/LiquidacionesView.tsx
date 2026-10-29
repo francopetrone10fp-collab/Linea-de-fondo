@@ -31,6 +31,7 @@ export default function LiquidacionesView({
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<LiquidacionManual | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   function changeMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
@@ -71,6 +72,20 @@ export default function LiquidacionesView({
       ),
     [designaciones, referees, manuales]
   );
+
+  function normalize(s: string): string {
+    return s
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "");
+  }
+
+  const totalesFiltrados = useMemo(() => {
+    const q = normalize(search);
+    if (!q) return totales;
+    return totales.filter((t) => normalize(t.nombre).includes(q));
+  }, [totales, search]);
 
   function exportCsv() {
     const headers = ["Árbitro", "Tipo", "Fecha", "Detalle", "Rol / Nota", "Importe"];
@@ -131,6 +146,28 @@ export default function LiquidacionesView({
         </button>
       </div>
 
+      <div className="relative mb-3 max-w-[320px]">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-faint pointer-events-none"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4.3-4.3" />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar árbitro..."
+          className="w-full pl-8 pr-3 py-2 text-[13px]"
+        />
+      </div>
+
       <div className="bg-surface border border-line rounded-xl overflow-hidden mb-6">
         <table className="w-full text-[13px]">
           <thead>
@@ -141,14 +178,14 @@ export default function LiquidacionesView({
             </tr>
           </thead>
           <tbody>
-            {totales.length === 0 ? (
+            {totalesFiltrados.length === 0 ? (
               <tr>
                 <td colSpan={3} className="px-3.5 py-6 text-center text-text-faint">
-                  No hay datos para este período.
+                  {totales.length === 0 ? "No hay datos para este período." : "Ningún árbitro coincide con la búsqueda."}
                 </td>
               </tr>
             ) : (
-              totales.map((t) => {
+              totalesFiltrados.map((t) => {
                 const open = expandedId === t.refereeId;
                 return (
                   <Fragment key={t.refereeId}>
